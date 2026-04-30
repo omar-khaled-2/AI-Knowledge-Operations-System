@@ -1,0 +1,28 @@
+# Bitnami MongoDB sub-chart values
+# NOTE: All MongoDB credentials MUST be provided via Kubernetes Secret.
+# Never hardcode passwords or usernames in this file.
+#
+# Required Secret: mongodb-secrets
+# kubectl create secret generic mongodb-secrets \
+#   --from-literal=mongodb-root-password='your-root-password' \
+#   -n default
+#
+# For production, create additional app users via init scripts or manually.
+
+mongodb:
+  # Use chart default image tag (do not override unless you specify a full Bitnami tag)
+  # Bitnami tags look like: 8.0.4-debian-12-r0
+  # If you need to pin: image: tag: "8.0.4-debian-12-r0"
+  architecture: standalone
+  auth:
+    enabled: true
+    existingSecret: mongodb-secrets
+  persistence:
+    enabled: false # Use emptyDir for local dev (data is lost on pod restart)
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi

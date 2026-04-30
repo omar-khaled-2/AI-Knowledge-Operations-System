@@ -6,3 +6,82 @@ service:
   type: ClusterIP
   port: 80
   targetPort: 3000
+
+replicaCount: 1
+
+imagePullPolicy: IfNotPresent
+
+# Resource limits for the Node.js backend
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Init container configuration
+initContainers:
+  mongodbWait:
+    enabled: true
+    image:
+      repository: busybox
+      tag: "1.36"
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 100m
+        memory: 64Mi
+      requests:
+        cpu: 10m
+        memory: 16Mi
+    timeout: 120    # seconds
+    interval: 2     # seconds between retries
+
+# Kubernetes Secrets configuration
+# Sensitive values MUST be provided via Kubernetes Secrets.
+# Never hardcode credentials in this file.
+#
+# Required Secrets:
+# 1. backend-secrets: Google OAuth + Better Auth
+#    kubectl create secret generic backend-secrets \
+#      --from-literal=GOOGLE_CLIENT_ID='your-google-client-id' \
+#      --from-literal=GOOGLE_CLIENT_SECRET='your-google-client-secret' \
+#      --from-literal=BETTER_AUTH_SECRET='your-secure-random-secret' \
+#      -n default
+#
+# 2. mongodb-secrets: MongoDB user + password (single source of truth)
+#    kubectl create secret generic mongodb-secrets \
+#      --from-literal=mongodb-root-user='root' \
+#      --from-literal=mongodb-root-password='your-password' \
+#      -n default
+
+secrets:
+  # Name of existing secret containing backend auth credentials
+  # REQUIRED: Must be created before deployment
+  existingSecretName: backend-secrets
+
+# MongoDB connection configuration (non-sensitive parts)
+# User and password come from mongodb-secrets (single source of truth)
+mongodb:
+  host: mongodb
+  port: 27017
+  database: ai-knowledge
+  # Name of existing secret containing MongoDB credentials
+  # REQUIRED: Must be created before deployment
+  # The secret must contain keys:
+  #   - mongodb-root-user
+  #   - mongodb-root-password
+  existingSecretName: mongodb-secrets
+
+# Non-sensitive configuration
+config:
+  # These will be auto-populated with service names if left empty
+  betterAuthUrl: ""
+  frontendUrl: ""
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

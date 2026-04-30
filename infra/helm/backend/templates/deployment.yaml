@@ -17,12 +17,68 @@ spec:
         app: backend
         release: {{ .Release.Name }}
     spec:
+      {{- if .Values.initContainers.mongodbWait.enabled }}
+      initContainers:
+        - name: wait-for-mongodb
+          image: "{{ .Values.initContainers.mongodbWait.image.repository }}:{{ .Values.initContainers.mongodbWait.image.tag }}"
+          imagePullPolicy: {{ .Values.initContainers.mongodbWait.image.pullPolicy | default .Values.imagePullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for MongoDB at ${MONGODB_HOST}:${MONGODB_PORT}..."
+              timeout {{ .Values.initContainers.mongodbWait.timeout }} sh -c '
+                until wget -qO- "http://${MONGODB_HOST}:${MONGODB_PORT}" >/dev/null 2>&1 || nc -z "${MONGODB_HOST}" "${MONGODB_PORT}" 2>/dev/null; do
+                  echo "MongoDB not ready, waiting {{ .Values.initContainers.mongodbWait.interval }}s..."
+                  sleep {{ .Values.initContainers.mongodbWait.interval }}
+                done
+              ' && echo "MongoDB is ready!" || { echo "ERROR: Timeout waiting for MongoDB after {{ .Values.initContainers.mongodbWait.timeout }} seconds"; exit 1; }
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-backend-config
+          resources:
+            {{- toYaml .Values.initContainers.mongodbWait.resources | nindent 12 }}
+      {{- end }}
       containers:
         - name: backend
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.targetPort }}
+              name: http
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-backend-config
+            - secretRef:
+                name: {{ .Values.secrets.existingSecretName }}
+          # MongoDB credentials from separate secret (single source of truth)
+          env:
+            - name: MONGODB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mongodb.existingSecretName | default "mongodb-secrets" }}
+                  key: mongodb-root-user
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mongodb.existingSecretName | default "mongodb-secrets" }}
+                  key: mongodb-root-password
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

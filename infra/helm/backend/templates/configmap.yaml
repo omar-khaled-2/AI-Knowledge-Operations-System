@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-backend-config
+  labels:
+    app: backend
+    release: {{ .Release.Name }}
+data:
+  BETTER_AUTH_URL: {{ .Values.config.betterAuthUrl | default (printf "http://%s-backend.%s.svc.cluster.local" .Release.Name .Release.Namespace) | quote }}
+  FRONTEND_URL: {{ .Values.config.frontendUrl | default (printf "http://%s-frontend.%s.svc.cluster.local" .Release.Name .Release.Namespace) | quote }}
+  AUTH_CALLBACK_URL: {{ .Values.config.authCallbackUrl | default (printf "http://%s-frontend.%s.svc.cluster.local/auth/callback" .Release.Name .Release.Namespace) | quote }}
+  NODE_ENV: "production"
+  PORT: "3000"
+  # MongoDB connection (non-sensitive parts)
+  MONGODB_HOST: {{ .Values.mongodb.host | default "mongodb" | quote }}
+  MONGODB_PORT: {{ .Values.mongodb.port | default "27017" | quote }}
+  MONGODB_DATABASE: {{ .Values.mongodb.database | default "ai-knowledge" | quote }}

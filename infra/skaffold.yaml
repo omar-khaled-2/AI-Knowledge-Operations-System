@@ -13,10 +13,19 @@ build:
         dockerfile: Dockerfile
   tagPolicy:
     gitCommit: {}
+  local:
+    push: false
 
 deploy:
   helm:
     releases:
+      - name: mongodb
+        chartPath: helm/mongodb
+        namespace: default
+        createNamespace: true
+        valuesFiles:
+          - values.yaml
+        skipBuildDependencies: false
       - name: frontend
         chartPath: helm/frontend
         namespace: default

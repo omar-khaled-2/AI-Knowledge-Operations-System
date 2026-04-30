@@ -1,0 +1,10 @@
+apiVersion: v2
+name: mongodb
+description: MongoDB database for AI Knowledge Operations
+type: application
+version: 0.1.0
+appVersion: "7.0"
+dependencies:
+  - name: mongodb
+    version: 18.x.x
+    repository: https://charts.bitnami.com/bitnami
