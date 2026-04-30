@@ -1,6 +1,6 @@
 export default function SettingsPage() {
   return (
-    <div className="space-y-6">
+    <div className="p-4 lg:p-8 space-y-6">
       <h1 className="text-[40px] font-medium tracking-tight text-[#0a0a0a]">
         Settings
       </h1>
