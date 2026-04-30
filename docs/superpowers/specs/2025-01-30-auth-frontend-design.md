@@ -194,7 +194,7 @@ Backend must set an `httpOnly` JWT cookie on successful callback.
 - Button has `type="button"` and clear `aria-label="Sign in with Google"`
 - Loading state announces via `aria-live="polite"`
 - Error state uses `role="alert"`
-- Focus visible styles use Tailwind `focus:ring-2 focus:ring-offset-2`
+- Focus visible styles use Tailwind `focus:ring-2`
 - Minimum touch target: 44px height on all buttons
 
 ---

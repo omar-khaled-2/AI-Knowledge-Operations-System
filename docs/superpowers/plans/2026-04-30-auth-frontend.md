@@ -236,7 +236,7 @@ export function GoogleSignInButton({ className }: GoogleSignInButtonProps) {
         "text-sm font-semibold leading-none",
         "flex items-center justify-center gap-3",
         "transition-colors duration-200 hover:bg-[#1f1f1f]",
-        "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
+        "focus:outline-none focus:ring-2 focus:ring-primary",
         className
       )}
       aria-label="Sign in with Google"
@@ -396,7 +396,7 @@ export default function AuthCallbackPage() {
             </p>
             <a
               href="/login"
-              className="h-11 px-5 py-3 bg-primary text-primary-foreground rounded-md text-sm font-semibold leading-none inline-flex items-center justify-center transition-colors duration-200 hover:bg-[#1f1f1f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              className="h-11 px-5 py-3 bg-primary text-primary-foreground rounded-md text-sm font-semibold leading-none inline-flex items-center justify-center transition-colors duration-200 hover:bg-[#1f1f1f] focus:outline-none focus:ring-2 focus:ring-primary"
             >
               Back to Sign In
             </a>
