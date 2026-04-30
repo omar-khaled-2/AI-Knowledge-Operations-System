@@ -1,5 +1,14 @@
 FROM oven/bun:1 as builder
 WORKDIR /app
+
+# Install build dependencies for native Node.js modules (Mongoose, Better Auth)
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY package.json bun.lockb* ./
 RUN bun install
 COPY . .
