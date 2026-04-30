@@ -1,8 +1,12 @@
-export default function Home() {
-  return (
-    <main>
-      <h1>AI Knowledge Operations</h1>
-      <p>Frontend running</p>
-    </main>
-  )
+import { redirect } from "next/navigation"
+import { cookies } from "next/headers"
+
+export default function HomePage() {
+  const sessionCookie = cookies().get("better-auth.session_token")
+
+  if (sessionCookie?.value) {
+    redirect("/app")
+  } else {
+    redirect("/signin")
+  }
 }
