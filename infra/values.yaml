@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  pullPolicy: IfNotPresent
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

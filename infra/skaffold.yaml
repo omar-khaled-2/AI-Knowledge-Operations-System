@@ -1,0 +1,47 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+
+build:
+  artifacts:
+    - image: frontend
+      context: ../frontend
+      docker:
+        dockerfile: Dockerfile
+    - image: backend
+      context: ../backend
+      docker:
+        dockerfile: Dockerfile
+  tagPolicy:
+    gitCommit: {}
+
+deploy:
+  helm:
+    releases:
+      - name: frontend
+        chartPath: helm/frontend
+        namespace: default
+        createNamespace: true
+        valuesFiles:
+          - values.yaml
+        setValues:
+          image.repository: frontend
+          image.tag: latest
+      - name: backend
+        chartPath: helm/backend
+        namespace: default
+        createNamespace: true
+        valuesFiles:
+          - values.yaml
+        setValues:
+          image.repository: backend
+          image.tag: latest
+
+portForward:
+  - resourceType: service
+    resourceName: frontend-frontend
+    port: 80
+    localPort: 3000
+  - resourceType: service
+    resourceName: backend-backend
+    port: 80
+    localPort: 3001
