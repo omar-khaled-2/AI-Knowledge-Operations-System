@@ -83,7 +83,7 @@ export function UserNav() {
       {isOpen && (
         <div
           className="
-            absolute right-0 mt-2 w-56
+            absolute left-0 bottom-full mb-2 w-56
             bg-[#fffaf0] border border-[#e5e5e5]
             rounded-2xl
             shadow-sm
