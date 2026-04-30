@@ -1,7 +1,5 @@
 "use client"
 
-import { SessionProvider } from "better-auth/react"
-import { authClient } from "@/lib/auth-client"
 import { ReactNode } from "react"
 
 interface AuthProviderProps {
@@ -9,9 +7,7 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  return (
-    <SessionProvider authClient={authClient}>
-      {children}
-    </SessionProvider>
-  )
+  // Better Auth v1.6+ doesn't require a SessionProvider wrapper.
+  // Hooks like useSession work without any provider.
+  return <>{children}</>
 }
