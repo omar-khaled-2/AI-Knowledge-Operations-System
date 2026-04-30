@@ -9,6 +9,11 @@ node_modules/
 # Build outputs
 dist/
 build/
+frontend/.next/
+frontend/out/
+
+# Lock files (managed at root)
+frontend/package-lock.json
 
 # IDE
 .vscode/
