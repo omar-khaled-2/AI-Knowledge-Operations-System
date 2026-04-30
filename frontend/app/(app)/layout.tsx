@@ -1,23 +1,26 @@
-import { ReactNode } from "react"
-import { UserNav } from "@/components/auth/user-nav"
-import Link from "next/link"
+"use client"
 
-export default function AppLayout({ children }: { children: ReactNode }) {
+import { useState } from "react"
+import { AppSidebar } from "@/components/app/app-sidebar"
+import { cn } from "@/lib/utils"
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   return (
-    <div className="min-h-screen bg-[#fffaf0]">
-      {/* Top Navigation */}
-      <header className="h-16 bg-[#fffaf0] border-b border-[#e5e5e5]">
-        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
-          <Link href="/app" className="text-lg font-semibold text-[#0a0a0a]">
-            AI Knowledge Operations
-          </Link>
-          <UserNav />
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#fffaf0] flex">
+      {/* Sidebar */}
+      <AppSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+      />
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {children}
+      <main className="flex-1 min-w-0 pt-14 lg:pt-0">
+        <div className="min-h-screen">
+          {children}
+        </div>
       </main>
     </div>
   )
