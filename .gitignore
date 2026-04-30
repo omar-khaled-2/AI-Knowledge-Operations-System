@@ -34,3 +34,7 @@ coverage/
 *.tmp
 *.swp
 *~
+
+# Helm chart dependencies (build artifacts)
+infra/helm/*/charts/*.tgz
+infra/helm/*/Chart.lock
