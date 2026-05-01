@@ -4,7 +4,7 @@ import { useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { createSignedUrl } from "./actions";
+import { createSignedUrl, createDocument } from "./actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -91,7 +91,7 @@ export function UploadButton({ projectId }: UploadButtonProps) {
         size: file.size,
       });
 
-      const { uploadUrl } = result;
+      const { uploadUrl, objectKey } = result;
 
       // Step 2: Upload file directly to S3
       const uploadResponse = await fetch(uploadUrl, {
@@ -105,6 +105,16 @@ export function UploadButton({ projectId }: UploadButtonProps) {
       if (!uploadResponse.ok) {
         throw new Error(`S3 upload failed: ${uploadResponse.status}`);
       }
+
+      // Step 3: Create document record
+      await createDocument({
+        name: file.name,
+        projectId,
+        size: file.size,
+        mimeType: file.type,
+        sourceType: "upload",
+        objectKey,
+      });
 
       toast.success(`"${file.name}" uploaded successfully`);
       setOpen(false);

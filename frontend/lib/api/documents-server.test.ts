@@ -192,7 +192,7 @@ describe("Documents Server API", () => {
   })
 
   describe("generateUploadUrl()", () => {
-    test("returns upload URL and document on success", async () => {
+    test("returns upload URL and objectKey on success", async () => {
       const uploadData = {
         filename: "test.pdf",
         mimeType: "application/pdf",
@@ -203,15 +203,6 @@ describe("Documents Server API", () => {
       const mockResponse = {
         uploadUrl: "https://s3.amazonaws.com/bucket/test",
         objectKey: "uploads/test.pdf",
-        document: {
-          id: "doc-new",
-          projectId: "proj-1",
-          name: "test.pdf",
-          sourceType: "upload",
-          createdAt: "2024-01-15T10:30:00Z",
-          size: 1024,
-          status: "processing",
-        } as Document,
       }
 
       mockCookies.mockReturnValue({
@@ -257,6 +248,100 @@ describe("Documents Server API", () => {
           body: JSON.stringify(uploadData),
         })
       )
+    })
+  })
+
+  describe("createDocument()", () => {
+    test("creates document and returns it on success", async () => {
+      const documentData = {
+        name: "test.pdf",
+        projectId: "proj-1",
+        size: 1024,
+        mimeType: "application/pdf",
+        sourceType: "upload",
+        objectKey: "uploads/test.pdf",
+      }
+
+      const mockDocument: Document = {
+        id: "doc-new",
+        projectId: "proj-1",
+        name: "test.pdf",
+        sourceType: "upload",
+        createdAt: "2024-01-15T10:30:00Z",
+        size: 1024,
+        status: "processing",
+      }
+
+      mockCookies.mockReturnValue({
+        getAll: () => [],
+      } as any)
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(mockDocument),
+      } as Response)
+
+      const { createDocument } = await importModule()
+      const result = await createDocument(documentData)
+      expect(result).toEqual(mockDocument)
+    })
+
+    test("sends POST request with JSON body", async () => {
+      const documentData = {
+        name: "test.pdf",
+        projectId: "proj-1",
+        size: 1024,
+        mimeType: "application/pdf",
+        sourceType: "upload",
+        objectKey: "uploads/test.pdf",
+      }
+
+      mockCookies.mockReturnValue({
+        getAll: () => [],
+      } as any)
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({}),
+      } as Response)
+
+      const { createDocument } = await importModule()
+      await createDocument(documentData)
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("/documents"),
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify(documentData),
+        })
+      )
+    })
+
+    test("throws error on HTTP error", async () => {
+      const documentData = {
+        name: "test.pdf",
+        projectId: "proj-1",
+        size: 1024,
+        mimeType: "application/pdf",
+        sourceType: "upload",
+        objectKey: "uploads/test.pdf",
+      }
+
+      mockCookies.mockReturnValue({
+        getAll: () => [],
+      } as any)
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+        text: () => Promise.resolve("Internal Server Error"),
+      } as Response)
+
+      const { createDocument } = await importModule()
+      await expect(createDocument(documentData)).rejects.toThrow("API error: 500")
     })
   })
 

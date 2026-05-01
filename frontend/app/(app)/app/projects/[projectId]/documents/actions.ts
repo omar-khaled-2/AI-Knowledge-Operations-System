@@ -4,6 +4,7 @@ import {
   getDocuments as getDocumentsServer,
   getDocument as getDocumentServer,
   generateUploadUrl as generateUploadUrlServer,
+  createDocument as createDocumentServer,
   deleteDocument as deleteDocumentServer,
   type PaginationOptions,
 } from "@/lib/api/documents-server";
@@ -42,6 +43,24 @@ export async function createSignedUrl(data: {
     const message =
       error instanceof Error ? error.message : "Failed to generate upload URL";
     console.error("[createSignedUrl] Failed:", message, "| Data:", data);
+    throw new Error(message);
+  }
+}
+
+export async function createDocument(data: {
+  name: string;
+  projectId: string;
+  size: number;
+  mimeType: string;
+  sourceType: string;
+  objectKey: string;
+}) {
+  try {
+    return await createDocumentServer(data);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to create document";
+    console.error("[createDocument] Failed:", message, "| Data:", data);
     throw new Error(message);
   }
 }

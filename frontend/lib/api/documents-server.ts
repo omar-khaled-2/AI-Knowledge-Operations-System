@@ -23,7 +23,15 @@ export interface GenerateUploadUrlData {
 export interface GenerateUploadUrlResponse {
   uploadUrl: string;
   objectKey: string;
-  document: Document;
+}
+
+export interface CreateDocumentData {
+  name: string;
+  projectId: string;
+  size: number;
+  mimeType: string;
+  sourceType: string;
+  objectKey: string;
 }
 
 // Use internal K8s service URL for server-side fetches
@@ -146,6 +154,15 @@ export async function generateUploadUrl(
   data: GenerateUploadUrlData
 ): Promise<GenerateUploadUrlResponse> {
   return fetchServer<GenerateUploadUrlResponse>("/documents/upload-url", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function createDocument(
+  data: CreateDocumentData
+): Promise<Document> {
+  return fetchServer<Document>("/documents", {
     method: "POST",
     body: JSON.stringify(data),
   });
