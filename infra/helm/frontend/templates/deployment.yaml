@@ -26,6 +26,8 @@ spec:
           env:
             - name: NEXT_PUBLIC_API_URL
               value: {{ .Values.config.apiUrl | quote }}
+            - name: API_URL
+              value: {{ .Values.config.internalApiUrl | quote }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

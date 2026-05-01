@@ -8,4 +8,10 @@ service:
   targetPort: 3000
 
 config:
+  # Fallback API URL for local dev and server-side proxy config.
+  # Not exposed to browser - all client requests go through Next.js proxy.
   apiUrl: "http://localhost:3001"
+  # Server-side internal API URL (Kubernetes service DNS)
+  # Next.js server uses this to reach backend directly.
+  # In K8s, this should be the backend service name.
+  internalApiUrl: "http://backend-backend"

@@ -7,6 +7,10 @@ build:
       context: ../frontend
       docker:
         dockerfile: Dockerfile
+        buildArgs:
+          # Internal backend service URL for Next.js server-side proxy
+          # In K8s, this is the backend service DNS name
+          API_URL: "http://backend-backend"
     - image: backend
       context: ../backend
       docker:
