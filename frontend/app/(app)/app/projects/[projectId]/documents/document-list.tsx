@@ -43,7 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getDocuments, type PaginationMeta } from "@/lib/api/documents";
+import { getDocuments } from "@/lib/api/documents";
 
 const sourceTypeLabels: Record<string, string> = {
   upload: "Uploaded",
@@ -230,7 +230,7 @@ export function DocumentList({ projectId }: DocumentListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -245,8 +245,8 @@ export function DocumentList({ projectId }: DocumentListProps) {
           sortBy: "createdAt",
           sortOrder: "desc",
         });
-        setDocuments(result.documents);
-        setPagination(result.pagination);
+        setDocuments(result.data);
+        setTotalCount(result.total);
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Failed to load documents";
@@ -280,11 +280,11 @@ export function DocumentList({ projectId }: DocumentListProps) {
     }
   };
 
-  const totalPages = pagination?.totalPages ?? 0;
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage + 1;
   const endIndex = Math.min(
     startIndex + itemsPerPage - 1,
-    pagination?.total ?? 0
+    totalCount
   );
 
   if (isLoading) {
@@ -355,7 +355,7 @@ export function DocumentList({ projectId }: DocumentListProps) {
             Showing{" "}
             {filteredDocuments.length > 0 ? startIndex : 0}-
             {Math.min(endIndex, startIndex + filteredDocuments.length - 1)} of{" "}
-            {pagination?.total ?? 0}
+            {totalCount}
           </span>
         </div>
 
@@ -391,7 +391,7 @@ export function DocumentList({ projectId }: DocumentListProps) {
         )}
 
         {/* Pagination and Items Per Page */}
-        {pagination && pagination.total > 0 && (
+        {totalCount > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <span>Items per page:</span>

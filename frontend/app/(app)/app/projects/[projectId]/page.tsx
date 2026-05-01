@@ -50,7 +50,7 @@ export default async function ProjectHomePage({
       sortBy: "createdAt",
       sortOrder: "desc",
     })
-    recentDocuments = result.documents
+    recentDocuments = result.data
   } catch (error) {
     console.error("Failed to fetch documents:", error)
   }
