@@ -9,6 +9,7 @@ import { GenerateUploadUrlDto } from './dto/generate-upload-url.dto';
 import { BadRequestException } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { S3Client } from '@aws-sdk/client-s3';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 // Mock AWS SDK
 jest.mock('@aws-sdk/client-s3', () => ({
@@ -28,6 +29,7 @@ describe('DocumentsService', () => {
   let service: DocumentsService;
   let mockDocumentModel: any;
   let mockConfigService: Partial<ConfigService>;
+  let mockEventEmitter: { emit: jest.Mock };
 
   const ownerId = '507f1f77bcf86cd799439011';
   const projectId = '507f1f77bcf86cd799439022';
@@ -73,10 +75,17 @@ describe('DocumentsService', () => {
           provide: ConfigService,
           useValue: mockConfigService,
         },
+        {
+          provide: EventEmitter2,
+          useValue: {
+            emit: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<DocumentsService>(DocumentsService);
+    mockEventEmitter = module.get(EventEmitter2);
   });
 
   describe('toObjectId', () => {
@@ -231,6 +240,7 @@ describe('DocumentsService', () => {
         projectId,
         size: 1024,
         mimeType: 'application/pdf',
+        objectKey: 'test-object-key-123',
       };
 
       const mockSave = jest.fn().mockImplementation(function () {
@@ -250,7 +260,7 @@ describe('DocumentsService', () => {
           ...createDto,
           projectId: expect.any(Types.ObjectId),
           owner: expect.any(Types.ObjectId),
-          objectKey: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-test\.pdf$/),
+          objectKey: 'test-object-key-123',
           status: 'processing',
         }),
       );
@@ -264,6 +274,7 @@ describe('DocumentsService', () => {
         sourceType: 'notion',
         size: 1024,
         mimeType: 'application/pdf',
+        objectKey: 'test-object-key-123',
       };
 
       mockDocumentModel.mockImplementation(() => ({
@@ -282,6 +293,7 @@ describe('DocumentsService', () => {
         projectId: 'invalid',
         size: 1024,
         mimeType: 'application/pdf',
+        objectKey: 'test-object-key-123',
       };
 
       // The toObjectId call in create happens on createDto.projectId
@@ -294,9 +306,47 @@ describe('DocumentsService', () => {
         projectId,
         size: 1024,
         mimeType: 'application/pdf',
+        objectKey: 'test-object-key-123',
       };
 
       await expect(service.create(createDto, 'invalid')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should emit document.created event after saving', async () => {
+      const createDto: CreateDocumentDto = {
+        name: 'test.pdf',
+        projectId,
+        size: 1024,
+        mimeType: 'application/pdf',
+        objectKey: 'test-object-key-123',
+      };
+
+      const savedDoc = {
+        ...mockDocument,
+        ...createDto,
+        projectId: new Types.ObjectId(projectId),
+        _id: new Types.ObjectId(documentId),
+      };
+
+      mockDocumentModel.mockImplementation(() => ({
+        save: jest.fn().mockResolvedValue(savedDoc),
+      }));
+
+      await service.create(createDto, ownerId);
+
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
+        'document.created',
+        expect.objectContaining({
+          documentId: savedDoc._id.toString(),
+          projectId: savedDoc.projectId.toString(),
+          ownerId: savedDoc.owner.toString(),
+          objectKey: savedDoc.objectKey,
+          name: savedDoc.name,
+          mimeType: savedDoc.mimeType,
+          size: savedDoc.size,
+          sourceType: savedDoc.sourceType,
+        }),
+      );
     });
   });
 
@@ -383,24 +433,11 @@ describe('DocumentsService', () => {
 
       (getSignedUrl as jest.Mock).mockResolvedValue('https://signed-url.example.com');
 
-      const mockDoc = {
-        ...mockDocument,
-        name: dto.filename,
-        save: jest.fn().mockResolvedValue(undefined),
-      };
-
-      // Mock the create method indirectly through the model constructor
-      const mockSave = jest.fn().mockResolvedValue(mockDoc);
-      mockDocumentModel.mockImplementation(() => ({
-        save: mockSave,
-      }));
-
-      const result = await service.generateUploadUrl(dto, ownerId);
+      const result = await service.generateUploadUrl(dto);
 
       expect(getSignedUrl).toHaveBeenCalled();
       expect(result.uploadUrl).toBe('https://signed-url.example.com');
       expect(result.objectKey).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-test\.pdf$/);
-      expect(result.document).toBeDefined();
     });
 
     it('should throw BadRequestException when S3 bucket not configured', async () => {
@@ -418,6 +455,12 @@ describe('DocumentsService', () => {
             provide: ConfigService,
             useValue: mockConfigService,
           },
+          {
+            provide: EventEmitter2,
+            useValue: {
+              emit: jest.fn(),
+            },
+          },
         ],
       }).compile();
 
@@ -430,10 +473,10 @@ describe('DocumentsService', () => {
         size: 1024,
       };
 
-      await expect(serviceWithNoBucket.generateUploadUrl(dto, ownerId)).rejects.toThrow(
+      await expect(serviceWithNoBucket.generateUploadUrl(dto)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(serviceWithNoBucket.generateUploadUrl(dto, ownerId)).rejects.toThrow(
+      await expect(serviceWithNoBucket.generateUploadUrl(dto)).rejects.toThrow(
         'S3 bucket not configured',
       );
     });
@@ -461,6 +504,12 @@ describe('DocumentsService', () => {
             provide: ConfigService,
             useValue: customEndpointConfig,
           },
+          {
+            provide: EventEmitter2,
+            useValue: {
+              emit: jest.fn(),
+            },
+          },
         ],
       }).compile();
 
@@ -474,20 +523,5 @@ describe('DocumentsService', () => {
       );
     });
 
-    it('should throw BadRequestException for invalid projectId in DTO', async () => {
-      const dto: GenerateUploadUrlDto = {
-        filename: 'test.pdf',
-        mimeType: 'application/pdf',
-        projectId: 'invalid',
-        size: 1024,
-      };
-
-      // The create call inside generateUploadUrl validates projectId
-      mockDocumentModel.mockImplementation(() => ({
-        save: jest.fn().mockRejectedValue(new BadRequestException('Invalid ID format: invalid')),
-      }));
-
-      await expect(service.generateUploadUrl(dto, ownerId)).rejects.toThrow(BadRequestException);
-    });
   });
 });

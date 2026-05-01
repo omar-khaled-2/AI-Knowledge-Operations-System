@@ -20,4 +20,8 @@ export default registerAs('app', () => ({
   awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
   awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
   s3Endpoint: process.env.S3_ENDPOINT || '',
+  // Redis configuration
+  redisHost: process.env.REDIS_HOST || 'localhost',
+  redisPort: parseInt(process.env.REDIS_PORT, 10) || 6379,
+  redisStreamKey: process.env.REDIS_STREAM_KEY || 'documents:events',
 }));

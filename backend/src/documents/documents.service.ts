@@ -4,10 +4,12 @@ import { Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Document as DocumentEntity, DocumentDocument } from './schemas/document.schema';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { GenerateUploadUrlDto } from './dto/generate-upload-url.dto';
+import { DocumentCreatedEvent } from './events/document-created.event';
 import { randomUUID } from 'crypto';
 
 @Injectable()
@@ -17,6 +19,7 @@ export class DocumentsService {
   constructor(
     @InjectModel(DocumentEntity.name) private documentModel: Model<DocumentDocument>,
     private configService: ConfigService,
+    private eventEmitter: EventEmitter2,
   ) {
     const region = this.configService.get<string>('app.s3Region');
     const endpoint = this.configService.get<string>('app.s3Endpoint');
@@ -71,16 +74,31 @@ export class DocumentsService {
   }
 
   async create(createDocumentDto: CreateDocumentDto, ownerId: string): Promise<DocumentDocument> {
-    const objectKey = `${randomUUID()}-${createDocumentDto.name}`;
-
     const createdDocument = new this.documentModel({
       ...createDocumentDto,
       projectId: this.toObjectId(createDocumentDto.projectId),
       owner: this.toObjectId(ownerId),
-      objectKey,
       status: 'processing',
     });
-    return createdDocument.save();
+
+    const savedDocument = await createdDocument.save();
+
+    // Emit event for document processor
+    this.eventEmitter.emit(
+      'document.created',
+      new DocumentCreatedEvent(
+        savedDocument._id.toString(),
+        savedDocument.projectId.toString(),
+        savedDocument.owner.toString(),
+        savedDocument.objectKey,
+        savedDocument.name,
+        savedDocument.mimeType,
+        savedDocument.size,
+        savedDocument.sourceType,
+      ),
+    );
+
+    return savedDocument;
   }
 
   async update(id: string, updateDocumentDto: UpdateDocumentDto, ownerId: string): Promise<DocumentEntity | null> {
@@ -109,8 +127,7 @@ export class DocumentsService {
 
   async generateUploadUrl(
     dto: GenerateUploadUrlDto,
-    ownerId: string,
-  ): Promise<{ uploadUrl: string; objectKey: string; document: DocumentDocument }> {
+  ): Promise<{ uploadUrl: string; objectKey: string }> {
     const bucket = this.configService.get<string>('app.s3Bucket');
     if (!bucket) {
       throw new BadRequestException('S3 bucket not configured');
@@ -127,21 +144,6 @@ export class DocumentsService {
 
     const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 300 });
 
-    const doc = await this.create(
-      {
-        name: dto.filename,
-        projectId: dto.projectId,
-        sourceType: 'upload',
-        size: dto.size,
-        mimeType: dto.mimeType,
-      },
-      ownerId,
-    );
-
-    // Update with the correct objectKey since create generates its own
-    doc.objectKey = objectKey;
-    await doc.save();
-
-    return { uploadUrl, objectKey, document: doc };
+    return { uploadUrl, objectKey };
   }
 }
