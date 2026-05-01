@@ -1,0 +1,97 @@
+image:
+  repository: document-processor
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+replicaCount: 2
+
+# Resource limits for the Document Processor
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+# Redis connection configuration
+# Connects to existing Redis instance (e.g., from redis/ subchart or external)
+redis:
+  host: "redis-master"
+  port: 6379
+  # Name of existing secret containing Redis password
+  # Set to empty string if Redis has no auth (dev mode)
+  existingSecretName: "redis-secrets"
+  passwordKey: "redis-password"
+
+# AWS S3 configuration for document downloads
+aws:
+  region: "eu-west-3"
+  # Name of existing secret containing AWS credentials
+  secretName: "aws-secrets"
+
+s3:
+  bucketName: "lalo-documents-omar"
+
+# Document processor application configuration (non-sensitive)
+config:
+  # BullMQ queue name
+  queueName: "document-processing"
+  # Number of workers per pod
+  concurrency: 5
+  # Document chunk size for processing
+  chunkSize: "1024"
+  # Max document size in MB
+  maxDocumentSize: "50"
+  # Log level
+  logLevel: "info"
+  # Node environment
+  nodeEnv: "production"
+
+# Health check configuration
+healthCheck:
+  # If the app has HTTP health endpoints, set useHttp: true
+  # Otherwise uses TCP socket check
+  useHttp: true
+  livenessPath: "/health"
+  readinessPath: "/ready"
+  port: 3000
+  liveness:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Init container to wait for Redis before starting
+initContainers:
+  redisWait:
+    enabled: true
+    image:
+      repository: busybox
+      tag: "1.36"
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 100m
+        memory: 64Mi
+      requests:
+        cpu: 10m
+        memory: 16Mi
+    timeout: 120
+    interval: 2
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

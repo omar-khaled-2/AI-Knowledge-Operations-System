@@ -15,6 +15,10 @@ build:
       context: ../backend
       docker:
         dockerfile: Dockerfile
+    - image: document-processor
+      context: ../services/document-processor
+      docker:
+        dockerfile: Dockerfile
   tagPolicy:
     gitCommit: {}
   local:
@@ -54,6 +58,15 @@ deploy:
           - values.yaml
         setValues:
           image.repository: backend
+          image.tag: latest
+      - name: document-processor
+        chartPath: helm/document-processor
+        namespace: default
+        createNamespace: true
+        valuesFiles:
+          - values.yaml
+        setValues:
+          image.repository: document-processor
           image.tag: latest
 
 portForward:

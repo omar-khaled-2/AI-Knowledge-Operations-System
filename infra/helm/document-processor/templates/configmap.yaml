@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: document-processor-config
+  labels:
+    app: document-processor
+data:
+  NODE_ENV: {{ .Values.config.nodeEnv | default "production" | quote }}
+  PORT: {{ .Values.service.targetPort | quote }}
+  QUEUE_NAME: {{ .Values.config.queueName | default "document-processing" | quote }}
+  CONCURRENCY: {{ .Values.config.concurrency | default "5" | quote }}
+  CHUNK_SIZE: {{ .Values.config.chunkSize | default "1024" | quote }}
+  MAX_DOCUMENT_SIZE: {{ .Values.config.maxDocumentSize | default "50" | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | default "info" | quote }}
+  REDIS_HOST: {{ .Values.redis.host | default "redis-master" | quote }}
+  REDIS_PORT: {{ .Values.redis.port | default "6379" | quote }}
+  AWS_REGION: {{ .Values.aws.region | default "us-east-1" | quote }}
+  S3_BUCKET_NAME: {{ .Values.s3.bucketName | quote }}
