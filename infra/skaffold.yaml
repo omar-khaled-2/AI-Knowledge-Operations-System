@@ -41,6 +41,13 @@ deploy:
         valuesFiles:
           - values.yaml
         skipBuildDependencies: false
+      - name: qdrant
+        chartPath: helm/qdrant
+        namespace: default
+        createNamespace: true
+        valuesFiles:
+          - values.yaml
+        skipBuildDependencies: false
       - name: frontend
         chartPath: helm/frontend
         namespace: default
@@ -82,3 +89,7 @@ portForward:
     resourceName: redis-master
     port: 6379
     localPort: 6379
+  - resourceType: service
+    resourceName: qdrant
+    port: 6333
+    localPort: 6333

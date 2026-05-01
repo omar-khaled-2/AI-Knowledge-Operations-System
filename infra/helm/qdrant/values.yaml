@@ -1,0 +1,25 @@
+# Qdrant vector database sub-chart values
+# Qdrant runs without authentication for local development simplicity.
+# For production, enable apiKey and provide credentials via Kubernetes Secret.
+
+# API key authentication - disabled for local development
+apiKey: false
+readOnlyApiKey: false
+
+# Qdrant uses a StatefulSet which always requires a PVC.
+# For local development, we use a minimal storage size.
+# Data is preserved across pod restarts but lost if the PVC is deleted.
+persistence:
+  size: 1Gi
+
+# Disable snapshot persistence for local development
+snapshotPersistence:
+  enabled: false
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
