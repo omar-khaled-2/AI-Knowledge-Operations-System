@@ -1,6 +1,34 @@
 "use server";
 
-import { generateUploadUrl } from "@/lib/api/documents-server";
+import {
+  getDocuments as getDocumentsServer,
+  getDocument as getDocumentServer,
+  generateUploadUrl as generateUploadUrlServer,
+  deleteDocument as deleteDocumentServer,
+  type PaginationOptions,
+} from "@/lib/api/documents-server";
+
+export async function getDocuments(projectId: string, options?: PaginationOptions) {
+  try {
+    return await getDocumentsServer(projectId, options);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch documents";
+    console.error("[getDocuments] Failed:", message, "| Project ID:", projectId);
+    throw new Error(message);
+  }
+}
+
+export async function getDocument(id: string) {
+  try {
+    return await getDocumentServer(id);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch document";
+    console.error("[getDocument] Failed:", message, "| ID:", id);
+    throw new Error(message);
+  }
+}
 
 export async function createSignedUrl(data: {
   filename: string;
@@ -9,12 +37,22 @@ export async function createSignedUrl(data: {
   size: number;
 }) {
   try {
-    const result = await generateUploadUrl(data);
-    return { success: true, data: result };
+    return await generateUploadUrlServer(data);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to generate upload URL";
     console.error("[createSignedUrl] Failed:", message, "| Data:", data);
-    return { success: false, error: message };
+    throw new Error(message);
+  }
+}
+
+export async function deleteDocument(id: string) {
+  try {
+    await deleteDocumentServer(id);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to delete document";
+    console.error("[deleteDocument] Failed:", message, "| ID:", id);
+    throw new Error(message);
   }
 }

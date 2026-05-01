@@ -91,11 +91,7 @@ export function UploadButton({ projectId }: UploadButtonProps) {
         size: file.size,
       });
 
-      if (!result.success || !result.data) {
-        throw new Error(result.error ?? "Failed to get upload URL");
-      }
-
-      const { uploadUrl } = result.data;
+      const { uploadUrl } = result;
 
       // Step 2: Upload file directly to S3
       const uploadResponse = await fetch(uploadUrl, {

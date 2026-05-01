@@ -43,7 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getDocuments } from "@/lib/api/documents";
+import { getDocuments } from "./actions";
 
 const sourceTypeLabels: Record<string, string> = {
   upload: "Uploaded",
@@ -239,14 +239,14 @@ export function DocumentList({ projectId }: DocumentListProps) {
       setIsLoading(true);
       setError(null);
       try {
-        const result = await getDocuments(projectId, {
+        const response = await getDocuments(projectId, {
           page,
           limit,
           sortBy: "createdAt",
           sortOrder: "desc",
         });
-        setDocuments(result.data);
-        setTotalCount(result.total);
+        setDocuments(response.data);
+        setTotalCount(response.total);
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Failed to load documents";

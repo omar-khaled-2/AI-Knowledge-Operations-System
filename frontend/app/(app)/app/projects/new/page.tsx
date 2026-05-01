@@ -10,7 +10,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
-import { createProject } from "@/lib/api/projects"
+import { createProject } from "@/app/(app)/app/projects/actions"
 
 const brandColors = [
   { id: "teal", label: "Teal", value: "#1a3a3a", textLight: true },

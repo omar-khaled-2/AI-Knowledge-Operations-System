@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getBrandColor } from "@/lib/mock-data";
-import { getProjects } from "@/lib/api/projects";
+import { getProjects } from "@/app/(app)/app/projects/actions";
 import type { Project } from "@/lib/mock-data";
 import { UserNav } from "@/components/auth/user-nav";
 
@@ -112,8 +112,8 @@ export function AppSidebar({ isOpen, onClose, onToggle }: AppSidebarProps) {
   useEffect(() => {
     async function loadProjects() {
       try {
-        const data = await getProjects();
-        setProjects(data);
+        const projects = await getProjects();
+        setProjects(projects);
       } catch (error) {
         console.error("Failed to load projects:", error);
       } finally {
