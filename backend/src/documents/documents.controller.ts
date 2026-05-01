@@ -165,13 +165,9 @@ export class DocumentsController {
   ) {
     const userId = this.getUserId(user);
     await this.verifyProjectOwnership(generateUploadUrlDto.projectId, userId);
-    const result = await this.documentsService.generateUploadUrl(
+    return this.documentsService.generateUploadUrl(
       generateUploadUrlDto,
       userId,
     );
-    return {
-      ...result,
-      document: plainToInstance(DocumentResponseDto, result.document),
-    };
   }
 }
