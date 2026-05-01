@@ -1,40 +1,72 @@
-# Environment variables
+# =============================================================================
+# Root .gitignore — Prevent accidental root-level language artifacts
+# =============================================================================
+
+# Node.js (should NEVER be at root — each service manages its own)
+node_modules/
+package.json
+package-lock.json
+yarn.lock
+.pnpm-lock.yaml
+coverage/
+
+# Python (if added later)
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Go (if added later)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dysh
+vendor/
+
+# Rust (if added later)
+target/
+Cargo.lock
+
+# Java / JVM (if added later)
+*.class
+*.jar
+*.war
+*.ear
+.gradle/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment files (should be in each service's .gitignore too)
 .env
 .env.local
 .env.*.local
 
-# Dependencies
-node_modules/
-
-# Build outputs
-dist/
-build/
-frontend/.next/
-frontend/out/
-
-# Lock files (managed at root)
-frontend/package-lock.json
-
-# IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
 # Logs
 *.log
-npm-debug.log*
-
-# Test coverage
-coverage/
+logs/
 
 # Temporary files
+tmp/
+temp/
 *.tmp
-*.swp
-*~
 
-# Helm chart dependencies (build artifacts)
-infra/helm/*/charts/*.tgz
-infra/helm/*/Chart.lock
+# =============================================================================
+# Infrastructure / Helm
+# =============================================================================
+
+# Helm chart dependencies (auto-generated, should be rebuilt)
+infra/helm/**/Chart.lock
+infra/helm/**/charts/

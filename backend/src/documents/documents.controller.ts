@@ -11,11 +11,13 @@ import {
   NotFoundException,
   UnauthorizedException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { DocumentsService } from './documents.service';
+import { ProjectsService } from '../projects/projects.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { GenerateUploadUrlDto } from './dto/generate-upload-url.dto';
@@ -23,7 +25,10 @@ import { GenerateUploadUrlDto } from './dto/generate-upload-url.dto';
 @Controller('documents')
 @UseGuards(AuthGuard)
 export class DocumentsController {
-  constructor(private readonly documentsService: DocumentsService) {}
+  constructor(
+    private readonly documentsService: DocumentsService,
+    private readonly projectsService: ProjectsService,
+  ) {}
 
   /**
    * Safely extract and validate the user ID from the auth session.
@@ -47,6 +52,17 @@ export class DocumentsController {
     }
 
     return idString;
+  }
+
+  /**
+   * Verify that the project exists and belongs to the authenticated user.
+   * Prevents IDOR attacks where users create documents in other users' projects.
+   */
+  private async verifyProjectOwnership(projectId: string, userId: string): Promise<void> {
+    const project = await this.projectsService.findOne(projectId, userId);
+    if (!project) {
+      throw new ForbiddenException('Project not found or access denied');
+    }
   }
 
   @Get()
@@ -104,6 +120,7 @@ export class DocumentsController {
   @Post()
   async create(@Body() createDocumentDto: CreateDocumentDto, @CurrentUser() user: any) {
     const userId = this.getUserId(user);
+    await this.verifyProjectOwnership(createDocumentDto.projectId, userId);
     const document = await this.documentsService.create(createDocumentDto, userId);
     return { success: true, data: document };
   }
@@ -131,6 +148,7 @@ export class DocumentsController {
   @Post('upload-url')
   async generateUploadUrl(@Body() generateUploadUrlDto: GenerateUploadUrlDto, @CurrentUser() user: any) {
     const userId = this.getUserId(user);
+    await this.verifyProjectOwnership(generateUploadUrlDto.projectId, userId);
     const result = await this.documentsService.generateUploadUrl(generateUploadUrlDto, userId);
     return { success: true, data: result };
   }
