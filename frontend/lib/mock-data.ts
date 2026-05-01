@@ -39,9 +39,9 @@ export interface Document {
   id: string;
   projectId: string;
   name: string;
-    sourceType: "upload" | "notion" | "slack" | "google-drive" | "confluence" | "github";
-  uploadDate: string;
-  size: string;
+  sourceType: "upload" | "notion" | "slack" | "google-drive" | "confluence" | "github";
+  createdAt: string;
+  size: number | string;
   status: "processed" | "processing" | "error";
   pageCount?: number;
 }
@@ -257,8 +257,8 @@ export const mockDocuments: Document[] = [
     projectId: "proj-1",
     name: "Q4 Strategy Document",
     sourceType: "upload",
-    uploadDate: "2024-01-10T10:00:00Z",
-    size: "2.4 MB",
+    createdAt: "2024-01-10T10:00:00Z",
+    size: 2516582,
     status: "processed",
     pageCount: 24,
   },
@@ -267,8 +267,8 @@ export const mockDocuments: Document[] = [
     projectId: "proj-1",
     name: "Competitive Analysis 2024",
     sourceType: "notion",
-    uploadDate: "2024-01-08T14:30:00Z",
-    size: "1.8 MB",
+    createdAt: "2024-01-08T14:30:00Z",
+    size: 1887437,
     status: "processed",
     pageCount: 18,
   },
@@ -277,8 +277,8 @@ export const mockDocuments: Document[] = [
     projectId: "proj-1",
     name: "Product Roadmap",
     sourceType: "upload",
-    uploadDate: "2024-01-05T09:00:00Z",
-    size: "3.2 MB",
+    createdAt: "2024-01-05T09:00:00Z",
+    size: 3355443,
     status: "processed",
     pageCount: 32,
   },
@@ -287,8 +287,8 @@ export const mockDocuments: Document[] = [
     projectId: "proj-2",
     name: "User Interview Transcripts",
     sourceType: "upload",
-    uploadDate: "2024-01-12T11:00:00Z",
-    size: "5.6 MB",
+    createdAt: "2024-01-12T11:00:00Z",
+    size: 5872026,
     status: "processed",
     pageCount: 89,
   },
@@ -297,8 +297,8 @@ export const mockDocuments: Document[] = [
     projectId: "proj-2",
     name: "Survey Results Q4",
     sourceType: "google-drive",
-    uploadDate: "2024-01-11T16:00:00Z",
-    size: "890 KB",
+    createdAt: "2024-01-11T16:00:00Z",
+    size: 911360,
     status: "processed",
     pageCount: 12,
   },
@@ -307,8 +307,8 @@ export const mockDocuments: Document[] = [
     projectId: "proj-2",
     name: "Persona Development",
     sourceType: "notion",
-    uploadDate: "2024-01-09T10:30:00Z",
-    size: "1.2 MB",
+    createdAt: "2024-01-09T10:30:00Z",
+    size: 1258291,
     status: "processing",
     pageCount: 8,
   },
@@ -317,8 +317,8 @@ export const mockDocuments: Document[] = [
     projectId: "proj-3",
     name: "API Documentation",
     sourceType: "github",
-    uploadDate: "2024-01-14T08:00:00Z",
-    size: "456 KB",
+    createdAt: "2024-01-14T08:00:00Z",
+    size: 466944,
     status: "processed",
   },
   {
@@ -326,8 +326,8 @@ export const mockDocuments: Document[] = [
     projectId: "proj-3",
     name: "Architecture Decision Records",
     sourceType: "confluence",
-    uploadDate: "2024-01-13T14:00:00Z",
-    size: "2.1 MB",
+    createdAt: "2024-01-13T14:00:00Z",
+    size: 2202010,
     status: "processed",
     pageCount: 15,
   },
@@ -336,8 +336,8 @@ export const mockDocuments: Document[] = [
     projectId: "proj-3",
     name: "Deployment Runbook",
     sourceType: "github",
-    uploadDate: "2024-01-12T09:00:00Z",
-    size: "340 KB",
+    createdAt: "2024-01-12T09:00:00Z",
+    size: 348160,
     status: "processed",
   },
   {
@@ -345,8 +345,8 @@ export const mockDocuments: Document[] = [
     projectId: "proj-4",
     name: "Brand Guidelines",
     sourceType: "upload",
-    uploadDate: "2024-01-10T13:00:00Z",
-    size: "8.9 MB",
+    createdAt: "2024-01-10T13:00:00Z",
+    size: 9332326,
     status: "processed",
     pageCount: 45,
   },
