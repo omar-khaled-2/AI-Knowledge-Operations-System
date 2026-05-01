@@ -5,19 +5,20 @@ import {
   MessageSquare,
   Database,
   Lightbulb,
-  Plus,
   ArrowRight,
   Settings,
+  Clock,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatFileSize } from "@/lib/utils"
 import {
   getSessionsByProjectId,
-  getDocumentsByProjectId,
   getInsightsByProjectId,
   formatRelativeTime,
   getBrandColor,
+  type Document,
 } from "@/lib/mock-data"
 import { getProject } from "@/lib/api/projects-server"
+import { getDocuments } from "@/lib/api/documents-server"
 import { Breadcrumbs } from "@/components/app/breadcrumbs"
 
 export default async function ProjectHomePage({
@@ -33,11 +34,29 @@ export default async function ProjectHomePage({
 
   // TODO: Replace with real data when sessions module is built
   const sessions = getSessionsByProjectId(project.id)
-  // TODO: Replace with real data when documents module is built
-  const documents = getDocumentsByProjectId(project.id)
+  // Fetch recent documents from API (server-side pagination)
+  let recentDocuments: Document[] = []
+  try {
+    const result = await getDocuments(params.projectId, {
+      page: 1,
+      limit: 5,
+      sortBy: "createdAt",
+      sortOrder: "desc",
+    })
+    recentDocuments = result.documents
+  } catch (error) {
+    console.error("Failed to fetch documents:", error)
+  }
   // TODO: Replace with real data when insights module is built
   const insights = getInsightsByProjectId(project.id)
   const brandColor = getBrandColor(project.color)
+
+  function getDisplaySize(doc: Document): string {
+    if (typeof doc.size === "number") {
+      return formatFileSize(doc.size)
+    }
+    return doc.size
+  }
 
   return (
     <div className="p-4 lg:p-8 space-y-8">
@@ -107,30 +126,42 @@ export default async function ProjectHomePage({
       {/* Recent Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Documents */}
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[#0a0a0a]">Recent Documents</h2>
+            <h2 className="text-lg font-semibold text-foreground">Recent Documents</h2>
             <Link
               href={`/app/projects/${project.id}/documents`}
-              className="text-sm text-[#6a6a6a] hover:text-[#0a0a0a] transition-colors flex items-center gap-1"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
             >
-              View all <ArrowRight className="h-4 w-4" />
+              View all <ArrowRight className="size-4" />
             </Link>
           </div>
-          <div className="bg-[#f5f0e0] rounded-2xl divide-y divide-[#e5e5e5]">
-            {documents.slice(0, 5).map((doc) => (
-              <Link
-                key={doc.id}
-                href={`/app/projects/${project.id}/documents/${doc.id}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-[#ebe6d6] transition-colors"
-              >
-                <FileText className="h-5 w-5 text-[#6a6a6a] flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#0a0a0a] truncate">{doc.name}</p>
-                  <p className="text-xs text-[#9a9a9a]">{doc.status} · {doc.size}</p>
-                </div>
-              </Link>
-            ))}
+          <div className="flex flex-col rounded-xl bg-card ring-1 ring-foreground/10 divide-y divide-border">
+            {recentDocuments.length === 0 ? (
+              <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                No documents yet. Upload your first document.
+              </div>
+            ) : (
+              recentDocuments.map((doc) => (
+                <Link
+                  key={doc.id}
+                  href={`/app/projects/${project.id}/documents/${doc.id}`}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors"
+                >
+                  <FileText className="size-5 text-muted-foreground flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{doc.name}</p>
+                    <p className="text-xs text-muted-foreground/70">
+                      {doc.status} · {getDisplaySize(doc)}
+                    </p>
+                  </div>
+                  <span className="text-xs text-muted-foreground/70 flex items-center gap-1 flex-shrink-0">
+                    <Clock className="size-3" />
+                    {formatRelativeTime(doc.createdAt)}
+                  </span>
+                </Link>
+              ))
+            )}
           </div>
         </div>
 
