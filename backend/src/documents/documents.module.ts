@@ -5,6 +5,7 @@ import { ProjectsModule } from '../projects/projects.module';
 import { Document, DocumentSchema } from './schemas/document.schema';
 import { DocumentsService } from './documents.service';
 import { DocumentsController } from './documents.controller';
+import { DocumentEventsListener } from './listeners/document-events.listener';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { DocumentsController } from './documents.controller';
     ProjectsModule,
   ],
   controllers: [DocumentsController],
-  providers: [DocumentsService],
+  providers: [DocumentsService, DocumentEventsListener],
   exports: [DocumentsService],
 })
 export class DocumentsModule {}
