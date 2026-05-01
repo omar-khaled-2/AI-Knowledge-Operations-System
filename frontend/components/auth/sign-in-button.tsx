@@ -9,9 +9,9 @@ export function SignInButton() {
 
   const handleSignIn = async () => {
     setIsLoading(true)
-    await authClient.signIn.social({
+      await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/app",
+      callbackURL: `${window.location.origin}/app`,
     })
     // Note: redirect happens via Better Auth, state reset not needed
   }

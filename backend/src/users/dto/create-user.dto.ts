@@ -8,10 +8,6 @@ export class CreateUserDto {
   @IsString()
   name: string;
 
-  @IsOptional()
-  @IsString()
-  avatar?: string;
-
   @IsNotEmpty()
   @IsString()
   googleId: string;

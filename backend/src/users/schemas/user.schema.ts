@@ -11,9 +11,6 @@ export class User {
   @Prop({ required: true })
   name: string;
 
-  @Prop()
-  avatar?: string;
-
   @Prop({ required: true, unique: true })
   googleId: string;
 }

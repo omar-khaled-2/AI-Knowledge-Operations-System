@@ -60,12 +60,9 @@ Create `frontend/.env.local`:
 ```bash
 cat > frontend/.env.local << 'EOF'
 NEXT_PUBLIC_API_URL=http://localhost:3001
-NEXT_PUBLIC_AUTH_CALLBACK_URL=http://localhost:3000/auth/callback
 EOF
-```
 
 - `NEXT_PUBLIC_API_URL` — Backend API base URL
-- `NEXT_PUBLIC_AUTH_CALLBACK_URL` — OAuth callback URL (must match Google OAuth redirect URI)
 
 ## Required Secrets
 
@@ -158,9 +155,8 @@ echo "Secrets created. Ready to deploy."
 | `BETTER_AUTH_SECRET` | Better Auth secret key | Secret (`backend-secrets`) | Backend |
 | `BETTER_AUTH_URL` | Backend base URL | ConfigMap (auto) | Backend |
 | `FRONTEND_URL` | Frontend URL for CORS | ConfigMap (auto) | Backend |
-| `AUTH_CALLBACK_URL` | OAuth callback redirect URL | ConfigMap (auto) | Backend |
+| `GOOGLE_REDIRECT_URI` | Google OAuth redirect URI | ConfigMap (auto) | Backend |
 | `NEXT_PUBLIC_API_URL` | Frontend API base URL | `.env.local` | Frontend |
-| `NEXT_PUBLIC_AUTH_CALLBACK_URL` | Frontend OAuth callback URL | `.env.local` | Frontend |
 | `mongodb-root-user` | MongoDB root username | Secret (`mongodb-secrets`) | MongoDB |
 | `mongodb-root-password` | MongoDB root password | Secret (`mongodb-secrets`) | MongoDB |
 

@@ -35,8 +35,8 @@ initContainers:
       requests:
         cpu: 10m
         memory: 16Mi
-    timeout: 120    # seconds
-    interval: 2     # seconds between retries
+    timeout: 120 # seconds
+    interval: 2 # seconds between retries
 
 # Kubernetes Secrets configuration
 # Sensitive values MUST be provided via Kubernetes Secrets.
@@ -78,7 +78,9 @@ mongodb:
 config:
   # These will be auto-populated with service names if left empty
   betterAuthUrl: ""
-  frontendUrl: ""
+  frontendUrl: "http://localhost:3000"
+  # Google OAuth redirect URI - must match the authorized redirect URI in Google Cloud Console
+  googleRedirectUri: "http://localhost:3001/api/auth/callback/google"
 
 nodeSelector: {}
 

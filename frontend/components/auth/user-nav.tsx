@@ -63,17 +63,9 @@ export function UserNav() {
         aria-haspopup="menu"
         aria-expanded={isOpen}
       >
-        {user.image ? (
-          <img
-            src={user.image}
-            alt={user.name || "User avatar"}
-            className="h-8 w-8 rounded-full object-cover"
-          />
-        ) : (
-          <div className="h-8 w-8 rounded-full bg-[#0a0a0a] text-white flex items-center justify-center text-xs font-semibold">
-            {initials}
-          </div>
-        )}
+        <div className="h-8 w-8 rounded-full bg-[#0a0a0a] text-white flex items-center justify-center text-xs font-semibold">
+          {initials}
+        </div>
         <span className="text-sm font-medium text-[#0a0a0a] hidden sm:inline">
           {user.name}
         </span>

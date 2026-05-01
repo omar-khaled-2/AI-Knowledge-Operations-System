@@ -21,12 +21,13 @@ export class AuthService implements OnModuleInit {
     this.auth = betterAuth({
       secret: this.configService.get<string>('app.betterAuthSecret'),
       baseURL: this.configService.get<string>('app.betterAuthUrl'),
+      trustedOrigins: [this.configService.get<string>('app.frontendUrl')!],
       database: mongodbAdapter(db),
       socialProviders: {
         google: {
           clientId: this.configService.get<string>('app.googleClientId')!,
           clientSecret: this.configService.get<string>('app.googleClientSecret')!,
-          redirectURI: this.configService.get<string>('app.authCallbackUrl')!,
+          redirectURI: this.configService.get<string>('app.googleRedirectUri')!,
         },
       },
     });

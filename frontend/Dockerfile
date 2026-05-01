@@ -1,4 +1,5 @@
 FROM oven/bun:1 as builder
+ARG NEXT_PUBLIC_API_URL
 WORKDIR /app
 COPY package.json bun.lockb* ./
 RUN bun install
