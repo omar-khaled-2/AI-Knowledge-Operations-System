@@ -10,15 +10,17 @@ import {
   NotFoundException,
   UnauthorizedException,
   BadRequestException,
-} from '@nestjs/common';
-import { Types } from 'mongoose';
-import { AuthGuard } from '../auth/guards/auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { ProjectsService } from './projects.service';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { UpdateProjectDto } from './dto/update-project.dto';
+} from "@nestjs/common";
+import { Types } from "mongoose";
+import { AuthGuard } from "../auth/guards/auth.guard";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { ProjectsService } from "./projects.service";
+import { CreateProjectDto } from "./dto/create-project.dto";
+import { UpdateProjectDto } from "./dto/update-project.dto";
+import { ProjectResponseDto } from "./dto/project-response.dto";
+import { plainToInstance } from "class-transformer";
 
-@Controller('projects')
+@Controller("projects")
 @UseGuards(AuthGuard)
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
@@ -29,13 +31,13 @@ export class ProjectsController {
    */
   private getUserId(user: any): string {
     if (!user) {
-      throw new UnauthorizedException('User not authenticated');
+      throw new UnauthorizedException("User not authenticated");
     }
 
     const userId = user.id || user._id || user.userId;
 
     if (!userId) {
-      throw new UnauthorizedException('User ID not found in session');
+      throw new UnauthorizedException("User ID not found in session");
     }
 
     const idString = userId.toString();
@@ -51,43 +53,69 @@ export class ProjectsController {
   async findAll(@CurrentUser() user: any) {
     const userId = this.getUserId(user);
     const projects = await this.projectsService.findAllByOwner(userId);
-    return { success: true, data: projects };
+    return {
+      success: true,
+      data: plainToInstance(ProjectResponseDto, projects),
+    };
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string, @CurrentUser() user: any) {
+  @Get(":id")
+  async findOne(@Param("id") id: string, @CurrentUser() user: any) {
     const userId = this.getUserId(user);
     const project = await this.projectsService.findOne(id, userId);
     if (!project) {
-      throw new NotFoundException('Project not found');
+      throw new NotFoundException("Project not found");
     }
-    return { success: true, data: project };
+    return {
+      success: true,
+      data: plainToInstance(ProjectResponseDto, project),
+    };
   }
 
   @Post()
-  async create(@Body() createProjectDto: CreateProjectDto, @CurrentUser() user: any) {
+  async create(
+    @Body() createProjectDto: CreateProjectDto,
+    @CurrentUser() user: any,
+  ) {
     const userId = this.getUserId(user);
     const project = await this.projectsService.create(createProjectDto, userId);
-    return { success: true, data: project };
+    return {
+      success: true,
+      data: plainToInstance(ProjectResponseDto, project),
+    };
   }
 
-  @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto, @CurrentUser() user: any) {
+  @Patch(":id")
+  async update(
+    @Param("id") id: string,
+    @Body() updateProjectDto: UpdateProjectDto,
+    @CurrentUser() user: any,
+  ) {
     const userId = this.getUserId(user);
-    const project = await this.projectsService.update(id, updateProjectDto, userId);
+    const project = await this.projectsService.update(
+      id,
+      updateProjectDto,
+      userId,
+    );
     if (!project) {
-      throw new NotFoundException('Project not found');
+      throw new NotFoundException("Project not found");
     }
-    return { success: true, data: project };
+    return {
+      success: true,
+      data: plainToInstance(ProjectResponseDto, project),
+    };
   }
 
-  @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
+  @Delete(":id")
+  async remove(@Param("id") id: string, @CurrentUser() user: any) {
     const userId = this.getUserId(user);
     const project = await this.projectsService.remove(id, userId);
     if (!project) {
-      throw new NotFoundException('Project not found');
+      throw new NotFoundException("Project not found");
     }
-    return { success: true, data: project };
+    return {
+      success: true,
+      data: plainToInstance(ProjectResponseDto, project),
+    };
   }
 }

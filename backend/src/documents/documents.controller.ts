@@ -12,17 +12,19 @@ import {
   UnauthorizedException,
   BadRequestException,
   ForbiddenException,
-} from '@nestjs/common';
-import { Types } from 'mongoose';
-import { AuthGuard } from '../auth/guards/auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { DocumentsService } from './documents.service';
-import { ProjectsService } from '../projects/projects.service';
-import { CreateDocumentDto } from './dto/create-document.dto';
-import { UpdateDocumentDto } from './dto/update-document.dto';
-import { GenerateUploadUrlDto } from './dto/generate-upload-url.dto';
+} from "@nestjs/common";
+import { Types } from "mongoose";
+import { AuthGuard } from "../auth/guards/auth.guard";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import { DocumentsService } from "./documents.service";
+import { ProjectsService } from "../projects/projects.service";
+import { CreateDocumentDto } from "./dto/create-document.dto";
+import { UpdateDocumentDto } from "./dto/update-document.dto";
+import { GenerateUploadUrlDto } from "./dto/generate-upload-url.dto";
+import { DocumentResponseDto } from "./dto/document-response.dto";
+import { plainToInstance } from "class-transformer";
 
-@Controller('documents')
+@Controller("documents")
 @UseGuards(AuthGuard)
 export class DocumentsController {
   constructor(
@@ -36,13 +38,13 @@ export class DocumentsController {
    */
   private getUserId(user: any): string {
     if (!user) {
-      throw new UnauthorizedException('User not authenticated');
+      throw new UnauthorizedException("User not authenticated");
     }
 
     const userId = user.id || user._id || user.userId;
 
     if (!userId) {
-      throw new UnauthorizedException('User ID not found in session');
+      throw new UnauthorizedException("User ID not found in session");
     }
 
     const idString = userId.toString();
@@ -58,45 +60,52 @@ export class DocumentsController {
    * Verify that the project exists and belongs to the authenticated user.
    * Prevents IDOR attacks where users create documents in other users' projects.
    */
-  private async verifyProjectOwnership(projectId: string, userId: string): Promise<void> {
+  private async verifyProjectOwnership(
+    projectId: string,
+    userId: string,
+  ): Promise<void> {
     const project = await this.projectsService.findOne(projectId, userId);
     if (!project) {
-      throw new ForbiddenException('Project not found or access denied');
+      throw new ForbiddenException("Project not found or access denied");
     }
   }
 
   @Get()
   async findAll(
-    @Query('projectId') projectId: string,
-    @Query('page') pageStr: string,
-    @Query('limit') limitStr: string,
-    @Query('sortBy') sortBy: string,
-    @Query('sortOrder') sortOrder: string,
+    @Query("projectId") projectId: string,
+    @Query("page") pageStr: string,
+    @Query("limit") limitStr: string,
+    @Query("sortBy") sortBy: string,
+    @Query("sortOrder") sortOrder: string,
     @CurrentUser() user: any,
   ) {
     if (!projectId) {
-      throw new BadRequestException('projectId query parameter is required');
+      throw new BadRequestException("projectId query parameter is required");
     }
 
     const page = Math.max(1, parseInt(pageStr, 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(limitStr, 10) || 12));
-    const sortByField = sortBy || 'createdAt';
-    const sortOrderValue = sortOrder === 'asc' ? 'asc' : 'desc';
+    const sortByField = sortBy || "createdAt";
+    const sortOrderValue = sortOrder === "asc" ? "asc" : "desc";
 
     const userId = this.getUserId(user);
-    const result = await this.documentsService.findAllByProject(projectId, userId, {
-      page,
-      limit,
-      sortBy: sortByField,
-      sortOrder: sortOrderValue,
-    });
+    const result = await this.documentsService.findAllByProject(
+      projectId,
+      userId,
+      {
+        page,
+        limit,
+        sortBy: sortByField,
+        sortOrder: sortOrderValue,
+      },
+    );
 
     const totalPages = Math.ceil(result.total / limit);
 
     return {
       success: true,
       data: {
-        documents: result.documents,
+        documents: plainToInstance(DocumentResponseDto, result.documents),
         pagination: {
           total: result.total,
           page,
@@ -107,49 +116,87 @@ export class DocumentsController {
     };
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string, @CurrentUser() user: any) {
+  @Get(":id")
+  async findOne(@Param("id") id: string, @CurrentUser() user: any) {
     const userId = this.getUserId(user);
     const document = await this.documentsService.findOne(id, userId);
     if (!document) {
-      throw new NotFoundException('Document not found');
+      throw new NotFoundException("Document not found");
     }
-    return { success: true, data: document };
+    return {
+      success: true,
+      data: plainToInstance(DocumentResponseDto, document),
+    };
   }
 
   @Post()
-  async create(@Body() createDocumentDto: CreateDocumentDto, @CurrentUser() user: any) {
+  async create(
+    @Body() createDocumentDto: CreateDocumentDto,
+    @CurrentUser() user: any,
+  ) {
     const userId = this.getUserId(user);
     await this.verifyProjectOwnership(createDocumentDto.projectId, userId);
-    const document = await this.documentsService.create(createDocumentDto, userId);
-    return { success: true, data: document };
+    const document = await this.documentsService.create(
+      createDocumentDto,
+      userId,
+    );
+    return {
+      success: true,
+      data: plainToInstance(DocumentResponseDto, document),
+    };
   }
 
-  @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateDocumentDto: UpdateDocumentDto, @CurrentUser() user: any) {
+  @Patch(":id")
+  async update(
+    @Param("id") id: string,
+    @Body() updateDocumentDto: UpdateDocumentDto,
+    @CurrentUser() user: any,
+  ) {
     const userId = this.getUserId(user);
-    const document = await this.documentsService.update(id, updateDocumentDto, userId);
+    const document = await this.documentsService.update(
+      id,
+      updateDocumentDto,
+      userId,
+    );
     if (!document) {
-      throw new NotFoundException('Document not found');
+      throw new NotFoundException("Document not found");
     }
-    return { success: true, data: document };
+    return {
+      success: true,
+      data: plainToInstance(DocumentResponseDto, document),
+    };
   }
 
-  @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUser() user: any) {
+  @Delete(":id")
+  async remove(@Param("id") id: string, @CurrentUser() user: any) {
     const userId = this.getUserId(user);
     const document = await this.documentsService.remove(id, userId);
     if (!document) {
-      throw new NotFoundException('Document not found');
+      throw new NotFoundException("Document not found");
     }
-    return { success: true, data: document };
+    return {
+      success: true,
+      data: plainToInstance(DocumentResponseDto, document),
+    };
   }
 
-  @Post('upload-url')
-  async generateUploadUrl(@Body() generateUploadUrlDto: GenerateUploadUrlDto, @CurrentUser() user: any) {
+  @Post("upload-url")
+  async generateUploadUrl(
+    @Body() generateUploadUrlDto: GenerateUploadUrlDto,
+    @CurrentUser() user: any,
+  ) {
     const userId = this.getUserId(user);
     await this.verifyProjectOwnership(generateUploadUrlDto.projectId, userId);
-    const result = await this.documentsService.generateUploadUrl(generateUploadUrlDto, userId);
-    return { success: true, data: result };
+    const result = await this.documentsService.generateUploadUrl(
+      generateUploadUrlDto,
+      userId,
+    );
+    return {
+      success: true,
+      data: {
+        ...result,
+        document: plainToInstance(DocumentResponseDto, result.document),
+      },
+    };
   }
 }
