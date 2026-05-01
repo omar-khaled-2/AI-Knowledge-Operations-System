@@ -3,6 +3,7 @@ import tempfile
 
 import pytest
 from src.parsers.base import DocumentParser
+from src.parsers.factory import get_parser
 from src.parsers.markdown_parser import MarkdownParser
 from src.parsers.pdf_parser import PdfParser
 from src.parsers.text_parser import TextParser
@@ -64,3 +65,23 @@ def test_pdf_parser_reads_pdf():
         assert "Hello from PDF" in result
     finally:
         os.unlink(temp_path)
+
+
+def test_factory_returns_text_parser():
+    parser = get_parser("text/plain")
+    assert parser.__class__.__name__ == "TextParser"
+
+
+def test_factory_returns_markdown_parser():
+    parser = get_parser("text/markdown")
+    assert parser.__class__.__name__ == "MarkdownParser"
+
+
+def test_factory_returns_pdf_parser():
+    parser = get_parser("application/pdf")
+    assert parser.__class__.__name__ == "PdfParser"
+
+
+def test_factory_raises_for_unsupported():
+    with pytest.raises(ValueError, match="Unsupported MIME type"):
+        get_parser("image/png")
