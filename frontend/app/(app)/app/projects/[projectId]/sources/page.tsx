@@ -17,7 +17,11 @@ import {
   getSourcesByProjectId,
   formatRelativeTime,
 } from "@/lib/mock-data"
+import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Breadcrumbs } from "@/components/app/breadcrumbs"
+import { PageHeader } from "@/components/page-header"
+import { ActionButton } from "@/components/action-button"
 
 const sourceTypeConfig: Record<
   string,
@@ -63,62 +67,62 @@ function SourceCard({
 
   const statusConfig = {
     connected: {
-      icon: <CheckCircle2 className="h-4 w-4 text-[#22c55e]" />,
+      icon: <CheckCircle2 className="size-4 text-green-500" />,
       label: "Connected",
-      className: "text-[#22c55e]",
+      className: "text-green-500",
     },
     disconnected: {
-      icon: <XCircle className="h-4 w-4 text-[#9a9a9a]" />,
+      icon: <XCircle className="size-4 text-[var(--muted-soft)]" />,
       label: "Disconnected",
-      className: "text-[#9a9a9a]",
+      className: "text-[var(--muted-soft)]",
     },
     syncing: {
-      icon: <Loader2 className="h-4 w-4 text-[#f59e0b] animate-spin" />,
+      icon: <Loader2 className="size-4 text-amber-500 animate-spin" />,
       label: "Syncing",
-      className: "text-[#f59e0b]",
+      className: "text-amber-500",
     },
   }
 
   const status = statusConfig[source.status]
 
   return (
-    <div className="bg-[#f5f0e0] rounded-2xl p-5 space-y-4">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#0a0a0a] text-white flex items-center justify-center text-sm font-bold">
-            {config.icon}
+    <Card>
+      <CardContent className="space-y-4">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-xl bg-[var(--ink)] text-white flex items-center justify-center text-sm font-bold">
+              {config.icon}
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-[var(--ink)]">{source.name}</h3>
+              <p className="text-xs text-muted-foreground">{config.description}</p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-[#0a0a0a]">{source.name}</h3>
-            <p className="text-xs text-[#6a6a6a]">{config.description}</p>
+          <div className={cn("flex items-center gap-1.5", status.className)}>
+            {status.icon}
+            <span className="text-xs font-medium">{status.label}</span>
           </div>
         </div>
-        <div className={cn("flex items-center gap-1.5", status.className)}>
-          {status.icon}
-          <span className="text-xs font-medium">{status.label}</span>
-        </div>
-      </div>
 
-      <div className="flex items-center justify-between text-sm">
-        <div className="flex items-center gap-4">
-          <span className="text-[#6a6a6a]">{source.itemCount} items indexed</span>
-          <span className="text-[#9a9a9a] flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" />
-            Last sync: {formatRelativeTime(source.lastSync)}
-          </span>
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-4">
+            <span className="text-muted-foreground">{source.itemCount} items indexed</span>
+            <span className="text-[var(--muted-soft)] flex items-center gap-1">
+              <Clock className="size-3.5" />
+              Last sync: {formatRelativeTime(source.lastSync)}
+            </span>
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-2 pt-2">
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-[#0a0a0a] text-white rounded-xl text-sm font-medium hover:bg-[#1f1f1f] transition-colors">
-          <RefreshCw className="h-3.5 w-3.5" />
-          Sync Now
-        </button>
-        <button className="px-4 py-2 border border-[#e5e5e5] rounded-xl text-sm text-[#0a0a0a] hover:bg-[#ebe6d6] transition-colors">
-          Configure
-        </button>
-      </div>
-    </div>
+        <div className="flex items-center gap-2 pt-2">
+          <Button>
+            <RefreshCw data-icon="inline-start" className="size-3.5" />
+            Sync Now
+          </Button>
+          <Button variant="outline">Configure</Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -134,20 +138,22 @@ function AvailableSourceCard({
   }
 
   return (
-    <div className="bg-[#fffaf0] border-2 border-dashed border-[#e5e5e5] rounded-2xl p-5 space-y-4 hover:border-[#0a0a0a]/30 transition-colors">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-[#f5f0e0] text-[#6a6a6a] flex items-center justify-center text-sm font-bold">
-          {config.icon}
+    <Card className="border-2 border-dashed border-border hover:border-ring/30 transition-colors">
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-xl bg-[var(--surface-card)] text-muted-foreground flex items-center justify-center text-sm font-bold">
+            {config.icon}
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--ink)]">{config.name}</h3>
+            <p className="text-xs text-muted-foreground">{config.description}</p>
+          </div>
         </div>
-        <div>
-          <h3 className="text-sm font-semibold text-[#0a0a0a]">{config.name}</h3>
-          <p className="text-xs text-[#6a6a6a]">{config.description}</p>
-        </div>
-      </div>
-      <button className="w-full py-2.5 bg-[#0a0a0a] text-white rounded-xl text-sm font-medium hover:bg-[#1f1f1f] transition-colors">
-        Connect
-      </button>
-    </div>
+        <Button className="w-full">
+          Connect
+        </Button>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -159,8 +165,8 @@ export default function SourcesPage() {
   if (!project) {
     return (
       <div className="p-4 lg:p-8">
-        <h1 className="text-2xl font-semibold text-[#0a0a0a]">Project not found</h1>
-        <Link href="/app" className="text-[#6a6a6a] hover:text-[#0a0a0a]">
+        <h1 className="text-2xl font-semibold text-[var(--ink)]">Project not found</h1>
+        <Link href="/app" className="text-muted-foreground hover:text-[var(--ink)]">
           ← Back to dashboard
         </Link>
       </div>
@@ -176,22 +182,20 @@ export default function SourcesPage() {
   return (
     <div className="p-4 lg:p-8 space-y-8">
       {/* Header */}
-      <div className="space-y-4">
-        <Breadcrumbs projectId={project.id} section="sources" />
-        <div className="flex items-center justify-between">
-          <h1 className="text-[40px] font-medium tracking-tight text-[#0a0a0a]">
-            Knowledge Sources
-          </h1>
-          <button className="inline-flex items-center gap-2 px-5 py-3 bg-[#0a0a0a] text-white rounded-xl text-sm font-semibold hover:bg-[#1f1f1f] transition-colors">
-            <Plus className="h-4 w-4" />
+      <PageHeader
+        title="Knowledge Sources"
+        action={
+          <ActionButton variant="primary" icon={<Plus className="size-4" />}>
             Connect Source
-          </button>
-        </div>
-      </div>
+          </ActionButton>
+        }
+      >
+        <Breadcrumbs projectId={project.id} section="sources" />
+      </PageHeader>
 
       {/* Connected Sources */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-[#0a0a0a]">Connected</h2>
+        <h2 className="text-lg font-semibold text-[var(--ink)]">Connected</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {connectedSources.map((source) => (
             <SourceCard
@@ -201,17 +205,17 @@ export default function SourcesPage() {
           ))}
         </div>
         {connectedSources.length === 0 && (
-          <div className="text-center py-8 bg-[#f5f0e0] rounded-2xl">
-            <Database className="h-8 w-8 text-[#e5e5e5] mx-auto mb-3" />
-            <p className="text-[#6a6a6a]">No sources connected yet</p>
-          </div>
+          <Card className="text-center py-8">
+            <Database className="size-8 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-muted-foreground">No sources connected yet</p>
+          </Card>
         )}
       </div>
 
       {/* Available Sources */}
       {availableTypes.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-[#0a0a0a]">Available Integrations</h2>
+          <h2 className="text-lg font-semibold text-[var(--ink)]">Available Integrations</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {availableTypes.map((type) => (
               <AvailableSourceCard

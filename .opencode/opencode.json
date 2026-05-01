@@ -9,6 +9,11 @@
     "chrome-devtools": {
       "type": "local",
       "command": ["bunx", "-y", "chrome-devtools-mcp@latest"]
+    },
+    "shadcn": {
+      "type": "local",
+      "command": ["bunx", "-y", "shadcn@latest", "mcp"],
+      "enabled": true
     }
   }
 }

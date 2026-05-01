@@ -19,28 +19,29 @@ import {
   formatRelativeTime,
 } from "@/lib/mock-data"
 import { Breadcrumbs } from "@/components/app/breadcrumbs"
+import { PageHeader } from "@/components/page-header"
 
 const typeConfig: Record<
   string,
   { icon: React.ReactNode; label: string; color: string }
 > = {
   "action-item": {
-    icon: <Target className="h-4 w-4" />,
+    icon: <Target className="size-4" />,
     label: "Action Item",
     color: "#ff4d8b",
   },
   trend: {
-    icon: <TrendingUp className="h-4 w-4" />,
+    icon: <TrendingUp className="size-4" />,
     label: "Trend",
     color: "#1a3a3a",
   },
   connection: {
-    icon: <Link2 className="h-4 w-4" />,
+    icon: <Link2 className="size-4" />,
     label: "Connection",
     color: "#b8a4ed",
   },
   anomaly: {
-    icon: <AlertTriangle className="h-4 w-4" />,
+    icon: <AlertTriangle className="size-4" />,
     label: "Anomaly",
     color: "#e8b94a",
   },
@@ -52,17 +53,17 @@ function InsightCard({
   insight: ReturnType<typeof getInsightsByProjectId>[0]
 }) {
   const config = typeConfig[insight.type] || {
-    icon: <Lightbulb className="h-4 w-4" />,
+    icon: <Lightbulb className="size-4" />,
     label: insight.type,
     color: "#6a6a6a",
   }
 
   return (
-    <div className="bg-[#f5f0e0] rounded-2xl p-5 space-y-4">
+    <div className="bg-[var(--surface-card)] rounded-2xl p-5 space-y-4">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
           <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center"
+            className="size-9 rounded-lg flex items-center justify-center"
             style={{ backgroundColor: config.color + "20", color: config.color }}
           >
             {config.icon}
@@ -80,20 +81,20 @@ function InsightCard({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[#9a9a9a]">
+          <span className="text-xs text-[var(--muted-soft)]">
             {Math.round(insight.confidence * 100)}% confidence
           </span>
         </div>
       </div>
 
-      <h3 className="text-base font-semibold text-[#0a0a0a]">{insight.title}</h3>
-      <p className="text-sm text-[#3a3a3a]">{insight.description}</p>
+      <h3 className="text-base font-semibold text-[var(--ink)]">{insight.title}</h3>
+      <p className="text-sm text-[var(--body)]">{insight.description}</p>
 
       {/* Related Documents */}
       {insight.relatedDocuments.length > 0 && (
         <div className="flex items-center gap-2">
-          <FileText className="h-3.5 w-3.5 text-[#9a9a9a]" />
-          <span className="text-xs text-[#6a6a6a]">
+          <FileText className="size-3.5 text-[var(--muted-soft)]" />
+          <span className="text-xs text-muted-foreground">
             {insight.relatedDocuments.length} related document
             {insight.relatedDocuments.length !== 1 ? "s" : ""}
           </span>
@@ -101,17 +102,17 @@ function InsightCard({
       )}
 
       <div className="flex items-center justify-between pt-2">
-        <span className="text-xs text-[#9a9a9a]">
+        <span className="text-xs text-[var(--muted-soft)]">
           {formatRelativeTime(insight.timestamp)}
         </span>
         <div className="flex items-center gap-2">
-          <button className="px-3 py-1.5 text-sm text-[#0a0a0a] bg-[#fffaf0] border border-[#e5e5e5] rounded-lg hover:bg-[#ebe6d6] transition-colors">
+          <button className="px-3 py-1.5 text-sm text-[var(--ink)] bg-background border border-[var(--hairline)] rounded-lg hover:bg-[var(--surface-strong)] transition-colors">
             View Details
           </button>
-          <button className="p-1.5 text-[#9a9a9a] hover:text-[#ef4444] transition-colors"
+          <button className="p-1.5 text-[var(--muted-soft)] hover:text-red-500 transition-colors"
             aria-label="Dismiss insight"
           >
-            <X className="h-4 w-4" />
+            <X className="size-4" />
           </button>
         </div>
       </div>
@@ -128,8 +129,8 @@ export default function InsightsPage() {
   if (!project) {
     return (
       <div className="p-4 lg:p-8">
-        <h1 className="text-2xl font-semibold text-[#0a0a0a]">Project not found</h1>
-        <Link href="/app" className="text-[#6a6a6a] hover:text-[#0a0a0a]">
+        <h1 className="text-2xl font-semibold text-[var(--ink)]">Project not found</h1>
+        <Link href="/app" className="text-muted-foreground hover:text-[var(--ink)]">
           ← Back to dashboard
         </Link>
       </div>
@@ -153,14 +154,9 @@ export default function InsightsPage() {
   return (
     <div className="p-4 lg:p-8 space-y-6">
       {/* Header */}
-      <div className="space-y-4">
+      <PageHeader title="Insights">
         <Breadcrumbs projectId={project.id} section="insights" />
-        <div className="flex items-center justify-between">
-          <h1 className="text-[40px] font-medium tracking-tight text-[#0a0a0a]">
-            Insights
-          </h1>
-        </div>
-      </div>
+      </PageHeader>
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2">
@@ -171,8 +167,8 @@ export default function InsightsPage() {
             className={cn(
               "px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap",
               activeFilter === filter.value
-                ? "bg-[#f5f0e0] text-[#0a0a0a]"
-                : "text-[#6a6a6a] hover:text-[#3a3a3a]"
+                ? "bg-[var(--surface-card)] text-[var(--ink)]"
+                : "text-muted-foreground hover:text-[var(--body)]"
             )}
           >
             {filter.label}
@@ -192,8 +188,8 @@ export default function InsightsPage() {
 
       {filteredInsights.length === 0 && (
         <div className="text-center py-12">
-          <Lightbulb className="h-12 w-12 text-[#e5e5e5] mx-auto mb-4" />
-          <p className="text-[#6a6a6a]">No insights found for this filter</p>
+          <Lightbulb className="size-12 text-[var(--hairline)] mx-auto mb-4" />
+          <p className="text-muted-foreground">No insights found for this filter</p>
         </div>
       )}
     </div>

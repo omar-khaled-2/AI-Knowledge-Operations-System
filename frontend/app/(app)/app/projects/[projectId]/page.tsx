@@ -5,7 +5,6 @@ import {
   MessageSquare,
   Database,
   Lightbulb,
-  ArrowRight,
   Settings,
   Clock,
 } from "lucide-react"
@@ -19,7 +18,15 @@ import {
 } from "@/lib/mock-data"
 import { getProject } from "@/lib/api/projects-server"
 import { getDocuments } from "@/lib/api/documents-server"
+import { Card, CardContent } from "@/components/ui/card"
+import { buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { Breadcrumbs } from "@/components/app/breadcrumbs"
+import { StatCard } from "@/components/stat-card"
+import { PageHeader } from "@/components/page-header"
+import { SectionHeader } from "@/components/section-header"
+import { ActionButton } from "@/components/action-button"
+import { ListContainer, ListItem } from "@/components/list-container"
 
 export default async function ProjectHomePage({
   params,
@@ -61,179 +68,164 @@ export default async function ProjectHomePage({
   return (
     <div className="p-4 lg:p-8 space-y-8">
       {/* Header */}
-      <div className="space-y-4">
-        <Breadcrumbs projectId={project.id} projectName={project.name} />
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <h1 className="text-[40px] font-medium tracking-tight text-[#0a0a0a]">
-              {project.name}
-            </h1>
-            <p className="text-base text-[#3a3a3a] max-w-2xl">{project.description}</p>
-          </div>
+      <PageHeader
+        title={project.name}
+        description={project.description}
+        action={
           <Link
             href={`/app/projects/${project.id}/settings`}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#e5e5e5] text-sm font-medium text-[#0a0a0a] hover:bg-[#f5f0e0] transition-colors"
+            className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
           >
-            <Settings className="h-4 w-4" />
+            <Settings data-icon="inline-start" className="size-4" />
             Settings
           </Link>
-        </div>
-      </div>
+        }
+      >
+        <Breadcrumbs projectId={project.id} projectName={project.name} />
+      </PageHeader>
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { icon: <FileText className="h-5 w-5" />, label: "Documents", value: project.documentCount, color: brandColor },
-          { icon: <Database className="h-5 w-5" />, label: "Sources", value: project.sourceCount, color: brandColor },
-          { icon: <MessageSquare className="h-5 w-5" />, label: "Sessions", value: project.sessionCount, color: brandColor },
-          { icon: <Lightbulb className="h-5 w-5" />, label: "Insights", value: project.insightCount, color: brandColor },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-[#f5f0e0] rounded-2xl p-5 space-y-2">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ backgroundColor: stat.color + "20", color: stat.color }}
-            >
-              {stat.icon}
-            </div>
-            <p className="text-[28px] font-medium text-[#0a0a0a] tracking-tight">{stat.value}</p>
-            <p className="text-sm text-[#6a6a6a]">{stat.label}</p>
-          </div>
-        ))}
+        <StatCard
+          icon={<FileText className="size-5" />}
+          label="Documents"
+          value={project.documentCount}
+          color={brandColor}
+          className="p-5"
+        />
+        <StatCard
+          icon={<Database className="size-5" />}
+          label="Sources"
+          value={project.sourceCount}
+          color={brandColor}
+          className="p-5"
+        />
+        <StatCard
+          icon={<MessageSquare className="size-5" />}
+          label="Sessions"
+          value={project.sessionCount}
+          color={brandColor}
+          className="p-5"
+        />
+        <StatCard
+          icon={<Lightbulb className="size-5" />}
+          label="Insights"
+          value={project.insightCount}
+          color={brandColor}
+          className="p-5"
+        />
       </div>
 
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-3">
-        <Link
-          href={`/app/projects/${project.id}/chat`}
-          className="inline-flex items-center gap-2 px-5 py-3 bg-[#0a0a0a] text-white rounded-xl text-sm font-semibold hover:bg-[#1f1f1f] transition-colors"
-        >
-          <MessageSquare className="h-4 w-4" />
-          New Chat
-        </Link>
-        <button className="inline-flex items-center gap-2 px-5 py-3 bg-[#fffaf0] border border-[#e5e5e5] text-[#0a0a0a] rounded-xl text-sm font-semibold hover:bg-[#f5f0e0] transition-colors">
-          <FileText className="h-4 w-4" />
+        <ActionButton variant="primary" icon={<MessageSquare className="size-4" />}>
+          <Link href={`/app/projects/${project.id}/chat`}>New Chat</Link>
+        </ActionButton>
+        <ActionButton variant="secondary" icon={<FileText className="size-4" />}>
           Upload Document
-        </button>
-        <Link
-          href={`/app/projects/${project.id}/sources`}
-          className="inline-flex items-center gap-2 px-5 py-3 bg-[#fffaf0] border border-[#e5e5e5] text-[#0a0a0a] rounded-xl text-sm font-semibold hover:bg-[#f5f0e0] transition-colors"
-        >
-          <Database className="h-4 w-4" />
-          Connect Source
-        </Link>
+        </ActionButton>
+        <ActionButton variant="secondary" icon={<Database className="size-4" />}>
+          <Link href={`/app/projects/${project.id}/sources`}>Connect Source</Link>
+        </ActionButton>
       </div>
 
       {/* Recent Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Documents */}
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Recent Documents</h2>
-            <Link
-              href={`/app/projects/${project.id}/documents`}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-            >
-              View all <ArrowRight className="size-4" />
-            </Link>
-          </div>
-          <div className="flex flex-col rounded-xl bg-card ring-1 ring-foreground/10 divide-y divide-border">
-            {recentDocuments.length === 0 ? (
-              <div className="px-4 py-6 text-center text-sm text-muted-foreground">
-                No documents yet. Upload your first document.
-              </div>
-            ) : (
-              recentDocuments.map((doc) => (
-                <Link
-                  key={doc.id}
-                  href={`/app/projects/${project.id}/documents/${doc.id}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors"
-                >
-                  <FileText className="size-5 text-muted-foreground flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{doc.name}</p>
-                    <p className="text-xs text-muted-foreground/70">
-                      {doc.status} · {getDisplaySize(doc)}
-                    </p>
-                  </div>
-                  <span className="text-xs text-muted-foreground/70 flex items-center gap-1 flex-shrink-0">
-                    <Clock className="size-3" />
-                    {formatRelativeTime(doc.createdAt)}
-                  </span>
-                </Link>
-              ))
-            )}
-          </div>
+          <SectionHeader
+            title="Recent Documents"
+            href={`/app/projects/${project.id}/documents`}
+          />
+          <Card className="p-0 overflow-hidden">
+            <div className="divide-y divide-border">
+              {recentDocuments.length === 0 ? (
+                <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                  No documents yet. Upload your first document.
+                </div>
+              ) : (
+                recentDocuments.map((doc) => (
+                  <Link
+                    key={doc.id}
+                    href={`/app/projects/${project.id}/documents/${doc.id}`}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors"
+                  >
+                    <FileText className="size-5 text-muted-foreground flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{doc.name}</p>
+                      <p className="text-xs text-muted-foreground/70">
+                        {doc.status} · {getDisplaySize(doc)}
+                      </p>
+                    </div>
+                    <span className="text-xs text-muted-foreground/70 flex items-center gap-1 flex-shrink-0">
+                      <Clock className="size-3" />
+                      {formatRelativeTime(doc.createdAt)}
+                    </span>
+                  </Link>
+                ))
+              )}
+            </div>
+          </Card>
         </div>
 
         {/* Recent Sessions */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[#0a0a0a]">Recent Conversations</h2>
-            <Link
-              href={`/app/projects/${project.id}/chat`}
-              className="text-sm text-[#6a6a6a] hover:text-[#0a0a0a] transition-colors flex items-center gap-1"
-            >
-              View all <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-          <div className="bg-[#f5f0e0] rounded-2xl divide-y divide-[#e5e5e5]">
+        <div className="flex flex-col gap-4">
+          <SectionHeader
+            title="Recent Conversations"
+            href={`/app/projects/${project.id}/chat`}
+          />
+          <ListContainer>
             {sessions.slice(0, 5).map((session) => (
-              <Link
+              <ListItem
                 key={session.id}
                 href={`/app/projects/${project.id}/chat/${session.id}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-[#ebe6d6] transition-colors"
+                className="gap-3"
               >
-                <MessageSquare className="h-5 w-5 text-[#6a6a6a] flex-shrink-0" />
+                <MessageSquare className="size-5 text-[var(--muted-soft)] flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#0a0a0a] truncate">{session.name}</p>
-                  <p className="text-xs text-[#9a9a9a] truncate">{session.preview}</p>
+                  <p className="text-sm font-medium text-[var(--ink)] truncate">{session.name}</p>
+                  <p className="text-xs text-[var(--muted-soft)] truncate">{session.preview}</p>
                 </div>
-                <span className="text-xs text-[#9a9a9a] flex-shrink-0">
+                <span className="text-xs text-[var(--muted-soft)] flex-shrink-0">
                   {formatRelativeTime(session.lastUpdated)}
                 </span>
-              </Link>
+              </ListItem>
             ))}
-          </div>
+          </ListContainer>
         </div>
       </div>
 
       {/* Active Insights */}
       {insights.length > 0 && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-[#0a0a0a]">Active Insights</h2>
-            <Link
-              href={`/app/projects/${project.id}/insights`}
-              className="text-sm text-[#6a6a6a] hover:text-[#0a0a0a] transition-colors flex items-center gap-1"
-            >
-              View all <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
+          <SectionHeader
+            title="Active Insights"
+            href={`/app/projects/${project.id}/insights`}
+          />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {insights.slice(0, 3).map((insight) => (
-              <div
-                key={insight.id}
-                className="bg-[#f5f0e0] rounded-2xl p-5 space-y-3"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-[#e8b94a]20 flex items-center justify-center">
-                    <Lightbulb className="h-4 w-4 text-[#e8b94a]" />
+              <Card key={insight.id} className="p-0">
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="size-8 rounded-lg bg-[#e8b94a]/20 flex items-center justify-center">
+                      <Lightbulb className="size-4 text-[#e8b94a]" />
+                    </div>
+                    <span className="text-xs font-medium text-muted-foreground uppercase">
+                      {insight.type.replace("-", " ")}
+                    </span>
                   </div>
-                  <span className="text-xs font-medium text-[#6a6a6a] uppercase">
-                    {insight.type.replace("-", " ")}
-                  </span>
-                </div>
-                <h3 className="text-sm font-semibold text-[#0a0a0a]">{insight.title}</h3>
-                <p className="text-sm text-[#3a3a3a] line-clamp-2">{insight.description}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#9a9a9a]">
-                    {Math.round(insight.confidence * 100)}% confidence
-                  </span>
-                  <span className="text-xs text-[#9a9a9a]">
-                    {formatRelativeTime(insight.timestamp)}
-                  </span>
-                </div>
-              </div>
+                  <h3 className="text-sm font-semibold text-[var(--ink)]">{insight.title}</h3>
+                  <p className="text-sm text-[var(--body)] line-clamp-2">{insight.description}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-[var(--muted-soft)]">
+                      {Math.round(insight.confidence * 100)}% confidence
+                    </span>
+                    <span className="text-xs text-[var(--muted-soft)]">
+                      {formatRelativeTime(insight.timestamp)}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>

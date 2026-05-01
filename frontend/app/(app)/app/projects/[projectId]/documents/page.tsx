@@ -5,6 +5,7 @@ import { Breadcrumbs } from "@/components/app/breadcrumbs"
 import { UploadButton } from "./upload-button"
 import { DocumentList } from "./document-list"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PageHeader } from "@/components/page-header"
 
 function DocumentsLoading() {
   return (
@@ -36,15 +37,12 @@ export default async function DocumentsPage({
   return (
     <div className="p-4 lg:p-8 flex flex-col gap-6">
       {/* Header */}
-      <div className="flex flex-col gap-4">
+      <PageHeader
+        title="Documents"
+        action={<UploadButton projectId={project.id} />}
+      >
         <Breadcrumbs projectId={project.id} projectName={project.name} section="documents" />
-        <div className="flex items-center justify-between">
-          <h1 className="text-[40px] font-medium tracking-tight text-foreground">
-            Documents
-          </h1>
-          <UploadButton projectId={project.id} />
-        </div>
-      </div>
+      </PageHeader>
 
       <Suspense fallback={<DocumentsLoading />}>
         <DocumentList projectId={project.id} />

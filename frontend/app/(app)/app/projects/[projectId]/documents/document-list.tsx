@@ -17,6 +17,7 @@ import { Document, formatRelativeTime } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Separator } from "@/components/ui/separator";
@@ -290,12 +291,12 @@ export function DocumentList({ projectId }: DocumentListProps) {
     return (
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-3">
-          <div className="h-8 flex-1 bg-muted rounded-lg animate-pulse" />
-          <div className="h-8 w-20 bg-muted rounded-lg animate-pulse" />
+          <Skeleton className="h-8 flex-1" />
+          <Skeleton className="h-8 w-20" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-32 bg-muted rounded-xl animate-pulse" />
+            <Skeleton key={i} className="h-32" />
           ))}
         </div>
       </div>
@@ -369,7 +370,7 @@ export function DocumentList({ projectId }: DocumentListProps) {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col rounded-xl bg-card ring-1 ring-foreground/10 overflow-hidden">
+          <Card className="p-0 overflow-hidden">
             {filteredDocuments.map((document, index) => (
               <div key={document.id}>
                 <DocumentListItem
@@ -379,7 +380,7 @@ export function DocumentList({ projectId }: DocumentListProps) {
                 {index < filteredDocuments.length - 1 && <Separator />}
               </div>
             ))}
-          </div>
+          </Card>
         )}
 
         {filteredDocuments.length === 0 && (
