@@ -45,7 +45,7 @@ describe("Projects Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: mockProject }),
+        json: () => Promise.resolve(mockProject),
       } as Response)
 
       const { getProject } = await importModule()
@@ -100,20 +100,7 @@ describe("Projects Server API", () => {
       await expect(getProject("proj-1")).rejects.toThrow("API error: 500")
     })
 
-    test("throws error on API failure response", async () => {
-      mockCookies.mockReturnValue({
-        getAll: () => [],
-      } as any)
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({ success: false, error: "Database error" }),
-      } as Response)
-
-      const { getProject } = await importModule()
-      await expect(getProject("proj-1")).rejects.toThrow("Database error")
-    })
   })
 
   describe("getProjects()", () => {
@@ -139,7 +126,7 @@ describe("Projects Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: mockProjects }),
+        json: () => Promise.resolve(mockProjects),
       } as Response)
 
       const { getProjects } = await importModule()
@@ -188,7 +175,7 @@ describe("Projects Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: createdProject }),
+        json: () => Promise.resolve(createdProject),
       } as Response)
 
       const { createProject } = await importModule()
@@ -210,7 +197,7 @@ describe("Projects Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: { id: "1", ...projectData } }),
+        json: () => Promise.resolve({ id: "1", ...projectData }),
       } as Response)
 
       const { createProject } = await importModule()
@@ -249,7 +236,7 @@ describe("Projects Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: updatedProject }),
+        json: () => Promise.resolve(updatedProject),
       } as Response)
 
       const { updateProject } = await importModule()
@@ -265,7 +252,7 @@ describe("Projects Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: {} }),
+        json: () => Promise.resolve({ id: "proj-1", name: "Updated" }),
       } as Response)
 
       const { updateProject } = await importModule()
@@ -289,7 +276,7 @@ describe("Projects Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: undefined }),
+        json: () => Promise.resolve({ id: "proj-1" }),
       } as Response)
 
       const { deleteProject } = await importModule()
@@ -311,7 +298,7 @@ describe("Projects Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: undefined }),
+        json: () => Promise.resolve({ id: "proj-1" }),
       } as Response)
 
       const { deleteProject } = await importModule()
@@ -330,7 +317,7 @@ describe("Projects Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: null }),
+        json: () => Promise.resolve(null),
       } as Response)
 
       const { getProject } = await importModule()
@@ -351,7 +338,7 @@ describe("Projects Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: null }),
+        json: () => Promise.resolve(null),
       } as Response)
 
       const { getProject } = await importModule()
@@ -371,7 +358,7 @@ describe("Projects Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: null }),
+        json: () => Promise.resolve(null),
       } as Response)
 
       const { getProject } = await importModule()
@@ -391,7 +378,7 @@ describe("Projects Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: null }),
+        json: () => Promise.resolve(null),
       } as Response)
 
       const { getProject } = await importModule()

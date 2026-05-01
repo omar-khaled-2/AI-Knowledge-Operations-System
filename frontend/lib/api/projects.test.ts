@@ -19,7 +19,7 @@ describe("Projects API Client", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: [] }),
+        json: () => Promise.resolve([]),
       } as Response)
 
       await getProjects()
@@ -36,7 +36,7 @@ describe("Projects API Client", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: [] }),
+        json: () => Promise.resolve([]),
       } as Response)
 
       await getProjects()
@@ -61,11 +61,7 @@ describe("Projects API Client", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () =>
-          Promise.resolve({
-            success: true,
-            data: { id: "1", ...projectData },
-          }),
+        json: () => Promise.resolve({ id: "1", ...projectData }),
       } as Response)
 
       await createProject(projectData)
@@ -99,7 +95,7 @@ describe("Projects API Client", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: mockProjects }),
+        json: () => Promise.resolve(mockProjects),
       } as Response)
 
       const result = await getProjects()
@@ -114,32 +110,6 @@ describe("Projects API Client", () => {
       } as Response)
 
       await expect(getProjects()).rejects.toThrow("API error: 500")
-    })
-
-    test("throws error on API failure response", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () =>
-          Promise.resolve({
-            success: false,
-            error: "Database connection failed",
-          }),
-      } as Response)
-
-      await expect(getProjects()).rejects.toThrow(
-        "Database connection failed"
-      )
-    })
-
-    test("throws generic error when API returns success: false with no error message", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({ success: false }),
-      } as Response)
-
-      await expect(getProjects()).rejects.toThrow("API request failed")
     })
   })
 
@@ -160,7 +130,7 @@ describe("Projects API Client", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: mockProject }),
+        json: () => Promise.resolve(mockProject),
       } as Response)
 
       const result = await getProject("proj-1")
@@ -210,32 +180,11 @@ describe("Projects API Client", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: createdProject }),
+        json: () => Promise.resolve(createdProject),
       } as Response)
 
       const result = await createProject(projectData)
       expect(result).toEqual(createdProject)
-    })
-
-    test("throws error on validation failure", async () => {
-      const projectData = {
-        name: "",
-        description: "",
-        color: "invalid" as Project["color"],
-      }
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({
-          success: false,
-          error: "Validation failed: name is required",
-        }),
-      } as Response)
-
-      await expect(createProject(projectData)).rejects.toThrow(
-        "Validation failed: name is required"
-      )
     })
   })
 
@@ -258,7 +207,7 @@ describe("Projects API Client", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: updatedProject }),
+        json: () => Promise.resolve(updatedProject),
       } as Response)
 
       const result = await updateProject("proj-1", updateData)
@@ -270,10 +219,7 @@ describe("Projects API Client", () => {
         ok: true,
         status: 200,
         json: () =>
-          Promise.resolve({
-            success: true,
-            data: { id: "proj-1", name: "Updated" },
-          }),
+          Promise.resolve({ id: "proj-1", name: "Updated" }),
       } as Response)
 
       await updateProject("proj-1", { name: "Updated" })
@@ -292,7 +238,7 @@ describe("Projects API Client", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: undefined }),
+        json: () => Promise.resolve({ id: "proj-1" }),
       } as Response)
 
       await deleteProject("proj-1")
@@ -309,7 +255,7 @@ describe("Projects API Client", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: undefined }),
+        json: () => Promise.resolve({ id: "proj-1" }),
       } as Response)
 
       await expect(deleteProject("proj-1")).resolves.toBeUndefined()

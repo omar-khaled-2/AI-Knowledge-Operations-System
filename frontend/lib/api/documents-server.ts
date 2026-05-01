@@ -8,16 +8,9 @@ export interface PaginationOptions {
   sortOrder?: "asc" | "desc";
 }
 
-export interface PaginationMeta {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
 export interface PaginatedDocumentsResponse {
-  documents: Document[];
-  pagination: PaginationMeta;
+  data: Document[];
+  total: number;
 }
 
 export interface GenerateUploadUrlData {
@@ -31,12 +24,6 @@ export interface GenerateUploadUrlResponse {
   uploadUrl: string;
   objectKey: string;
   document: Document;
-}
-
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: string;
 }
 
 // Use internal K8s service URL for server-side fetches
@@ -99,13 +86,7 @@ async function fetchServer<T>(
     throw new Error(message);
   }
 
-  const result: ApiResponse<T> = await response.json();
-
-  if (!result.success) {
-    throw new Error(result.error ?? "API request failed");
-  }
-
-  return result.data;
+  return response.json();
 }
 
 /**
@@ -133,13 +114,7 @@ async function fetchDocumentByIdServer(id: string): Promise<Document | null> {
     throw new Error(`API error: ${response.status}`);
   }
 
-  const result: ApiResponse<Document> = await response.json();
-
-  if (!result.success) {
-    throw new Error(result.error ?? "API request failed");
-  }
-
-  return result.data;
+  return response.json();
 }
 
 function buildQueryString(

@@ -19,10 +19,7 @@ describe("Documents API Client", () => {
         ok: true,
         status: 200,
         json: () =>
-          Promise.resolve({
-            success: true,
-            data: { documents: [], pagination: { total: 0, page: 1, limit: 10, totalPages: 0 } },
-          }),
+          Promise.resolve({ data: [], total: 0 }),
       } as Response)
 
       await getDocuments("proj-1")
@@ -40,10 +37,7 @@ describe("Documents API Client", () => {
         ok: true,
         status: 200,
         json: () =>
-          Promise.resolve({
-            success: true,
-            data: { documents: [], pagination: { total: 0, page: 1, limit: 10, totalPages: 0 } },
-          }),
+          Promise.resolve({ data: [], total: 0 }),
       } as Response)
 
       await getDocuments("proj-1")
@@ -71,12 +65,9 @@ describe("Documents API Client", () => {
         status: 200,
         json: () =>
           Promise.resolve({
-            success: true,
-            data: {
-              uploadUrl: "https://s3.amazonaws.com/test",
-              objectKey: "test-key",
-              document: {} as Document,
-            },
+            uploadUrl: "https://s3.amazonaws.com/test",
+            objectKey: "test-key",
+            document: {} as Document,
           }),
       } as Response)
 
@@ -95,7 +86,7 @@ describe("Documents API Client", () => {
   describe("getDocuments()", () => {
     test("returns paginated documents on success", async () => {
       const mockResponse = {
-        documents: [
+        data: [
           {
             id: "doc-1",
             projectId: "proj-1",
@@ -106,18 +97,13 @@ describe("Documents API Client", () => {
             status: "processed",
           },
         ] as Document[],
-        pagination: {
-          total: 1,
-          page: 1,
-          limit: 10,
-          totalPages: 1,
-        },
+        total: 1,
       }
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: mockResponse }),
+        json: () => Promise.resolve(mockResponse),
       } as Response)
 
       const result = await getDocuments("proj-1")
@@ -129,10 +115,7 @@ describe("Documents API Client", () => {
         ok: true,
         status: 200,
         json: () =>
-          Promise.resolve({
-            success: true,
-            data: { documents: [], pagination: { total: 0, page: 1, limit: 10, totalPages: 0 } },
-          }),
+          Promise.resolve({ data: [], total: 0 }),
       } as Response)
 
       await getDocuments("proj-1")
@@ -148,10 +131,7 @@ describe("Documents API Client", () => {
         ok: true,
         status: 200,
         json: () =>
-          Promise.resolve({
-            success: true,
-            data: { documents: [], pagination: { total: 0, page: 2, limit: 20, totalPages: 0 } },
-          }),
+          Promise.resolve({ data: [], total: 0 }),
       } as Response)
 
       await getDocuments("proj-1", { page: 2, limit: 20, sortBy: "name", sortOrder: "asc" })
@@ -169,10 +149,7 @@ describe("Documents API Client", () => {
         ok: true,
         status: 200,
         json: () =>
-          Promise.resolve({
-            success: true,
-            data: { documents: [], pagination: { total: 0, page: 1, limit: 10, totalPages: 0 } },
-          }),
+          Promise.resolve({ data: [], total: 0 }),
       } as Response)
 
       await getDocuments("proj-1", {})
@@ -189,22 +166,6 @@ describe("Documents API Client", () => {
       } as Response)
 
       await expect(getDocuments("proj-1")).rejects.toThrow("API error: 500")
-    })
-
-    test("throws error on API failure response", async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () =>
-          Promise.resolve({
-            success: false,
-            error: "Project not found",
-          }),
-      } as Response)
-
-      await expect(getDocuments("invalid-proj")).rejects.toThrow(
-        "Project not found"
-      )
     })
   })
 
@@ -223,7 +184,7 @@ describe("Documents API Client", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: mockDocument }),
+        json: () => Promise.resolve(mockDocument),
       } as Response)
 
       const result = await getDocument("doc-1")
@@ -278,34 +239,11 @@ describe("Documents API Client", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: mockResponse }),
+        json: () => Promise.resolve(mockResponse),
       } as Response)
 
       const result = await generateUploadUrl(uploadData)
       expect(result).toEqual(mockResponse)
-    })
-
-    test("throws error on file type rejection", async () => {
-      const uploadData = {
-        filename: "test.exe",
-        mimeType: "application/x-msdownload",
-        projectId: "proj-1",
-        size: 1024,
-      }
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () =>
-          Promise.resolve({
-            success: false,
-            error: "File type not allowed",
-          }),
-      } as Response)
-
-      await expect(generateUploadUrl(uploadData)).rejects.toThrow(
-        "File type not allowed"
-      )
     })
   })
 
@@ -314,7 +252,7 @@ describe("Documents API Client", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: undefined }),
+        json: () => Promise.resolve({ id: "doc-1" }),
       } as Response)
 
       await deleteDocument("doc-1")
@@ -331,7 +269,7 @@ describe("Documents API Client", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: undefined }),
+        json: () => Promise.resolve({ id: "doc-1" }),
       } as Response)
 
       await expect(deleteDocument("doc-1")).resolves.toBeUndefined()

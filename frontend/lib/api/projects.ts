@@ -12,17 +12,11 @@ export interface UpdateProjectData {
   color?: Project["color"];
 }
 
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: string;
-}
-
 /**
  * Client-side ONLY fetch wrapper.
  * All requests go through Next.js proxy at /api/*.
  * This ensures the backend is never exposed to the browser.
- * 
+ *
  * For server components, use @/lib/api/projects-server instead.
  */
 async function fetchApi<T>(
@@ -42,13 +36,7 @@ async function fetchApi<T>(
     throw new Error(`API error: ${response.status}`);
   }
 
-  const result: ApiResponse<T> = await response.json();
-
-  if (!result.success) {
-    throw new Error(result.error ?? "API request failed");
-  }
-
-  return result.data;
+  return response.json();
 }
 
 /**
@@ -70,13 +58,7 @@ async function fetchProjectById(id: string): Promise<Project | null> {
     throw new Error(`API error: ${response.status}`);
   }
 
-  const result: ApiResponse<Project> = await response.json();
-
-  if (!result.success) {
-    throw new Error(result.error ?? "API request failed");
-  }
-
-  return result.data;
+  return response.json();
 }
 
 export async function getProjects(): Promise<Project[]> {

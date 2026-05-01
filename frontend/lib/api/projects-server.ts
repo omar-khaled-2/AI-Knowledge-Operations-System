@@ -13,12 +13,6 @@ export interface UpdateProjectData {
   color?: Project["color"];
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: string;
-}
-
 // Use internal K8s service URL for server-side fetches
 // In Kubernetes, this should point to the backend service (e.g., http://backend-backend)
 // For local dev, falls back to localhost
@@ -66,13 +60,7 @@ async function fetchServer<T>(
     throw new Error(`API error: ${response.status}`);
   }
 
-  const result: ApiResponse<T> = await response.json();
-
-  if (!result.success) {
-    throw new Error(result.error ?? "API request failed");
-  }
-
-  return result.data;
+  return response.json();
 }
 
 /**
@@ -100,13 +88,7 @@ async function fetchProjectByIdServer(id: string): Promise<Project | null> {
     throw new Error(`API error: ${response.status}`);
   }
 
-  const result: ApiResponse<Project> = await response.json();
-
-  if (!result.success) {
-    throw new Error(result.error ?? "API request failed");
-  }
-
-  return result.data;
+  return response.json();
 }
 
 export async function getProjects(): Promise<Project[]> {

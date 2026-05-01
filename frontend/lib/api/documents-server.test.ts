@@ -43,7 +43,7 @@ describe("Documents Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: mockDocument }),
+        json: () => Promise.resolve(mockDocument),
       } as Response)
 
       const { getDocument } = await importModule()
@@ -98,41 +98,12 @@ describe("Documents Server API", () => {
       await expect(getDocument("doc-1")).rejects.toThrow("API error: 500")
     })
 
-    test("throws error on API failure response", async () => {
-      mockCookies.mockReturnValue({
-        getAll: () => [],
-      } as any)
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({ success: false, error: "Document not found" }),
-      } as Response)
-
-      const { getDocument } = await importModule()
-      await expect(getDocument("doc-1")).rejects.toThrow("Document not found")
-    })
-
-    test("throws generic error when API returns success: false with no error message", async () => {
-      mockCookies.mockReturnValue({
-        getAll: () => [],
-      } as any)
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({ success: false }),
-      } as Response)
-
-      const { getDocument } = await importModule()
-      await expect(getDocument("doc-1")).rejects.toThrow("API request failed")
-    })
   })
 
   describe("getDocuments()", () => {
     test("returns paginated documents on success", async () => {
       const mockResponse = {
-        documents: [
+        data: [
           {
             id: "doc-1",
             projectId: "proj-1",
@@ -143,12 +114,7 @@ describe("Documents Server API", () => {
             status: "processed",
           },
         ] as Document[],
-        pagination: {
-          total: 1,
-          page: 1,
-          limit: 10,
-          totalPages: 1,
-        },
+        total: 1,
       }
 
       mockCookies.mockReturnValue({
@@ -158,7 +124,7 @@ describe("Documents Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: mockResponse }),
+        json: () => Promise.resolve(mockResponse),
       } as Response)
 
       const { getDocuments } = await importModule()
@@ -174,10 +140,7 @@ describe("Documents Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({
-          success: true,
-          data: { documents: [], pagination: { total: 0, page: 1, limit: 10, totalPages: 0 } },
-        }),
+        json: () => Promise.resolve({ data: [], total: 0 }),
       } as Response)
 
       const { getDocuments } = await importModule()
@@ -197,10 +160,7 @@ describe("Documents Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({
-          success: true,
-          data: { documents: [], pagination: { total: 0, page: 2, limit: 20, totalPages: 0 } },
-        }),
+        json: () => Promise.resolve({ data: [], total: 0 }),
       } as Response)
 
       const { getDocuments } = await importModule()
@@ -261,7 +221,7 @@ describe("Documents Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: mockResponse }),
+        json: () => Promise.resolve(mockResponse),
       } as Response)
 
       const { generateUploadUrl } = await importModule()
@@ -284,7 +244,7 @@ describe("Documents Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: {} }),
+        json: () => Promise.resolve({}),
       } as Response)
 
       const { generateUploadUrl } = await importModule()
@@ -298,28 +258,6 @@ describe("Documents Server API", () => {
         })
       )
     })
-
-    test("throws error on API failure response", async () => {
-      const uploadData = {
-        filename: "test.exe",
-        mimeType: "application/x-msdownload",
-        projectId: "proj-1",
-        size: 1024,
-      }
-
-      mockCookies.mockReturnValue({
-        getAll: () => [],
-      } as any)
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({ success: false, error: "File type not allowed" }),
-      } as Response)
-
-      const { generateUploadUrl } = await importModule()
-      await expect(generateUploadUrl(uploadData)).rejects.toThrow("File type not allowed")
-    })
   })
 
   describe("deleteDocument()", () => {
@@ -331,7 +269,7 @@ describe("Documents Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: undefined }),
+        json: () => Promise.resolve({ id: "doc-1" }),
       } as Response)
 
       const { deleteDocument } = await importModule()
@@ -353,7 +291,7 @@ describe("Documents Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: undefined }),
+        json: () => Promise.resolve({ id: "doc-1" }),
       } as Response)
 
       const { deleteDocument } = await importModule()
@@ -388,7 +326,7 @@ describe("Documents Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: null }),
+        json: () => Promise.resolve(null),
       } as Response)
 
       const { getDocument } = await importModule()
@@ -409,7 +347,7 @@ describe("Documents Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: null }),
+        json: () => Promise.resolve(null),
       } as Response)
 
       const { getDocument } = await importModule()
@@ -429,7 +367,7 @@ describe("Documents Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: null }),
+        json: () => Promise.resolve(null),
       } as Response)
 
       const { getDocument } = await importModule()
@@ -449,7 +387,7 @@ describe("Documents Server API", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: () => Promise.resolve({ success: true, data: null }),
+        json: () => Promise.resolve(null),
       } as Response)
 
       const { getDocument } = await importModule()

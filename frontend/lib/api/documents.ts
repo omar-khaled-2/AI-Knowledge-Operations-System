@@ -7,16 +7,9 @@ export interface PaginationOptions {
   sortOrder?: "asc" | "desc";
 }
 
-export interface PaginationMeta {
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
 export interface PaginatedDocumentsResponse {
-  documents: Document[];
-  pagination: PaginationMeta;
+  data: Document[];
+  total: number;
 }
 
 export interface GenerateUploadUrlData {
@@ -30,12 +23,6 @@ export interface GenerateUploadUrlResponse {
   uploadUrl: string;
   objectKey: string;
   document: Document;
-}
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: string;
 }
 
 /**
@@ -59,13 +46,7 @@ async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
     throw new Error(`API error: ${response.status}`);
   }
 
-  const result: ApiResponse<T> = await response.json();
-
-  if (!result.success) {
-    throw new Error(result.error ?? "API request failed");
-  }
-
-  return result.data;
+  return response.json();
 }
 
 /**
@@ -87,13 +68,7 @@ async function fetchDocumentById(id: string): Promise<Document | null> {
     throw new Error(`API error: ${response.status}`);
   }
 
-  const result: ApiResponse<Document> = await response.json();
-
-  if (!result.success) {
-    throw new Error(result.error ?? "API request failed");
-  }
-
-  return result.data;
+  return response.json();
 }
 
 function buildQueryString(
