@@ -1,4 +1,7 @@
 FROM oven/bun:1 as builder
+# API_URL: Internal backend URL for server-side proxy (e.g., http://backend-backend in K8s)
+ARG API_URL
+# NEXT_PUBLIC_API_URL: Client-side fallback (not used directly since auth goes through proxy)
 ARG NEXT_PUBLIC_API_URL
 WORKDIR /app
 COPY package.json bun.lockb* ./

@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { createProject } from "@/lib/api/projects"
 
 const brandColors = [
   { id: "teal", label: "Teal", value: "#1a3a3a", textLight: true },
@@ -41,13 +42,20 @@ export default function NewProjectPage() {
 
     setIsSubmitting(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      const newProject = await createProject({
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        color: formData.color,
+      })
 
-    toast.success("Project created successfully!")
-    
-    // Redirect to the new project (in a real app, you'd get the ID back)
-    router.push("/app")
+      toast.success("Project created successfully!")
+      router.push(`/app/projects/${newProject.id}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to create project"
+      toast.error(message)
+      setIsSubmitting(false)
+    }
   }
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -19,7 +19,9 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { mockProjects, getProjectById, getBrandColor } from "@/lib/mock-data";
+import { getBrandColor } from "@/lib/mock-data";
+import { getProjects } from "@/lib/api/projects";
+import type { Project } from "@/lib/mock-data";
 import { UserNav } from "@/components/auth/user-nav";
 
 interface SidebarItemProps {
@@ -103,12 +105,29 @@ interface AppSidebarProps {
 export function AppSidebar({ isOpen, onClose, onToggle }: AppSidebarProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real projects from API
+  useEffect(() => {
+    async function loadProjects() {
+      try {
+        const data = await getProjects();
+        setProjects(data);
+      } catch (error) {
+        console.error("Failed to load projects:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProjects();
+  }, []);
 
   // Extract project ID from path if we're in a project context
   const projectMatch = pathname.match(/\/app\/projects\/([^\/]+)/);
   const currentProjectId = projectMatch?.[1];
   const currentProject = currentProjectId
-    ? getProjectById(currentProjectId)
+    ? projects.find((p) => p.id === currentProjectId) || null
     : null;
 
   const isProjectActive = (projectId: string) =>
@@ -182,23 +201,37 @@ export function AppSidebar({ isOpen, onClose, onToggle }: AppSidebarProps) {
 
           {/* Projects */}
           <SidebarSection title="Projects" isCollapsed={isCollapsed}>
-            {mockProjects.map((project) => (
-              <SidebarItem
-                key={project.id}
-                href={`/app/projects/${project.id}`}
-                icon={
-                  <div
-                    className="w-3 h-3 rounded-sm flex-shrink-0"
-                    style={{
-                      backgroundColor: getBrandColor(project.color),
-                    }}
-                  />
-                }
-                label={project.name}
-                isActive={isProjectActive(project.id)}
-                isCollapsed={isCollapsed}
-              />
-            ))}
+            {loading ? (
+              !isCollapsed && (
+                <div className="px-3 py-2 text-sm text-[#9a9a9a]">
+                  Loading...
+                </div>
+              )
+            ) : projects.length === 0 ? (
+              !isCollapsed && (
+                <div className="px-3 py-2 text-sm text-[#9a9a9a]">
+                  No projects yet
+                </div>
+              )
+            ) : (
+              projects.map((project) => (
+                <SidebarItem
+                  key={project.id}
+                  href={`/app/projects/${project.id}`}
+                  icon={
+                    <div
+                      className="w-3 h-3 rounded-sm flex-shrink-0"
+                      style={{
+                        backgroundColor: getBrandColor(project.color),
+                      }}
+                    />
+                  }
+                  label={project.name}
+                  isActive={isProjectActive(project.id)}
+                  isCollapsed={isCollapsed}
+                />
+              ))
+            )}
             {!isCollapsed && (
               <Link
                 href="/app/projects/new"

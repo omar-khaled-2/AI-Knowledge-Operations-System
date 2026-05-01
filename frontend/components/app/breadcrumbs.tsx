@@ -11,17 +11,18 @@ interface BreadcrumbItem {
 
 interface BreadcrumbsProps {
   projectId?: string
+  projectName?: string
   section?: string
   itemName?: string
 }
 
-export function Breadcrumbs({ projectId, section, itemName }: BreadcrumbsProps) {
+export function Breadcrumbs({ projectId, projectName, section, itemName }: BreadcrumbsProps) {
   const items: BreadcrumbItem[] = [{ label: "Projects", href: "/app" }]
 
   if (projectId) {
-    const project = getProjectById(projectId)
-    if (project) {
-      items.push({ label: project.name, href: `/app/projects/${projectId}` })
+    const name = projectName ?? getProjectById(projectId)?.name
+    if (name) {
+      items.push({ label: name, href: `/app/projects/${projectId}` })
     }
   }
 

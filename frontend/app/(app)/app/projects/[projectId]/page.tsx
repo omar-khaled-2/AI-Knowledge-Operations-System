@@ -1,7 +1,5 @@
-"use client"
-
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { notFound } from "next/navigation"
 import {
   FileText,
   MessageSquare,
@@ -9,38 +7,35 @@ import {
   Lightbulb,
   Plus,
   ArrowRight,
-  Clock,
   Settings,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
-  getProjectById,
   getSessionsByProjectId,
   getDocumentsByProjectId,
   getInsightsByProjectId,
   formatRelativeTime,
   getBrandColor,
 } from "@/lib/mock-data"
+import { getProject } from "@/lib/api/projects-server"
 import { Breadcrumbs } from "@/components/app/breadcrumbs"
 
-export default function ProjectHomePage() {
-  const params = useParams()
-  const projectId = params.projectId as string
-  const project = getProjectById(projectId)
+export default async function ProjectHomePage({
+  params,
+}: {
+  params: { projectId: string }
+}) {
+  const project = await getProject(params.projectId)
 
   if (!project) {
-    return (
-      <div className="p-4 lg:p-8">
-        <h1 className="text-2xl font-semibold text-[#0a0a0a]">Project not found</h1>
-        <Link href="/app" className="text-[#6a6a6a] hover:text-[#0a0a0a]">
-          ← Back to dashboard
-        </Link>
-      </div>
-    )
+    notFound()
   }
 
+  // TODO: Replace with real data when sessions module is built
   const sessions = getSessionsByProjectId(project.id)
+  // TODO: Replace with real data when documents module is built
   const documents = getDocumentsByProjectId(project.id)
+  // TODO: Replace with real data when insights module is built
   const insights = getInsightsByProjectId(project.id)
   const brandColor = getBrandColor(project.color)
 
@@ -48,7 +43,7 @@ export default function ProjectHomePage() {
     <div className="p-4 lg:p-8 space-y-8">
       {/* Header */}
       <div className="space-y-4">
-        <Breadcrumbs projectId={project.id} />
+        <Breadcrumbs projectId={project.id} projectName={project.name} />
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <h1 className="text-[40px] font-medium tracking-tight text-[#0a0a0a]">

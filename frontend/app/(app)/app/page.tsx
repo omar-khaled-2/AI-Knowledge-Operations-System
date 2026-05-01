@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import {
   FileText,
@@ -10,7 +8,11 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { mockProjects, getBrandColor } from "@/lib/mock-data";
+import { Project, getBrandColor } from "@/lib/mock-data";
+import { getProjects } from "@/lib/api/projects-server";
+
+// Force dynamic rendering so data is fetched at request time
+export const dynamic = "force-dynamic";
 
 function StatCard({
   icon,
@@ -41,9 +43,8 @@ function StatCard({
   );
 }
 
-function ProjectCard({ project }: { project: (typeof mockProjects)[0] }) {
+function ProjectCard({ project }: { project: Project }) {
   const brandColor = getBrandColor(project.color);
-  const isDark = project.color === "teal" || project.color === "pink";
 
   return (
     <Link
@@ -80,16 +81,25 @@ function ProjectCard({ project }: { project: (typeof mockProjects)[0] }) {
   );
 }
 
-export default function DashboardPage() {
-  const totalDocuments = mockProjects.reduce(
+export default async function DashboardPage() {
+  let projects: Project[] = [];
+  let error: string | null = null;
+
+  try {
+    projects = await getProjects();
+  } catch (err) {
+    error = err instanceof Error ? err.message : "Failed to load projects";
+  }
+
+  const totalDocuments = projects.reduce(
     (sum, p) => sum + p.documentCount,
     0,
   );
-  const totalSessions = mockProjects.reduce(
+  const totalSessions = projects.reduce(
     (sum, p) => sum + p.sessionCount,
     0,
   );
-  const totalInsights = mockProjects.reduce(
+  const totalInsights = projects.reduce(
     (sum, p) => sum + p.insightCount,
     0,
   );
@@ -106,12 +116,20 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-red-800">
+          <p className="text-sm font-medium">Error loading projects</p>
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon={<FolderOpen className="h-5 w-5" />}
           label="Total Projects"
-          value={mockProjects.length}
+          value={projects.length}
           color="#1a3a3a"
         />
         <StatCard
@@ -148,7 +166,7 @@ export default function DashboardPage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {mockProjects.map((project) => (
+          {projects.map((project) => (
             <ProjectCard key={project.id} project={project} />
           ))}
           <Link
