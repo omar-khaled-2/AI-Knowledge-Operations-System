@@ -231,6 +231,7 @@ describe('DocumentsService', () => {
         projectId,
         size: 1024,
         mimeType: 'application/pdf',
+        objectKey: 'test-object-key-123',
       };
 
       const mockSave = jest.fn().mockImplementation(function () {
@@ -250,7 +251,7 @@ describe('DocumentsService', () => {
           ...createDto,
           projectId: expect.any(Types.ObjectId),
           owner: expect.any(Types.ObjectId),
-          objectKey: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-test\.pdf$/),
+          objectKey: 'test-object-key-123',
           status: 'processing',
         }),
       );
@@ -264,6 +265,7 @@ describe('DocumentsService', () => {
         sourceType: 'notion',
         size: 1024,
         mimeType: 'application/pdf',
+        objectKey: 'test-object-key-123',
       };
 
       mockDocumentModel.mockImplementation(() => ({
@@ -282,6 +284,7 @@ describe('DocumentsService', () => {
         projectId: 'invalid',
         size: 1024,
         mimeType: 'application/pdf',
+        objectKey: 'test-object-key-123',
       };
 
       // The toObjectId call in create happens on createDto.projectId
@@ -294,6 +297,7 @@ describe('DocumentsService', () => {
         projectId,
         size: 1024,
         mimeType: 'application/pdf',
+        objectKey: 'test-object-key-123',
       };
 
       await expect(service.create(createDto, 'invalid')).rejects.toThrow(BadRequestException);

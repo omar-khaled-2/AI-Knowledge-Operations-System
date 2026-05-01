@@ -71,13 +71,10 @@ export class DocumentsService {
   }
 
   async create(createDocumentDto: CreateDocumentDto, ownerId: string): Promise<DocumentDocument> {
-    const objectKey = `${randomUUID()}-${createDocumentDto.name}`;
-
     const createdDocument = new this.documentModel({
       ...createDocumentDto,
       projectId: this.toObjectId(createDocumentDto.projectId),
       owner: this.toObjectId(ownerId),
-      objectKey,
       status: 'processing',
     });
     return createdDocument.save();
@@ -134,13 +131,10 @@ export class DocumentsService {
         sourceType: 'upload',
         size: dto.size,
         mimeType: dto.mimeType,
+        objectKey,
       },
       ownerId,
     );
-
-    // Update with the correct objectKey since create generates its own
-    doc.objectKey = objectKey;
-    await doc.save();
 
     return { uploadUrl, objectKey, document: doc };
   }

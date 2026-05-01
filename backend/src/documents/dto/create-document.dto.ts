@@ -22,4 +22,8 @@ export class CreateDocumentDto {
   @IsString()
   @IsNotEmpty()
   mimeType: string;
+
+  @IsString()
+  @IsNotEmpty()
+  objectKey: string;
 }
