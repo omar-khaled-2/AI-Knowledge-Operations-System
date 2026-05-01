@@ -127,7 +127,6 @@ export class DocumentsService {
 
   async generateUploadUrl(
     dto: GenerateUploadUrlDto,
-    ownerId: string,
   ): Promise<{ uploadUrl: string; objectKey: string }> {
     const bucket = this.configService.get<string>('app.s3Bucket');
     if (!bucket) {

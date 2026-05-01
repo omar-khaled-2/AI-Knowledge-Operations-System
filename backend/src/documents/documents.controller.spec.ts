@@ -321,7 +321,7 @@ describe('DocumentsController', () => {
 
       const result = await controller.generateUploadUrl(dto as any, validUser);
       expect(mockProjectsService.findOne).toHaveBeenCalledWith(projectId, validUser.id);
-      expect(mockDocumentsService.generateUploadUrl).toHaveBeenCalledWith(dto, validUser.id);
+      expect(mockDocumentsService.generateUploadUrl).toHaveBeenCalledWith(dto);
       expect(result).toEqual(uploadResult);
     });
 

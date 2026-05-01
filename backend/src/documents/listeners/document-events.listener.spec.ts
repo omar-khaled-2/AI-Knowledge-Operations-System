@@ -41,7 +41,7 @@ describe('DocumentEventsListener', () => {
     }).compile();
 
     listener = module.get<DocumentEventsListener>(DocumentEventsListener);
-    // @ts-ignore - accessing private field for testing
+    // @ts-expect-error - accessing private field for testing
     mockRedis = listener['redis'];
   });
 

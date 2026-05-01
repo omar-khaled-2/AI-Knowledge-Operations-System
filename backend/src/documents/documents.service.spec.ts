@@ -433,7 +433,7 @@ describe('DocumentsService', () => {
 
       (getSignedUrl as jest.Mock).mockResolvedValue('https://signed-url.example.com');
 
-      const result = await service.generateUploadUrl(dto, ownerId);
+      const result = await service.generateUploadUrl(dto);
 
       expect(getSignedUrl).toHaveBeenCalled();
       expect(result.uploadUrl).toBe('https://signed-url.example.com');
@@ -473,10 +473,10 @@ describe('DocumentsService', () => {
         size: 1024,
       };
 
-      await expect(serviceWithNoBucket.generateUploadUrl(dto, ownerId)).rejects.toThrow(
+      await expect(serviceWithNoBucket.generateUploadUrl(dto)).rejects.toThrow(
         BadRequestException,
       );
-      await expect(serviceWithNoBucket.generateUploadUrl(dto, ownerId)).rejects.toThrow(
+      await expect(serviceWithNoBucket.generateUploadUrl(dto)).rejects.toThrow(
         'S3 bucket not configured',
       );
     });
