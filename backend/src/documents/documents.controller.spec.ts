@@ -115,11 +115,8 @@ describe('DocumentsController', () => {
         { page: 1, limit: 12, sortBy: 'createdAt', sortOrder: 'desc' },
       );
       expect(result).toEqual({
-        success: true,
-        data: {
-          documents,
-          pagination: { total: 1, page: 1, limit: 12, totalPages: 1 },
-        },
+        data: documents,
+        total: 1,
       });
     });
 
@@ -174,7 +171,7 @@ describe('DocumentsController', () => {
       );
     });
 
-    it('should calculate totalPages correctly', async () => {
+    it('should return correct total count', async () => {
       mockDocumentsService.findAllByProject.mockResolvedValue({
         documents: [{ id: '1' }],
         total: 25,
@@ -182,7 +179,7 @@ describe('DocumentsController', () => {
 
       const result = await controller.findAll(projectId, '1', '10', '', '', validUser);
 
-      expect(result.data.pagination.totalPages).toBe(3);
+      expect(result.total).toBe(25);
     });
 
     it('should throw BadRequestException when projectId is missing', async () => {
@@ -214,7 +211,7 @@ describe('DocumentsController', () => {
 
       const result = await controller.findOne(documentId, validUser);
       expect(mockDocumentsService.findOne).toHaveBeenCalledWith(documentId, validUser.id);
-      expect(result).toEqual({ success: true, data: document });
+      expect(result).toEqual(document);
     });
 
     it('should throw NotFoundException when document not found', async () => {
@@ -240,7 +237,7 @@ describe('DocumentsController', () => {
       const result = await controller.create(createDto as any, validUser);
       expect(mockProjectsService.findOne).toHaveBeenCalledWith(projectId, validUser.id);
       expect(mockDocumentsService.create).toHaveBeenCalledWith(createDto, validUser.id);
-      expect(result).toEqual({ success: true, data: createdDocument });
+      expect(result).toEqual(createdDocument);
     });
 
     it('should throw ForbiddenException when user does not own the project (IDOR protection)', async () => {
@@ -279,7 +276,7 @@ describe('DocumentsController', () => {
 
       const result = await controller.update(documentId, updateDto as any, validUser);
       expect(mockDocumentsService.update).toHaveBeenCalledWith(documentId, updateDto, validUser.id);
-      expect(result).toEqual({ success: true, data: updatedDocument });
+      expect(result).toEqual(updatedDocument);
     });
 
     it('should throw NotFoundException when document not found', async () => {
@@ -296,7 +293,7 @@ describe('DocumentsController', () => {
 
       const result = await controller.remove(documentId, validUser);
       expect(mockDocumentsService.remove).toHaveBeenCalledWith(documentId, validUser.id);
-      expect(result).toEqual({ success: true, data: deletedDocument });
+      expect(result).toEqual(deletedDocument);
     });
 
     it('should throw NotFoundException when document not found', async () => {
@@ -325,7 +322,7 @@ describe('DocumentsController', () => {
       const result = await controller.generateUploadUrl(dto as any, validUser);
       expect(mockProjectsService.findOne).toHaveBeenCalledWith(projectId, validUser.id);
       expect(mockDocumentsService.generateUploadUrl).toHaveBeenCalledWith(dto, validUser.id);
-      expect(result).toEqual({ success: true, data: uploadResult });
+      expect(result).toEqual(uploadResult);
     });
 
     it('should throw ForbiddenException when user does not own the project (IDOR protection)', async () => {

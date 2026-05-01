@@ -100,19 +100,9 @@ export class DocumentsController {
       },
     );
 
-    const totalPages = Math.ceil(result.total / limit);
-
     return {
-      success: true,
-      data: {
-        documents: plainToInstance(DocumentResponseDto, result.documents),
-        pagination: {
-          total: result.total,
-          page,
-          limit,
-          totalPages,
-        },
-      },
+      data: plainToInstance(DocumentResponseDto, result.documents),
+      total: result.total,
     };
   }
 
@@ -123,10 +113,7 @@ export class DocumentsController {
     if (!document) {
       throw new NotFoundException("Document not found");
     }
-    return {
-      success: true,
-      data: plainToInstance(DocumentResponseDto, document),
-    };
+    return plainToInstance(DocumentResponseDto, document);
   }
 
   @Post()
@@ -140,10 +127,7 @@ export class DocumentsController {
       createDocumentDto,
       userId,
     );
-    return {
-      success: true,
-      data: plainToInstance(DocumentResponseDto, document),
-    };
+    return plainToInstance(DocumentResponseDto, document);
   }
 
   @Patch(":id")
@@ -161,10 +145,7 @@ export class DocumentsController {
     if (!document) {
       throw new NotFoundException("Document not found");
     }
-    return {
-      success: true,
-      data: plainToInstance(DocumentResponseDto, document),
-    };
+    return plainToInstance(DocumentResponseDto, document);
   }
 
   @Delete(":id")
@@ -174,10 +155,7 @@ export class DocumentsController {
     if (!document) {
       throw new NotFoundException("Document not found");
     }
-    return {
-      success: true,
-      data: plainToInstance(DocumentResponseDto, document),
-    };
+    return plainToInstance(DocumentResponseDto, document);
   }
 
   @Post("upload-url")
@@ -192,11 +170,8 @@ export class DocumentsController {
       userId,
     );
     return {
-      success: true,
-      data: {
-        ...result,
-        document: plainToInstance(DocumentResponseDto, result.document),
-      },
+      ...result,
+      document: plainToInstance(DocumentResponseDto, result.document),
     };
   }
 }

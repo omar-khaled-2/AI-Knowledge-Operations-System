@@ -53,10 +53,7 @@ export class ProjectsController {
   async findAll(@CurrentUser() user: any) {
     const userId = this.getUserId(user);
     const projects = await this.projectsService.findAllByOwner(userId);
-    return {
-      success: true,
-      data: plainToInstance(ProjectResponseDto, projects),
-    };
+    return plainToInstance(ProjectResponseDto, projects);
   }
 
   @Get(":id")
@@ -66,10 +63,7 @@ export class ProjectsController {
     if (!project) {
       throw new NotFoundException("Project not found");
     }
-    return {
-      success: true,
-      data: plainToInstance(ProjectResponseDto, project),
-    };
+    return plainToInstance(ProjectResponseDto, project);
   }
 
   @Post()
@@ -79,10 +73,7 @@ export class ProjectsController {
   ) {
     const userId = this.getUserId(user);
     const project = await this.projectsService.create(createProjectDto, userId);
-    return {
-      success: true,
-      data: plainToInstance(ProjectResponseDto, project),
-    };
+    return plainToInstance(ProjectResponseDto, project);
   }
 
   @Patch(":id")
@@ -100,10 +91,7 @@ export class ProjectsController {
     if (!project) {
       throw new NotFoundException("Project not found");
     }
-    return {
-      success: true,
-      data: plainToInstance(ProjectResponseDto, project),
-    };
+    return plainToInstance(ProjectResponseDto, project);
   }
 
   @Delete(":id")
@@ -113,9 +101,6 @@ export class ProjectsController {
     if (!project) {
       throw new NotFoundException("Project not found");
     }
-    return {
-      success: true,
-      data: plainToInstance(ProjectResponseDto, project),
-    };
+    return plainToInstance(ProjectResponseDto, project);
   }
 }

@@ -87,7 +87,7 @@ describe('UsersController', () => {
 
       const result = await controller.getMe(validUser);
       expect(mockUsersService.findById).toHaveBeenCalledWith(validUser.id);
-      expect(result).toEqual({ success: true, data: validUser });
+      expect(result).toEqual(validUser);
     });
 
     it('should throw UnauthorizedException when user profile not found', async () => {
@@ -106,7 +106,7 @@ describe('UsersController', () => {
 
       const result = await controller.updateMe(updateDto as any, validUser);
       expect(mockUsersService.update).toHaveBeenCalledWith(validUser.id, updateDto);
-      expect(result).toEqual({ success: true, data: updatedUser });
+      expect(result).toEqual(updatedUser);
     });
 
     it('should strip googleId from update to prevent privilege escalation', async () => {
@@ -116,7 +116,7 @@ describe('UsersController', () => {
 
       const result = await controller.updateMe(updateDto, validUser);
       expect(mockUsersService.update).toHaveBeenCalledWith(validUser.id, { name: 'Updated Name' });
-      expect(result).toEqual({ success: true, data: updatedUser });
+      expect(result).toEqual(updatedUser);
     });
 
     it('should throw UnauthorizedException when user profile not found', async () => {

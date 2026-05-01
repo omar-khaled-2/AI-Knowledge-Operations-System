@@ -62,7 +62,7 @@ export class UsersController {
     if (!profile) {
       throw new UnauthorizedException("User profile not found");
     }
-    return { success: true, data: plainToInstance(UserResponseDto, profile) };
+    return plainToInstance(UserResponseDto, profile);
   }
 
   /**
@@ -85,6 +85,6 @@ export class UsersController {
     if (!updated) {
       throw new UnauthorizedException("User profile not found");
     }
-    return { success: true, data: plainToInstance(UserResponseDto, updated) };
+    return plainToInstance(UserResponseDto, updated);
   }
 }

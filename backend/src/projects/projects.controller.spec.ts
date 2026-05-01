@@ -97,14 +97,14 @@ describe('ProjectsController', () => {
 
       const result = await controller.findAll(validUser);
       expect(mockProjectsService.findAllByOwner).toHaveBeenCalledWith(validUser.id);
-      expect(result).toEqual({ success: true, data: projects });
+      expect(result).toEqual(projects);
     });
 
     it('should return empty array when no projects exist', async () => {
       mockProjectsService.findAllByOwner.mockResolvedValue([]);
 
       const result = await controller.findAll(validUser);
-      expect(result).toEqual({ success: true, data: [] });
+      expect(result).toEqual([]);
     });
   });
 
@@ -115,7 +115,7 @@ describe('ProjectsController', () => {
 
       const result = await controller.findOne(validObjectId, validUser);
       expect(mockProjectsService.findOne).toHaveBeenCalledWith(validObjectId, validUser.id);
-      expect(result).toEqual({ success: true, data: project });
+      expect(result).toEqual(project);
     });
 
     it('should throw NotFoundException when project not found', async () => {
@@ -134,7 +134,7 @@ describe('ProjectsController', () => {
 
       const result = await controller.create(createDto, validUser);
       expect(mockProjectsService.create).toHaveBeenCalledWith(createDto, validUser.id);
-      expect(result).toEqual({ success: true, data: createdProject });
+      expect(result).toEqual(createdProject);
     });
   });
 
@@ -146,7 +146,7 @@ describe('ProjectsController', () => {
 
       const result = await controller.update(validObjectId, updateDto, validUser);
       expect(mockProjectsService.update).toHaveBeenCalledWith(validObjectId, updateDto, validUser.id);
-      expect(result).toEqual({ success: true, data: updatedProject });
+      expect(result).toEqual(updatedProject);
     });
 
     it('should throw NotFoundException when project not found', async () => {
@@ -163,7 +163,7 @@ describe('ProjectsController', () => {
 
       const result = await controller.remove(validObjectId, validUser);
       expect(mockProjectsService.remove).toHaveBeenCalledWith(validObjectId, validUser.id);
-      expect(result).toEqual({ success: true, data: deletedProject });
+      expect(result).toEqual(deletedProject);
     });
 
     it('should throw NotFoundException when project not found', async () => {
