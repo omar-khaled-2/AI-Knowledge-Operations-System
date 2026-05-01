@@ -1,0 +1,17 @@
+# Bitnami Redis sub-chart values
+# Redis runs without authentication for local development simplicity.
+# For production, enable auth and provide credentials via Kubernetes Secret.
+
+redis:
+  architecture: standalone
+  auth:
+    enabled: false
+  persistence:
+    enabled: false
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi

@@ -37,6 +37,21 @@ initContainers:
         memory: 16Mi
     timeout: 120 # seconds
     interval: 2 # seconds between retries
+  redisWait:
+    enabled: true
+    image:
+      repository: busybox
+      tag: "1.36"
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 100m
+        memory: 64Mi
+      requests:
+        cpu: 10m
+        memory: 16Mi
+    timeout: 120 # seconds
+    interval: 2 # seconds between retries
 
 # Kubernetes Secrets configuration
 # Sensitive values MUST be provided via Kubernetes Secrets.
@@ -79,6 +94,13 @@ mongodb:
   #   - mongodb-root-user
   #   - mongodb-root-password
   existingSecretName: mongodb-secrets
+
+# Redis connection configuration (non-sensitive parts)
+# Redis runs without auth in local dev (auth.enabled: false in redis subchart)
+# Service name format: <release-name>-master (Bitnami standalone chart)
+redis:
+  host: redis-master
+  port: 6379
 
 # S3 configuration for document uploads
 s3:

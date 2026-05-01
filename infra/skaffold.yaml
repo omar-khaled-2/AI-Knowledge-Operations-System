@@ -30,6 +30,13 @@ deploy:
         valuesFiles:
           - values.yaml
         skipBuildDependencies: false
+      - name: redis
+        chartPath: helm/redis
+        namespace: default
+        createNamespace: true
+        valuesFiles:
+          - values.yaml
+        skipBuildDependencies: false
       - name: frontend
         chartPath: helm/frontend
         namespace: default
@@ -58,3 +65,7 @@ portForward:
     resourceName: backend-backend
     port: 80
     localPort: 3001
+  - resourceType: service
+    resourceName: redis-master
+    port: 6379
+    localPort: 6379

@@ -17,8 +17,9 @@ spec:
         app: backend
         release: {{ .Release.Name }}
     spec:
-      {{- if .Values.initContainers.mongodbWait.enabled }}
+      {{- if or .Values.initContainers.mongodbWait.enabled .Values.initContainers.redisWait.enabled }}
       initContainers:
+        {{- if .Values.initContainers.mongodbWait.enabled }}
         - name: wait-for-mongodb
           image: "{{ .Values.initContainers.mongodbWait.image.repository }}:{{ .Values.initContainers.mongodbWait.image.tag }}"
           imagePullPolicy: {{ .Values.initContainers.mongodbWait.image.pullPolicy | default .Values.imagePullPolicy }}
@@ -38,6 +39,28 @@ spec:
                 name: {{ .Release.Name }}-backend-config
           resources:
             {{- toYaml .Values.initContainers.mongodbWait.resources | nindent 12 }}
+        {{- end }}
+        {{- if .Values.initContainers.redisWait.enabled }}
+        - name: wait-for-redis
+          image: "{{ .Values.initContainers.redisWait.image.repository }}:{{ .Values.initContainers.redisWait.image.tag }}"
+          imagePullPolicy: {{ .Values.initContainers.redisWait.image.pullPolicy | default .Values.imagePullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Redis at ${REDIS_HOST}:${REDIS_PORT}..."
+              timeout {{ .Values.initContainers.redisWait.timeout }} sh -c '
+                until nc -z "${REDIS_HOST}" "${REDIS_PORT}" 2>/dev/null; do
+                  echo "Redis not ready, waiting {{ .Values.initContainers.redisWait.interval }}s..."
+                  sleep {{ .Values.initContainers.redisWait.interval }}
+                done
+              ' && echo "Redis is ready!" || { echo "ERROR: Timeout waiting for Redis after {{ .Values.initContainers.redisWait.timeout }} seconds"; exit 1; }
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-backend-config
+          resources:
+            {{- toYaml .Values.initContainers.redisWait.resources | nindent 12 }}
+        {{- end }}
       {{- end }}
       containers:
         - name: backend
