@@ -40,3 +40,20 @@ resource "aws_s3_bucket_public_access_block" "this" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+
+# ---------------------------------------------------------------------------
+# S3 CORS Configuration
+# ---------------------------------------------------------------------------
+# Allows the frontend to upload files directly to S3 via presigned URLs.
+# ---------------------------------------------------------------------------
+
+resource "aws_s3_bucket_cors_configuration" "this" {
+  bucket = aws_s3_bucket.this.id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["PUT", "POST"]
+    allowed_origins = var.cors_allowed_origins
+    max_age_seconds = 300
+  }
+}

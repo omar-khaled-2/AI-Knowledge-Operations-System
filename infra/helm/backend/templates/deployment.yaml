@@ -63,6 +63,19 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.mongodb.existingSecretName | default "mongodb-secrets" }}
                   key: mongodb-root-password
+            # AWS credentials for S3 document uploads (separate secret for better isolation)
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.s3.existingSecretName | default "aws-secrets" }}
+                  key: AWS_ACCESS_KEY_ID
+                  optional: true
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.s3.existingSecretName | default "aws-secrets" }}
+                  key: AWS_SECRET_ACCESS_KEY
+                  optional: true
           livenessProbe:
             httpGet:
               path: /health

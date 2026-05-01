@@ -12,3 +12,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "cors_allowed_origins" {
+  description = "List of origins allowed for CORS (e.g., ['http://localhost:3000'])"
+  type        = list(string)
+  default     = []
+}

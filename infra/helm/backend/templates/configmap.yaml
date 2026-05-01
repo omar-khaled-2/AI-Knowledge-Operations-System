@@ -15,3 +15,7 @@ data:
   MONGODB_HOST: {{ .Values.mongodb.host | default "mongodb" | quote }}
   MONGODB_PORT: {{ .Values.mongodb.port | default "27017" | quote }}
   MONGODB_DATABASE: {{ .Values.mongodb.database | default "ai-knowledge" | quote }}
+  # S3 configuration (non-sensitive parts)
+  S3_REGION: {{ .Values.s3.region | default "us-east-1" | quote }}
+  S3_BUCKET: {{ .Values.s3.bucket | quote }}
+  S3_ENDPOINT: {{ .Values.s3.endpoint | default "" | quote }}

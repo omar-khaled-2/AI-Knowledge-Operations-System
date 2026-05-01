@@ -13,3 +13,9 @@ variable "documents_bucket_name" {
   type        = string
   default     = "lalo-documents-omar"
 }
+
+variable "cors_allowed_origins" {
+  description = "List of origins allowed for CORS on the documents S3 bucket"
+  type        = list(string)
+  default     = ["http://localhost:3000"]
+}

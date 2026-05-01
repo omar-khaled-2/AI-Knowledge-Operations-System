@@ -50,7 +50,13 @@ initContainers:
 #      --from-literal=BETTER_AUTH_SECRET='your-secure-random-secret' \
 #      -n default
 #
-# 2. mongodb-secrets: MongoDB user + password (single source of truth)
+# 2. aws-secrets: AWS credentials for S3 document uploads
+#    kubectl create secret generic aws-secrets \
+#      --from-literal=AWS_ACCESS_KEY_ID='your-aws-access-key' \
+#      --from-literal=AWS_SECRET_ACCESS_KEY='your-aws-secret-key' \
+#      -n default
+#
+# 3. mongodb-secrets: MongoDB user + password (single source of truth)
 #    kubectl create secret generic mongodb-secrets \
 #      --from-literal=mongodb-root-user='root' \
 #      --from-literal=mongodb-root-password='your-password' \
@@ -73,6 +79,17 @@ mongodb:
   #   - mongodb-root-user
   #   - mongodb-root-password
   existingSecretName: mongodb-secrets
+
+# S3 configuration for document uploads
+s3:
+  region: "eu-west-3"
+  bucket: "lalo-documents-omar"
+  endpoint: ""
+  # Name of existing secret containing AWS credentials
+  # The secret must contain keys:
+  #   - AWS_ACCESS_KEY_ID
+  #   - AWS_SECRET_ACCESS_KEY
+  existingSecretName: "aws-secrets"
 
 # Non-sensitive configuration
 config:

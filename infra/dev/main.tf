@@ -13,4 +13,6 @@ module "documents_bucket" {
     Environment = "dev"
     Project     = "documents"
   }
+
+  cors_allowed_origins = var.cors_allowed_origins
 }
