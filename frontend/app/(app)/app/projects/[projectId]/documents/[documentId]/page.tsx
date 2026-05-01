@@ -16,8 +16,17 @@ import {
   getProjectById,
   getDocumentById,
   formatRelativeTime,
+  type Document,
 } from "@/lib/mock-data"
+import { formatFileSize } from "@/lib/utils"
 import { Breadcrumbs } from "@/components/app/breadcrumbs"
+
+function getDisplaySize(doc: Document): string {
+  if (typeof doc.size === "number") {
+    return formatFileSize(doc.size);
+  }
+  return doc.size;
+}
 
 export default function DocumentViewerPage() {
   const params = useParams()
@@ -79,7 +88,7 @@ export default function DocumentViewerPage() {
               <div className="flex items-center gap-3 text-sm text-[#6a6a6a] mt-1">
                 <span className="capitalize">{document.sourceType.replace("-", " ")}</span>
                 <span>·</span>
-                <span>{document.size}</span>
+                <span>{getDisplaySize(document)}</span>
                 {document.pageCount && (
                   <>
                     <span>·</span>
@@ -139,7 +148,7 @@ export default function DocumentViewerPage() {
               </div>
               <div>
                 <p className="text-xs text-[#9a9a9a]">File Size</p>
-                <p className="text-sm text-[#0a0a0a]">{document.size}</p>
+                <p className="text-sm text-[#0a0a0a]">{getDisplaySize(document)}</p>
               </div>
               {document.pageCount && (
                 <div>
@@ -151,7 +160,7 @@ export default function DocumentViewerPage() {
                 <p className="text-xs text-[#9a9a9a]">Uploaded</p>
                 <p className="text-sm text-[#0a0a0a] flex items-center gap-1">
                   <Clock className="h-3.5 w-3.5" />
-                  {formatRelativeTime(document.uploadDate)}
+                  {formatRelativeTime(document.createdAt)}
                 </p>
               </div>
             </div>
