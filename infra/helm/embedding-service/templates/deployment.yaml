@@ -1,38 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "document-processor.fullname" . }}
+  name: {{ include "embedding-service.fullname" . }}
   labels:
-    {{- include "document-processor.labels" . | nindent 4 }}
+    {{- include "embedding-service.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "document-processor.selectorLabels" . | nindent 6 }}
+      {{- include "embedding-service.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "document-processor.selectorLabels" . | nindent 8 }}
+        {{- include "embedding-service.selectorLabels" . | nindent 8 }}
     spec:
-      {{- if .Values.initContainers.redisWait.enabled }}
-      initContainers:
-        - name: wait-for-redis
-          image: "{{ .Values.initContainers.redisWait.image.repository }}:{{ .Values.initContainers.redisWait.image.tag }}"
-          imagePullPolicy: {{ .Values.initContainers.redisWait.image.pullPolicy }}
-          resources:
-            {{- toYaml .Values.initContainers.redisWait.resources | nindent 12 }}
-          command:
-            - sh
-            - -c
-            - |
-              until nc -z {{ .Values.redis.host }} {{ .Values.redis.port }}; do
-                echo "Waiting for Redis..."
-                sleep {{ .Values.initContainers.redisWait.interval }}
-              done
-              echo "Redis is available!"
-      {{- end }}
       containers:
-        - name: document-processor
+        - name: embedding-service
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
@@ -41,34 +24,20 @@ spec:
               protocol: TCP
           envFrom:
             - configMapRef:
-                name: {{ include "document-processor.fullname" . }}-config
+                name: {{ include "embedding-service.fullname" . }}-config
           env:
             - name: REDIS_URL
               value: "redis://{{ .Values.redis.host }}:{{ .Values.redis.port }}"
-            - name: AWS_REGION
-              value: {{ .Values.aws.region | quote }}
-            - name: S3_BUCKET_NAME
-              value: {{ .Values.s3.bucketName | quote }}
             - name: QDRANT_URL
               value: "http://{{ .Values.qdrant.host }}:{{ .Values.qdrant.port }}"
             - name: QDRANT_COLLECTION
               value: {{ .Values.qdrant.collection | quote }}
-            - name: EMBEDDING_MODEL
-              value: {{ .Values.embedding.modelName | quote }}
-            - name: EMBEDDING_QUEUE_NAME
-              value: {{ .Values.embedding.queueName | quote }}
-            - name: MAX_CHUNK_SIZE
-              value: {{ .Values.embedding.maxChunkSize | quote }}
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.aws.secretName }}
-                  key: AWS_ACCESS_KEY_ID
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.aws.secretName }}
-                  key: AWS_SECRET_ACCESS_KEY
+            - name: QUEUE_NAME
+              value: {{ .Values.config.queueName | quote }}
+            - name: MODEL_NAME
+              value: {{ .Values.config.modelName | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.config.logLevel | quote }}
             {{- if .Values.redis.existingSecretName }}
             - name: REDIS_PASSWORD
               valueFrom:

@@ -1,0 +1,72 @@
+# Default values for embedding-service
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  repository: embedding-service
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+replicaCount: 2
+
+# Resource limits for the Embedding Service
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+# Redis connection configuration
+redis:
+  host: "redis-master"
+  port: 6379
+  existingSecretName: "redis-secrets"
+  passwordKey: "redis-password"
+
+# Qdrant vector database configuration
+qdrant:
+  host: "qdrant"
+  port: 6333
+  collection: "documents"
+
+# Embedding service application configuration
+config:
+  queueName: "embedding-jobs"
+  modelName: "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
+  logLevel: "info"
+
+# Health check configuration
+healthCheck:
+  useHttp: true
+  livenessPath: "/health"
+  readinessPath: "/ready"
+  port: 3000
+  liveness:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Node selector for pod assignment
+# ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+nodeSelector: {}
+
+# Tolerations for pod assignment
+# ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+tolerations: []
+
+# Affinity for pod assignment
+# ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+affinity: {}

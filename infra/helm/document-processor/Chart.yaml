@@ -1,6 +1,6 @@
 apiVersion: v2
 name: document-processor
-description: Document Processor microservice for AI Knowledge Operations - handles document ingestion via BullMQ
+description: Document Processor microservice for AI Knowledge Operations - handles document parsing, semantic chunking, and embedding job enqueueing
 type: application
-version: 0.1.0
+version: 0.2.0
 appVersion: "1.0.0"

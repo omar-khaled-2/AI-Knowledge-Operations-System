@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "embedding-service.fullname" . }}-config
+  labels:
+    {{- include "embedding-service.labels" . | nindent 4 }}
+data:
+  REDIS_HOST: {{ .Values.redis.host | default "redis-master" | quote }}
+  REDIS_PORT: {{ .Values.redis.port | default "6379" | quote }}
+  QDRANT_HOST: {{ .Values.qdrant.host | default "qdrant" | quote }}
+  QDRANT_PORT: {{ .Values.qdrant.port | default "6333" | quote }}
+  QDRANT_COLLECTION: {{ .Values.qdrant.collection | default "documents" | quote }}
+  QUEUE_NAME: {{ .Values.config.queueName | default "embedding-jobs" | quote }}
+  MODEL_NAME: {{ .Values.config.modelName | default "sentence-transformers/multi-qa-MiniLM-L6-cos-v1" | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | default "info" | quote }}
+  PORT: {{ .Values.service.targetPort | default "3000" | quote }}

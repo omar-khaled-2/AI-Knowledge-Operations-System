@@ -38,9 +38,21 @@ aws:
 s3:
   bucketName: "lalo-documents-omar"
 
+# Qdrant vector database configuration
+qdrant:
+  host: "qdrant"
+  port: 6333
+  collection: "documents"
+
+# Embedding service configuration
+embedding:
+  modelName: "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
+  queueName: "embedding-jobs"
+  maxChunkSize: "512"
+
 # Document processor application configuration (non-sensitive)
 config:
-  # BullMQ queue name
+  # RQ queue name
   queueName: "document-processing"
   # Number of workers per pod
   concurrency: 5
