@@ -20,8 +20,8 @@ describe("Documents Server API", () => {
   })
 
   const importModule = async () => {
-    const module = await import("./documents-server")
-    return module
+    const mod = await import("./documents-server")
+    return mod
   }
 
   describe("getDocument()", () => {

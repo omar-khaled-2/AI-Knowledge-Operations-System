@@ -92,7 +92,7 @@ export function UploadButton({ projectId }: UploadButtonProps) {
       });
 
       if (!result.success || !result.data) {
-        throw new Error(result.error || "Failed to get upload URL");
+        throw new Error(result.error ?? "Failed to get upload URL");
       }
 
       const { uploadUrl } = result.data;

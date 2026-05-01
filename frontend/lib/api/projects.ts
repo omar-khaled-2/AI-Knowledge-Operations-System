@@ -45,7 +45,7 @@ async function fetchApi<T>(
   const result: ApiResponse<T> = await response.json();
 
   if (!result.success) {
-    throw new Error(result.error || "API request failed");
+    throw new Error(result.error ?? "API request failed");
   }
 
   return result.data;
@@ -73,7 +73,7 @@ async function fetchProjectById(id: string): Promise<Project | null> {
   const result: ApiResponse<Project> = await response.json();
 
   if (!result.success) {
-    throw new Error(result.error || "API request failed");
+    throw new Error(result.error ?? "API request failed");
   }
 
   return result.data;

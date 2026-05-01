@@ -70,8 +70,8 @@ function SourceTypeIcon({ sourceType }: { sourceType: string }) {
     github: <span className="text-xs font-bold">GH</span>,
   };
 
-  const icon = icons[sourceType] || <FileText />;
-  const label = sourceTypeLabels[sourceType] || sourceType;
+  const icon = icons[sourceType] ?? <FileText />;
+  const label = sourceTypeLabels[sourceType] ?? sourceType;
 
   return (
     <TooltipProvider delay={0}>
@@ -279,11 +279,11 @@ export function DocumentList({ projectId }: DocumentListProps) {
     }
   };
 
-  const totalPages = pagination?.totalPages || 0;
+  const totalPages = pagination?.totalPages ?? 0;
   const startIndex = (currentPage - 1) * itemsPerPage + 1;
   const endIndex = Math.min(
     startIndex + itemsPerPage - 1,
-    pagination?.total || 0
+    pagination?.total ?? 0
   );
 
   if (isLoading) {
@@ -354,7 +354,7 @@ export function DocumentList({ projectId }: DocumentListProps) {
             Showing{" "}
             {filteredDocuments.length > 0 ? startIndex : 0}-
             {Math.min(endIndex, startIndex + filteredDocuments.length - 1)} of{" "}
-            {pagination?.total || 0}
+            {pagination?.total ?? 0}
           </span>
         </div>
 

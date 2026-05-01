@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { MessageSquare, Plus, Search, Clock } from "lucide-react";
-import { cn } from "@/lib/utils";
 import {
   getProjectById,
   getSessionsByProjectId,

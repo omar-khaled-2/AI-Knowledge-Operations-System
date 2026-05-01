@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { AppSidebar } from "@/components/app/app-sidebar"
-import { cn } from "@/lib/utils"
+
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)

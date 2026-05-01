@@ -9,7 +9,7 @@ import {
   Settings,
   Clock,
 } from "lucide-react"
-import { cn, formatFileSize } from "@/lib/utils"
+import { formatFileSize } from "@/lib/utils"
 import {
   getSessionsByProjectId,
   getInsightsByProjectId,

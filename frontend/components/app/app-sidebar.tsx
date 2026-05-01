@@ -127,7 +127,7 @@ export function AppSidebar({ isOpen, onClose, onToggle }: AppSidebarProps) {
   const projectMatch = pathname.match(/\/app\/projects\/([^\/]+)/);
   const currentProjectId = projectMatch?.[1];
   const currentProject = currentProjectId
-    ? projects.find((p) => p.id === currentProjectId) || null
+    ? projects.find((p) => p.id === currentProjectId) ?? null
     : null;
 
   const isProjectActive = (projectId: string) =>

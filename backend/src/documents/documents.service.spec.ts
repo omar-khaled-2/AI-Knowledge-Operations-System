@@ -8,6 +8,7 @@ import { UpdateDocumentDto } from './dto/update-document.dto';
 import { GenerateUploadUrlDto } from './dto/generate-upload-url.dto';
 import { BadRequestException } from '@nestjs/common';
 import { Types } from 'mongoose';
+import { S3Client } from '@aws-sdk/client-s3';
 
 // Mock AWS SDK
 jest.mock('@aws-sdk/client-s3', () => ({
@@ -463,9 +464,9 @@ describe('DocumentsService', () => {
         ],
       }).compile();
 
-      const serviceWithEndpoint = module.get<DocumentsService>(DocumentsService);
+      module.get<DocumentsService>(DocumentsService);
 
-      expect(require('@aws-sdk/client-s3').S3Client).toHaveBeenCalledWith(
+      expect(S3Client).toHaveBeenCalledWith(
         expect.objectContaining({
           endpoint: 'http://localhost:9000',
           forcePathStyle: true,

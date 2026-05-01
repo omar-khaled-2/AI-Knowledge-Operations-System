@@ -20,8 +20,8 @@ describe("Projects Server API", () => {
   })
 
   const importModule = async () => {
-    const module = await import("./projects-server")
-    return module
+    const mod = await import("./projects-server")
+    return mod
   }
 
   describe("getProject()", () => {

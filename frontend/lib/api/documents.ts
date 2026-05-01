@@ -62,7 +62,7 @@ async function fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
   const result: ApiResponse<T> = await response.json();
 
   if (!result.success) {
-    throw new Error(result.error || "API request failed");
+    throw new Error(result.error ?? "API request failed");
   }
 
   return result.data;
@@ -90,7 +90,7 @@ async function fetchDocumentById(id: string): Promise<Document | null> {
   const result: ApiResponse<Document> = await response.json();
 
   if (!result.success) {
-    throw new Error(result.error || "API request failed");
+    throw new Error(result.error ?? "API request failed");
   }
 
   return result.data;

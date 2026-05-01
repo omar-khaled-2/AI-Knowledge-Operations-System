@@ -4,9 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import {
   Lightbulb,
-  CheckCircle2,
   X,
-  ArrowRight,
   FileText,
   Target,
   TrendingUp,
@@ -50,10 +48,8 @@ const typeConfig: Record<
 
 function InsightCard({
   insight,
-  projectId,
 }: {
   insight: ReturnType<typeof getInsightsByProjectId>[0]
-  projectId: string
 }) {
   const config = typeConfig[insight.type] || {
     icon: <Lightbulb className="h-4 w-4" />,
@@ -190,7 +186,6 @@ export default function InsightsPage() {
           <InsightCard
             key={insight.id}
             insight={insight}
-            projectId={project.id}
           />
         ))}
       </div>

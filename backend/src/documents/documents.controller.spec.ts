@@ -8,8 +8,6 @@ import { Types } from 'mongoose';
 
 describe('DocumentsController', () => {
   let controller: DocumentsController;
-  let service: DocumentsService;
-  let projectsService: ProjectsService;
 
   const mockDocumentsService = {
     findAllByProject: jest.fn(),
@@ -55,8 +53,6 @@ describe('DocumentsController', () => {
       .compile();
 
     controller = module.get<DocumentsController>(DocumentsController);
-    service = module.get<DocumentsService>(DocumentsService);
-    projectsService = module.get<ProjectsService>(ProjectsService);
   });
 
   describe('getUserId', () => {

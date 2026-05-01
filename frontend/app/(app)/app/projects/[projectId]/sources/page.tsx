@@ -9,7 +9,6 @@ import {
   Loader2,
   Clock,
   RefreshCw,
-  ArrowRight,
 } from "lucide-react"
 import { useParams } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -53,10 +52,8 @@ const sourceTypeConfig: Record<
 
 function SourceCard({
   source,
-  projectId,
 }: {
   source: ReturnType<typeof getSourcesByProjectId>[0]
-  projectId: string
 }) {
   const config = sourceTypeConfig[source.type] || {
     name: source.type,
@@ -127,10 +124,8 @@ function SourceCard({
 
 function AvailableSourceCard({
   type,
-  projectId,
 }: {
   type: string
-  projectId: string
 }) {
   const config = sourceTypeConfig[type] || {
     name: type,
@@ -202,7 +197,6 @@ export default function SourcesPage() {
             <SourceCard
               key={source.id}
               source={source}
-              projectId={project.id}
             />
           ))}
         </div>
@@ -223,7 +217,6 @@ export default function SourcesPage() {
               <AvailableSourceCard
                 key={type}
                 type={type}
-                projectId={project.id}
               />
             ))}
           </div>

@@ -1,10 +1,4 @@
 import {
-  mockProjects,
-  mockSessions,
-  mockMessages,
-  mockDocuments,
-  mockKnowledgeSources,
-  mockInsights,
   mockActivity,
   getProjectById,
   getSessionsByProjectId,

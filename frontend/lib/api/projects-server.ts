@@ -22,7 +22,7 @@ export interface ApiResponse<T> {
 // Use internal K8s service URL for server-side fetches
 // In Kubernetes, this should point to the backend service (e.g., http://backend-backend)
 // For local dev, falls back to localhost
-const API_BASE = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_BASE = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 /**
  * Build Cookie header string from Next.js cookies store.
@@ -69,7 +69,7 @@ async function fetchServer<T>(
   const result: ApiResponse<T> = await response.json();
 
   if (!result.success) {
-    throw new Error(result.error || "API request failed");
+    throw new Error(result.error ?? "API request failed");
   }
 
   return result.data;
@@ -103,7 +103,7 @@ async function fetchProjectByIdServer(id: string): Promise<Project | null> {
   const result: ApiResponse<Project> = await response.json();
 
   if (!result.success) {
-    throw new Error(result.error || "API request failed");
+    throw new Error(result.error ?? "API request failed");
   }
 
   return result.data;

@@ -43,8 +43,8 @@ export interface ApiResponse<T> {
 // In Kubernetes, this should point to the backend service (e.g., http://backend-backend)
 // For local dev, falls back to localhost
 const API_BASE =
-  process.env.API_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.API_URL ??
+  process.env.NEXT_PUBLIC_API_URL ??
   "http://localhost:3001";
 
 /**
@@ -102,7 +102,7 @@ async function fetchServer<T>(
   const result: ApiResponse<T> = await response.json();
 
   if (!result.success) {
-    throw new Error(result.error || "API request failed");
+    throw new Error(result.error ?? "API request failed");
   }
 
   return result.data;
@@ -136,7 +136,7 @@ async function fetchDocumentByIdServer(id: string): Promise<Document | null> {
   const result: ApiResponse<Document> = await response.json();
 
   if (!result.success) {
-    throw new Error(result.error || "API request failed");
+    throw new Error(result.error ?? "API request failed");
   }
 
   return result.data;

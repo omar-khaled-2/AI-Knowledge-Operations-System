@@ -7,7 +7,6 @@ import { Types } from 'mongoose';
 
 describe('ProjectsController', () => {
   let controller: ProjectsController;
-  let service: ProjectsService;
 
   const mockProjectsService = {
     findAllByOwner: jest.fn(),
@@ -42,7 +41,6 @@ describe('ProjectsController', () => {
       .compile();
 
     controller = module.get<ProjectsController>(ProjectsController);
-    service = module.get<ProjectsService>(ProjectsService);
   });
 
   describe('getUserId', () => {
