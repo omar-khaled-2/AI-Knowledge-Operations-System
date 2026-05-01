@@ -14,4 +14,10 @@ export default registerAs('app', () => ({
   mongodbDatabase: process.env.MONGODB_DATABASE || 'ai-knowledge-ops',
   mongodbUser: process.env.MONGODB_USER || '',
   mongodbPassword: process.env.MONGODB_PASSWORD || '',
+  // S3 configuration
+  s3Region: process.env.S3_REGION || 'us-east-1',
+  s3Bucket: process.env.S3_BUCKET || '',
+  awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+  awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+  s3Endpoint: process.env.S3_ENDPOINT || '',
 }));

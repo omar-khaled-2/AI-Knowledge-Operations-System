@@ -6,6 +6,7 @@ import appConfig from "./config/app.config";
 import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { ProjectsModule } from "./projects/projects.module";
+import { DocumentsModule } from "./documents/documents.module";
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ProjectsModule } from "./projects/projects.module";
     UsersModule,
     AuthModule,
     ProjectsModule,
+    DocumentsModule,
   ],
   controllers: [AppController],
 })
