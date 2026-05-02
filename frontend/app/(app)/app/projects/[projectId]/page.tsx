@@ -187,7 +187,7 @@ export default async function ProjectHomePage({
                   <p className="text-xs text-[var(--muted-soft)] truncate">{session.preview}</p>
                 </div>
                 <span className="text-xs text-[var(--muted-soft)] flex-shrink-0">
-                  {formatRelativeTime(session.lastUpdated)}
+                  {formatRelativeTime(session.updatedAt)}
                 </span>
               </ListItem>
             ))}

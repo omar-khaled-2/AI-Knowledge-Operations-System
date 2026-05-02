@@ -15,7 +15,7 @@ export interface Session {
   projectId: string;
   name: string;
   messageCount: number;
-  lastUpdated: string;
+  updatedAt: string;
   preview: string;
 }
 
@@ -132,7 +132,7 @@ export const mockSessions: Session[] = [
     projectId: "proj-1",
     name: "Q4 Strategy Review",
     messageCount: 24,
-    lastUpdated: "2024-01-15T10:30:00Z",
+    updatedAt: "2024-01-15T10:30:00Z",
     preview: "What were the key outcomes from our Q4 planning session?",
   },
   {
@@ -140,7 +140,7 @@ export const mockSessions: Session[] = [
     projectId: "proj-1",
     name: "Competitor Analysis",
     messageCount: 18,
-    lastUpdated: "2024-01-14T16:45:00Z",
+    updatedAt: "2024-01-14T16:45:00Z",
     preview: "Compare our pricing strategy with competitors",
   },
   {
@@ -148,7 +148,7 @@ export const mockSessions: Session[] = [
     projectId: "proj-1",
     name: "Roadmap Questions",
     messageCount: 12,
-    lastUpdated: "2024-01-13T09:00:00Z",
+    updatedAt: "2024-01-13T09:00:00Z",
     preview: "When is the mobile app scheduled for release?",
   },
   {
@@ -156,7 +156,7 @@ export const mockSessions: Session[] = [
     projectId: "proj-2",
     name: "User Interview Insights",
     messageCount: 32,
-    lastUpdated: "2024-01-14T16:45:00Z",
+    updatedAt: "2024-01-14T16:45:00Z",
     preview: "Summarize the top pain points from user interviews",
   },
   {
@@ -164,7 +164,7 @@ export const mockSessions: Session[] = [
     projectId: "proj-2",
     name: "Persona Validation",
     messageCount: 15,
-    lastUpdated: "2024-01-13T11:20:00Z",
+    updatedAt: "2024-01-13T11:20:00Z",
     preview: "Do our personas align with the recent survey data?",
   },
   {
@@ -172,7 +172,7 @@ export const mockSessions: Session[] = [
     projectId: "proj-3",
     name: "API Documentation Help",
     messageCount: 28,
-    lastUpdated: "2024-01-15T08:20:00Z",
+    updatedAt: "2024-01-15T08:20:00Z",
     preview: "How do I authenticate with the new REST API?",
   },
   {
@@ -180,7 +180,7 @@ export const mockSessions: Session[] = [
     projectId: "proj-3",
     name: "Architecture Decision",
     messageCount: 22,
-    lastUpdated: "2024-01-14T13:10:00Z",
+    updatedAt: "2024-01-14T13:10:00Z",
     preview: "Why did we choose PostgreSQL over MongoDB?",
   },
   {
@@ -188,7 +188,7 @@ export const mockSessions: Session[] = [
     projectId: "proj-3",
     name: "Deployment Runbook",
     messageCount: 10,
-    lastUpdated: "2024-01-12T15:30:00Z",
+    updatedAt: "2024-01-12T15:30:00Z",
     preview: "Walk me through the production deployment process",
   },
 ];

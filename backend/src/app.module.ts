@@ -9,6 +9,7 @@ import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { ProjectsModule } from "./projects/projects.module";
 import { DocumentsModule } from "./documents/documents.module";
+import { SessionsModule } from "./sessions/sessions.module";
 import { WebSocketModule } from "./websocket/websocket.module";
 
 @Module({
@@ -54,6 +55,7 @@ import { WebSocketModule } from "./websocket/websocket.module";
     AuthModule,
     ProjectsModule,
     DocumentsModule,
+    SessionsModule,
     WebSocketModule,
   ],
   controllers: [AppController],
