@@ -26,6 +26,12 @@ class Config:
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     embedding_model: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 
+    # Redis for chunk tracking
+    redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379")
+
+    # Backend API URL for status updates
+    backend_url: str = os.getenv("BACKEND_URL", "")
+
     # Logging
     log_level: str = os.getenv("LOG_LEVEL", "info").upper()
 

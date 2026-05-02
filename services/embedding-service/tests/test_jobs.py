@@ -25,11 +25,20 @@ def test_embed_chunk_creates_vector():
             mock_client.upsert_chunks.return_value = None
             mock_client_class.return_value = mock_client
 
-            embed_chunk(chunk_data)
+            with patch('src.jobs.ChunkTracker') as mock_tracker_class:
+                mock_tracker = Mock()
+                mock_tracker.mark_chunk_embedded.return_value = 1
+                mock_tracker.is_complete.return_value = True
+                mock_tracker_class.return_value = mock_tracker
 
-            mock_model.embed.assert_called_once_with("Hello world")
-            mock_client.upsert_chunks.assert_called_once()
-            call_args = mock_client.upsert_chunks.call_args[0][0]
-            assert len(call_args) == 1
-            assert call_args[0]["id"] == "chunk-1"
-            assert call_args[0]["payload"]["document_id"] == "doc-1"
+                embed_chunk(chunk_data)
+
+                mock_model.embed.assert_called_once_with("Hello world")
+                mock_client.upsert_chunks.assert_called_once()
+                call_args = mock_client.upsert_chunks.call_args[0][0]
+                assert len(call_args) == 1
+                assert call_args[0]["id"] == "chunk-1"
+                assert call_args[0]["payload"]["document_id"] == "doc-1"
+                mock_tracker.mark_chunk_embedded.assert_called_once_with("doc-1", 1)
+                mock_tracker.is_complete.assert_called_once_with("doc-1", 1)
+                mock_tracker.cleanup.assert_called_once_with("doc-1")
