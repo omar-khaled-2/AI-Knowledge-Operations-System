@@ -85,6 +85,10 @@ spec:
               value: {{ .Values.embedding.queueName | quote }}
             - name: MAX_CHUNK_SIZE
               value: {{ .Values.embedding.maxChunkSize | quote }}
+            {{- if .Values.backend.url }}
+            - name: BACKEND_URL
+              value: {{ .Values.backend.url | quote }}
+            {{- end }}
             {{- if .Values.llm.existingSecretName }}
             - name: OPENAI_API_KEY
               valueFrom:

@@ -18,3 +18,4 @@ data:
   MODEL_NAME: {{ .Values.config.modelName | default "sentence-transformers/multi-qa-MiniLM-L6-cos-v1" | quote }}
   LOG_LEVEL: {{ .Values.config.logLevel | default "info" | quote }}
   PORT: {{ .Values.service.targetPort | default "3000" | quote }}
+  BACKEND_URL: {{ .Values.backend.url | default "" | quote }}

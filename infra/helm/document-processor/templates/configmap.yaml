@@ -25,3 +25,4 @@ data:
   EMBEDDING_MODEL: {{ .Values.embedding.modelName | quote }}
   EMBEDDING_QUEUE_NAME: {{ .Values.embedding.queueName | quote }}
   MAX_CHUNK_SIZE: {{ .Values.embedding.maxChunkSize | quote }}
+  BACKEND_URL: {{ .Values.backend.url | default "" | quote }}

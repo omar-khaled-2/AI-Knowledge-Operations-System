@@ -48,6 +48,10 @@ config:
   embeddingModel: "text-embedding-3-small"
   logLevel: "info"
 
+# Backend API configuration for status updates
+backend:
+  url: "http://backend-backend:80"
+
 # LLM API keys configuration
 # Reference to the existing llm-secrets Secret
 llm:
