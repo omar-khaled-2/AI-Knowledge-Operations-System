@@ -30,6 +30,30 @@ function getReconnectDelay(attempt: number): number {
   return delay * (0.5 + Math.random() * 0.5)
 }
 
+async function fetchTicket(): Promise<string | null> {
+  try {
+    const response = await fetch('/api/ws/ticket', {
+      method: 'POST',
+      credentials: 'include', // Send cookies for auth
+    })
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        console.error('[WebSocket] Unauthorized: user not authenticated')
+      } else {
+        console.error('[WebSocket] Failed to fetch ticket:', response.status, response.statusText)
+      }
+      return null
+    }
+
+    const data = await response.json()
+    return data.ticket ?? null
+  } catch (error) {
+    console.error('[WebSocket] Error fetching ticket:', error)
+    return null
+  }
+}
+
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected')
   const [lastMessage, setLastMessage] = useState<WSMessage | null>(null)
@@ -68,7 +92,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     setConnectionStatus('disconnected')
   }, [clearHeartbeat, clearReconnectTimeout])
 
-  const connectSocket = useCallback(() => {
+  const connectSocket = useCallback(async () => {
     // Don't connect if already connected or connecting
     const ws = wsRef.current
     if (ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) {
@@ -84,8 +108,16 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     setConnectionStatus('connecting')
     isIntentionalCloseRef.current = false
 
+    // Fetch ticket from backend (one-time use, get fresh ticket each time)
+    const ticket = await fetchTicket()
+    if (!ticket) {
+      setConnectionStatus('error')
+      return
+    }
+
     try {
-      const socket = new WebSocket(WS_URL)
+      const wsUrl = `${WS_URL}?ticket=${encodeURIComponent(ticket)}`
+      const socket = new WebSocket(wsUrl)
       wsRef.current = socket
 
       socket.onopen = () => {
@@ -134,7 +166,9 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         
         reconnectTimeoutRef.current = setTimeout(() => {
           reconnectAttemptRef.current += 1
-          connectSocket()
+          connectSocket().catch((error) => {
+            console.error('[WebSocket] Reconnection failed:', error)
+          })
         }, delay)
       }
 
@@ -159,7 +193,9 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Initial connection attempt
-    connectSocket()
+    connectSocket().catch((error) => {
+      console.error('[WebSocket] Initial connection failed:', error)
+    })
 
     // Monitor auth cookie changes
     const checkCookieInterval = setInterval(() => {
@@ -173,7 +209,9 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         disconnectSocket()
       } else if (hasAuth && !isConnected && !isConnecting) {
         console.log('[WebSocket] Auth cookie present, connecting')
-        connectSocket()
+        connectSocket().catch((error) => {
+          console.error('[WebSocket] Connection failed:', error)
+        })
       }
     }, 5000)
 
