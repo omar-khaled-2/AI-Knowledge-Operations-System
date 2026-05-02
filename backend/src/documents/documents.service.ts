@@ -10,6 +10,8 @@ import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { GenerateUploadUrlDto } from './dto/generate-upload-url.dto';
 import { DocumentCreatedEvent } from './events/document-created.event';
+import { WebSocketPublisher } from '../websocket/websocket-publisher.service';
+import { WSMessage, DocumentStatusPayload } from '../websocket/types';
 import { randomUUID } from 'crypto';
 
 @Injectable()
@@ -21,6 +23,7 @@ export class DocumentsService {
     @InjectModel(DocumentEntity.name) private documentModel: Model<DocumentDocument>,
     private configService: ConfigService,
     private eventEmitter: EventEmitter2,
+    private wsPublisher: WebSocketPublisher,
   ) {
     const region = this.configService.get<string>('app.s3Region');
     const endpoint = this.configService.get<string>('app.s3Endpoint');
@@ -135,7 +138,38 @@ export class DocumentsService {
       this.logger.warn(`Document not found for update: id=${id}, ownerId=${ownerId}`);
     }
 
+    // After successful update, publish WebSocket event
+    if (updateDocumentDto.status && updatedDocument) {
+      await this.publishDocumentStatus(
+        updatedDocument.owner.toString(),
+        id,
+        updateDocumentDto.status as DocumentStatusPayload['status'],
+      );
+    }
+
     return updatedDocument;
+  }
+
+  async publishDocumentStatus(
+    userId: string,
+    documentId: string,
+    status: DocumentStatusPayload['status'],
+    options?: { progress?: number; error?: string },
+  ): Promise<void> {
+    const event: WSMessage<'document.status', DocumentStatusPayload> = {
+      event: 'document.status',
+      version: '1.0',
+      timestamp: new Date().toISOString(),
+      userId,
+      payload: {
+        documentId,
+        status,
+        ...(options?.progress !== undefined && { progress: options.progress }),
+        ...(options?.error && { error: options.error }),
+      },
+    };
+
+    await this.wsPublisher.sendToUser(userId, event);
   }
 
   async remove(id: string, ownerId: string): Promise<DocumentEntity | null> {
