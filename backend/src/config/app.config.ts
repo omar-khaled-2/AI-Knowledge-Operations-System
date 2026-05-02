@@ -20,8 +20,9 @@ export default registerAs('app', () => ({
   awsAccessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
   awsSecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
   s3Endpoint: process.env.S3_ENDPOINT || '',
-  // Redis configuration
-  redisHost: process.env.REDIS_HOST || 'localhost',
-  redisPort: parseInt(process.env.REDIS_PORT, 10) || 6379,
-  redisStreamKey: process.env.REDIS_STREAM_KEY || 'documents:events',
+  // RabbitMQ configuration
+  rabbitmqUrl: process.env.RABBITMQ_URL || 'amqp://localhost:5672',
+  rabbitmqExchange: process.env.RABBITMQ_EXCHANGE || 'documents',
+  rabbitmqDocumentQueue: process.env.RABBITMQ_DOCUMENT_QUEUE || 'document-jobs',
+  rabbitmqEmbeddingQueue: process.env.RABBITMQ_EMBEDDING_QUEUE || 'embedding-jobs',
 }));

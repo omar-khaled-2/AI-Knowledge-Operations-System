@@ -1,37 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { ConfigService } from '@nestjs/config';
-import Redis from 'ioredis';
+import { RabbitMQService } from '../../rabbitmq/rabbitmq.service';
 import { DocumentCreatedEvent } from '../events/document-created.event';
 
 @Injectable()
 export class DocumentEventsListener {
   private readonly logger = new Logger(DocumentEventsListener.name);
-  private readonly redis: Redis;
-  private readonly streamKey: string;
+  private readonly documentQueue: string;
 
-  constructor(private readonly configService: ConfigService) {
-    const host = this.configService.get<string>('app.redisHost');
-    const port = this.configService.get<number>('app.redisPort');
-    this.streamKey = this.configService.get<string>('app.redisStreamKey') || 'documents:events';
-    
-    this.redis = new Redis({
-      host,
-      port,
-      retryStrategy: (times) => Math.min(times * 50, 2000),
-    });
-
-    this.redis.on('connect', () => {
-      this.logger.log('Redis connection established');
-    });
-
-    this.redis.on('error', (err) => {
-      this.logger.error('Redis connection error', err.message);
-    });
-
-    this.redis.on('reconnecting', () => {
-      this.logger.warn('Redis reconnecting...');
-    });
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly rabbitmqService: RabbitMQService,
+  ) {
+    this.documentQueue = this.configService.get<string>('app.rabbitmqDocumentQueue') || 'document-jobs';
   }
 
   @OnEvent('document.created')
@@ -41,30 +23,35 @@ export class DocumentEventsListener {
     );
 
     try {
-      await this.redis.xadd(
-        this.streamKey,
-        '*', // Auto-generate ID
-        'documentId', event.documentId,
-        'projectId', event.projectId,
-        'ownerId', event.ownerId,
-        'objectKey', event.objectKey,
-        'name', event.name,
-        'mimeType', event.mimeType,
-        'size', String(event.size),
-        'sourceType', event.sourceType,
-        'timestamp', event.timestamp,
+      await this.rabbitmqService.publish(
+        'document.created',
+        {
+          documentId: event.documentId,
+          projectId: event.projectId,
+          ownerId: event.ownerId,
+          objectKey: event.objectKey,
+          filename: event.name,
+          mimeType: event.mimeType,
+          size: event.size,
+          sourceType: event.sourceType,
+          timestamp: event.timestamp,
+        },
+        {
+          messageId: event.documentId,
+        },
       );
 
       this.logger.log(
-        `Published document.created event to Redis stream`,
+        `Published document.created event to RabbitMQ`,
         {
           documentId: event.documentId,
-          streamKey: this.streamKey,
+          exchange: 'documents',
+          routingKey: 'document.created',
         },
       );
     } catch (error) {
       this.logger.error(
-        'Failed to publish document.created event to Redis stream',
+        'Failed to publish document.created event to RabbitMQ',
         {
           documentId: event.documentId,
           error: error instanceof Error ? error.message : String(error),
