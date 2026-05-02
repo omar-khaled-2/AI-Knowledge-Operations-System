@@ -12,9 +12,11 @@ load_dotenv()
 class Config:
     """Service configuration loaded from environment variables."""
 
-    # Redis
-    redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379")
-    queue_name: str = os.getenv("QUEUE_NAME", "embedding-jobs")
+    # RabbitMQ
+    rabbitmq_url: str = os.getenv("RABBITMQ_URL", "amqp://localhost:5672")
+    rabbitmq_exchange: str = os.getenv("RABBITMQ_EXCHANGE", "documents")
+    rabbitmq_queue: str = os.getenv("RABBITMQ_EMBEDDING_QUEUE", "embedding-jobs")
+    rabbitmq_routing_key: str = os.getenv("RABBITMQ_EMBEDDING_ROUTING_KEY", "chunk.embed")
 
     # Qdrant
     qdrant_url: str = os.getenv("QDRANT_URL", "http://localhost:6333")
