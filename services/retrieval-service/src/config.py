@@ -1,0 +1,33 @@
+"""Retrieval Service - Configuration."""
+
+import os
+from dataclasses import dataclass
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+@dataclass(frozen=True)
+class Config:
+    """Service configuration loaded from environment variables."""
+
+    # Qdrant
+    qdrant_url: str = os.getenv("QDRANT_URL", "http://localhost:6333")
+    qdrant_collection: str = os.getenv("QDRANT_COLLECTION", "documents")
+
+    # OpenAI
+    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
+    embedding_model: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
+
+    # Service
+    port: int = int(os.getenv("PORT", "3000"))
+    request_timeout: int = int(os.getenv("REQUEST_TIMEOUT", "30"))
+
+    # Logging
+    log_level: str = os.getenv("LOG_LEVEL", "info").upper()
+
+    @classmethod
+    def from_env(cls) -> "Config":
+        """Create configuration from environment variables."""
+        return cls()
