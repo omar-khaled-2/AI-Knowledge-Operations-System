@@ -1,0 +1,50 @@
+# services/retrieval-service/.dockerignore
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Test files
+test
+tests
+*_test.py
+*_tests.py
+pytest.ini
+.coverage
+htmlcov
+.tox
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Misc
+README.md
+CHANGELOG.md
+LICENSE
+*.md
+requirements-dev.txt
+Makefile
