@@ -8,7 +8,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Project, getBrandColor } from "@/lib/mock-data";
-import { getProjects } from "@/lib/api/projects-server";
+import { getProjects } from "@/app/(app)/app/projects/actions";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/components/stat-card";
 import { PageHeader } from "@/components/page-header";

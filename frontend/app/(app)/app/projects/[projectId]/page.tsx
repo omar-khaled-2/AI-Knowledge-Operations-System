@@ -16,8 +16,8 @@ import {
   getBrandColor,
   type Document,
 } from "@/lib/mock-data"
-import { getProject } from "@/lib/api/projects-server"
-import { getDocuments } from "@/lib/api/documents-server"
+import { getProject } from "@/app/(app)/app/projects/actions"
+import { getDocuments } from "@/app/(app)/app/projects/[projectId]/documents/actions"
 import { Card, CardContent } from "@/components/ui/card"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"

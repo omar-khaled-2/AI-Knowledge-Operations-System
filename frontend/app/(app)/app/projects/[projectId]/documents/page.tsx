@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
-import { getProject } from "@/lib/api/projects-server"
+import { getProject } from "@/app/(app)/app/projects/actions"
 import { Breadcrumbs } from "@/components/app/breadcrumbs"
 import { UploadButton } from "./upload-button"
 import { DocumentList } from "./document-list"
