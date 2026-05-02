@@ -10,6 +10,7 @@ import { BadRequestException } from '@nestjs/common';
 import { Types } from 'mongoose';
 import { S3Client } from '@aws-sdk/client-s3';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { WebSocketPublisher } from '../websocket/websocket-publisher.service';
 
 // Mock AWS SDK
 jest.mock('@aws-sdk/client-s3', () => ({
@@ -79,6 +80,12 @@ describe('DocumentsService', () => {
           provide: EventEmitter2,
           useValue: {
             emit: jest.fn(),
+          },
+        },
+        {
+          provide: WebSocketPublisher,
+          useValue: {
+            sendToUser: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
@@ -461,6 +468,12 @@ describe('DocumentsService', () => {
               emit: jest.fn(),
             },
           },
+          {
+            provide: WebSocketPublisher,
+            useValue: {
+              sendToUser: jest.fn().mockResolvedValue(undefined),
+            },
+          },
         ],
       }).compile();
 
@@ -508,6 +521,12 @@ describe('DocumentsService', () => {
             provide: EventEmitter2,
             useValue: {
               emit: jest.fn(),
+            },
+          },
+          {
+            provide: WebSocketPublisher,
+            useValue: {
+              sendToUser: jest.fn().mockResolvedValue(undefined),
             },
           },
         ],

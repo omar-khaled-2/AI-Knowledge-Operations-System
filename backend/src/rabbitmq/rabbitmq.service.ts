@@ -5,7 +5,7 @@ import * as amqp from 'amqplib';
 @Injectable()
 export class RabbitMQService implements OnModuleDestroy {
   private readonly logger = new Logger(RabbitMQService.name);
-  private connection: amqp.Connection | null = null;
+  private connection: any = null;
   private channel: amqp.Channel | null = null;
   private readonly exchange: string;
   private readonly url: string;
