@@ -1,0 +1,72 @@
+# Default values for retrieval-service
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  repository: retrieval-service
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+replicaCount: 2
+
+# Resource limits for the Retrieval Service
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+# Qdrant vector database configuration
+qdrant:
+  host: "qdrant"
+  port: 6333
+  collection: "documents"
+
+# Retrieval service application configuration
+config:
+  embeddingModel: "text-embedding-3-small"
+  logLevel: "info"
+
+# LLM API keys configuration
+# Reference to the existing llm-secrets Secret
+llm:
+  existingSecretName: "llm-secrets"
+
+# Health check configuration
+healthCheck:
+  useHttp: true
+  livenessPath: "/health"
+  readinessPath: "/ready"
+  port: 3000
+  liveness:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Request timeout configuration (seconds)
+requestTimeout: 30
+
+# Node selector for pod assignment
+# ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+nodeSelector: {}
+
+# Tolerations for pod assignment
+# ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+tolerations: []
+
+# Affinity for pod assignment
+# ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+affinity: {}

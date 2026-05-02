@@ -26,6 +26,10 @@ build:
       context: ../services/embedding-service
       docker:
         dockerfile: Dockerfile
+    - image: retrieval-service
+      context: ../services/retrieval-service
+      docker:
+        dockerfile: Dockerfile
     - image: websocket-gateway
       context: ../services/websocket-gateway
       docker:
@@ -101,6 +105,15 @@ deploy:
           - values.yaml
         setValues:
           image.repository: embedding-service
+          image.tag: latest
+      - name: retrieval-service
+        chartPath: helm/retrieval-service
+        namespace: default
+        createNamespace: true
+        valuesFiles:
+          - values.yaml
+        setValues:
+          image.repository: retrieval-service
           image.tag: latest
       - name: websocket-gateway
         chartPath: helm/websocket-gateway

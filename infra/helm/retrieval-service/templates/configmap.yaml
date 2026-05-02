@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: retrieval-service-config
+  labels:
+    app.kubernetes.io/name: retrieval-service
+data:
+  QDRANT_URL: "http://{{ .Values.qdrant.host }}:{{ .Values.qdrant.port }}"
+  QDRANT_COLLECTION: {{ .Values.qdrant.collection | default "documents" | quote }}
+  EMBEDDING_MODEL: {{ .Values.config.embeddingModel | default "text-embedding-3-small" | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | default "info" | quote }}
+  PORT: {{ .Values.service.targetPort | default "3000" | quote }}
+  REQUEST_TIMEOUT: {{ .Values.requestTimeout | default "30" | quote }}
