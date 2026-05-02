@@ -47,6 +47,11 @@ class BackendClient:
             logger.error(f"Backend API unexpected error: {e}")
             return []
 
+    async def get_latest_message(self, session_id: str) -> dict[str, Any] | None:
+        """Fetch the latest message for a session."""
+        messages = await self.get_messages(session_id, limit=1)
+        return messages[0] if messages else None
+
     async def close(self):
         """Close the HTTP client."""
         await self.client.aclose()

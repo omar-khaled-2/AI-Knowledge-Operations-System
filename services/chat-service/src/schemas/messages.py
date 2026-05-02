@@ -17,7 +17,6 @@ class ChatNotification(BaseModel):
 
     userId: str = Field(..., description="The user ID")
     sessionId: str = Field(..., description="The chat session ID")
-    message: str = Field(..., description="The user's message")
     projectId: str | None = Field(default=None, description="Optional project ID for RAG")
 
 

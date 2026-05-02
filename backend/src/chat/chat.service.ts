@@ -7,7 +7,6 @@ import { SessionsService } from '../sessions/sessions.service';
 interface ChatNotification {
   userId: string;
   sessionId: string;
-  message: string;
   projectId: string | null;
 }
 
@@ -62,11 +61,10 @@ export class ChatService implements OnModuleInit, OnModuleDestroy {
       });
 
       // Publish light notification to chat:process
-      // Chat service can call REST API to fetch history if needed
+      // Chat service can call REST API to fetch latest message if needed
       const notification = {
         userId: data.userId,
         sessionId: data.sessionId,
-        message: data.message,
         projectId: data.projectId,
       };
 

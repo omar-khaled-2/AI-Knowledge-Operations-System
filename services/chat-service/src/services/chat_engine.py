@@ -56,7 +56,6 @@ class ChatEngine:
 
         user_id = notification.userId
         session_id = notification.sessionId
-        user_message = notification.message
         project_id = notification.projectId
 
         logger.info(
@@ -64,9 +63,23 @@ class ChatEngine:
             f"project={project_id}"
         )
 
-        # NOTE: If you need chat history for real AI, fetch it from backend API:
+        # Fetch latest message from backend API
+        latest_message = await self.backend_client.get_latest_message(session_id)
+        if not latest_message:
+            logger.error(f"No messages found for session {session_id}")
+            yield {
+                "userId": user_id,
+                "sessionId": session_id,
+                "chunk": "Error: Could not fetch message from backend",
+                "done": True,
+                "sources": None,
+            }
+            return
+
+        user_message = latest_message["content"]
+
+        # NOTE: If you need full chat history for real AI, fetch it:
         # history = await self.backend_client.get_messages(session_id)
-        # For stub AI, we don't need history
 
         # Retrieve RAG context if project_id is provided
         sources: list[Source] | None = None
