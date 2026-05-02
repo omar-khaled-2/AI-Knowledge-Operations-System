@@ -1,0 +1,78 @@
+# Grafana sub-chart values
+# Pre-configured with Loki datasource for local development
+
+grafana:
+  replicas: 1
+  
+  admin:
+    existingSecret: ""
+    userKey: admin-user
+    passwordKey: admin-password
+    
+  # Set admin credentials via env vars
+  env:
+    GF_SECURITY_ADMIN_USER: admin
+    GF_SECURITY_ADMIN_PASSWORD: admin
+    
+  grafana.ini:
+    analytics:
+      reporting_enabled: false
+      check_for_updates: false
+    auth:
+      disable_login_form: false
+    auth.anonymous:
+      enabled: true
+      org_name: Main Org.
+      org_role: Admin
+    explore:
+      enabled: true
+    log:
+      mode: console
+      level: info
+    paths:
+      data: /var/lib/grafana/data
+      logs: /var/log/grafana
+      plugins: /var/lib/grafana/plugins
+      provisioning: /etc/grafana/provisioning
+    server:
+      http_port: 3000
+      root_url: '%(protocol)s://%(domain)s:%(http_port)s/'
+      serve_from_sub_path: false
+
+  # Auto-provision Loki datasource
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Loki
+          type: loki
+          url: http://loki:3100
+          access: proxy
+          isDefault: true
+          editable: false
+
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  # Use emptyDir for local dev (dashboards lost on restart)
+  persistence:
+    enabled: false
+
+  testFramework:
+    enabled: false
+
+  sidecar:
+    datasources:
+      enabled: false
+    dashboards:
+      enabled: false

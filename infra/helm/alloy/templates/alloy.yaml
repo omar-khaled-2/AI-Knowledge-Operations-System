@@ -1,0 +1,158 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "alloy.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "alloy.labels" . | nindent 4 }}
+data:
+  config.alloy: |
+    // Discover pods in the default namespace
+    discovery.kubernetes "pods" {
+      role = "pod"
+      namespaces {
+        names = ["default"]
+      }
+    }
+
+    // Relabel pod targets to add useful labels
+    discovery.relabel "pod_labels" {
+      targets = discovery.kubernetes.pods.targets
+
+      rule {
+        source_labels = ["__meta_kubernetes_namespace"]
+        target_label  = "namespace"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_name"]
+        target_label  = "pod"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_container_name"]
+        target_label  = "container"
+      }
+
+      rule {
+        source_labels = ["__meta_kubernetes_pod_label_app"]
+        target_label  = "service"
+      }
+    }
+
+    // Tail logs from discovered pods
+    loki.source.kubernetes "pods" {
+      targets    = discovery.relabel.pod_labels.output
+      forward_to = [loki.write.default.receiver]
+    }
+
+    // Write logs to Loki
+    loki.write "default" {
+      endpoint {
+        name = "loki"
+        url  = "{{ .Values.loki.url }}/loki/api/v1/push"
+        headers = {
+          "X-Scope-OrgID" = "fake",
+        }
+      }
+    }
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "alloy.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "alloy.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "alloy.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "alloy.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "alloy.fullname" . }}
+      containers:
+        - name: alloy
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - run
+            - /etc/alloy/config.alloy
+            - --storage.path=/tmp/alloy
+            - --server.http.listen-addr=0.0.0.0:12345
+          ports:
+            - containerPort: 12345
+              name: http
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alloy
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+            - name: dockercontainers
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "alloy.fullname" . }}-config
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: dockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "alloy.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "alloy.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "alloy.fullname" . }}
+  labels:
+    {{- include "alloy.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources:
+      - pods
+      - pods/log
+      - namespaces
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - nodes/proxy
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "alloy.fullname" . }}
+  labels:
+    {{- include "alloy.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "alloy.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "alloy.fullname" . }}
+    namespace: {{ .Release.Namespace }}

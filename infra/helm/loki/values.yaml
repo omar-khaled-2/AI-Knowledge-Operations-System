@@ -1,0 +1,28 @@
+# Minimal Loki configuration for local development
+
+image:
+  repository: grafana/loki
+  tag: "3.0.0"
+  pullPolicy: IfNotPresent
+
+replicas: 1
+
+service:
+  type: ClusterIP
+  port: 3100
+
+persistence:
+  enabled: true
+  size: 1Gi
+  storageClassName: ""
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+retention:
+  period: 168h  # 7 days

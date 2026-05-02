@@ -1,0 +1,17 @@
+# Grafana Alloy configuration
+
+image:
+  repository: grafana/alloy
+  tag: "v1.16.0"
+  pullPolicy: IfNotPresent
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+loki:
+  url: http://loki:3100
