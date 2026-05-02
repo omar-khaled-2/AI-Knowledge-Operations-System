@@ -6,8 +6,9 @@ import random
 from typing import AsyncGenerator
 
 from src.config import Config
-from src.schemas.messages import ProcessMessage, ResponseChunk, Source
+from src.schemas.messages import ChatNotification, Source
 from src.services.retrieval_client import RetrievalClient
+from src.services.backend_client import BackendClient
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,10 @@ class ChatEngine:
             base_url=config.retrieval_service_url,
             timeout=config.retrieval_timeout,
         )
+        self.backend_client = BackendClient(
+            base_url=config.backend_url,
+            timeout=config.backend_timeout,
+        )
 
     async def process_message(
         self,
@@ -37,7 +42,7 @@ class ChatEngine:
     ) -> AsyncGenerator[dict, None]:
         """Process a chat message and generate response chunks."""
         try:
-            process_msg = ProcessMessage.model_validate(message)
+            notification = ChatNotification.model_validate(message)
         except Exception as e:
             logger.error(f"Invalid message format: {e}")
             yield {
@@ -49,15 +54,19 @@ class ChatEngine:
             }
             return
 
-        user_id = process_msg.userId
-        session_id = process_msg.sessionId
-        user_message = process_msg.message
-        project_id = process_msg.projectId
+        user_id = notification.userId
+        session_id = notification.sessionId
+        user_message = notification.message
+        project_id = notification.projectId
 
         logger.info(
             f"Processing message for user={user_id}, session={session_id}, "
             f"project={project_id}"
         )
+
+        # NOTE: If you need chat history for real AI, fetch it from backend API:
+        # history = await self.backend_client.get_messages(session_id)
+        # For stub AI, we don't need history
 
         # Retrieve RAG context if project_id is provided
         sources: list[Source] | None = None

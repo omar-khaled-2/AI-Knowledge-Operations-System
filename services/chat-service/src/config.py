@@ -9,6 +9,10 @@ class Config(BaseSettings):
     # Redis
     redis_url: str = "redis://localhost:6379"
 
+    # Backend API
+    backend_url: str = "http://localhost:3001"
+    backend_timeout: float = 10.0
+
     # Retrieval Service
     retrieval_service_url: str = "http://localhost:3000"
     retrieval_timeout: float = 10.0

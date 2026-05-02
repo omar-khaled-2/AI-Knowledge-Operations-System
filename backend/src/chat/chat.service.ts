@@ -4,11 +4,10 @@ import { WebSocketPublisher } from '../websocket/websocket-publisher.service';
 import { MessagesService } from '../messages/messages.service';
 import { SessionsService } from '../sessions/sessions.service';
 
-interface ChatProcessMessage {
+interface ChatNotification {
   userId: string;
   sessionId: string;
   message: string;
-  history: Array<{ role: string; content: string }>;
   projectId: string | null;
 }
 
@@ -51,7 +50,7 @@ export class ChatService implements OnModuleInit, OnModuleDestroy {
 
   private async handleIncomingMessage(message: string): Promise<void> {
     try {
-      const data = JSON.parse(message) as ChatProcessMessage;
+      const data = JSON.parse(message) as ChatNotification;
       this.logger.debug(`Received chat:incoming for session ${data.sessionId}`);
 
       // Save user message
@@ -62,23 +61,17 @@ export class ChatService implements OnModuleInit, OnModuleDestroy {
         content: data.message,
       });
 
-      // Fetch chat history
-      const { messages: history } = await this.messagesService.findBySession(data.sessionId);
-
-      // Publish to chat:process for the chat service
-      const processMessage = {
+      // Publish light notification to chat:process
+      // Chat service can call REST API to fetch history if needed
+      const notification = {
         userId: data.userId,
         sessionId: data.sessionId,
         message: data.message,
-        history: history.map((msg) => ({
-          role: msg.role,
-          content: msg.content,
-        })),
         projectId: data.projectId,
       };
 
-      await this.redisService.publish('chat:process', JSON.stringify(processMessage));
-      this.logger.debug(`Published chat:process for session ${data.sessionId}`);
+      await this.redisService.publish('chat:process', JSON.stringify(notification));
+      this.logger.debug(`Published chat:process notification for session ${data.sessionId}`);
     } catch (error) {
       this.logger.error(
         `Error handling incoming message: ${error instanceof Error ? error.message : String(error)}`,

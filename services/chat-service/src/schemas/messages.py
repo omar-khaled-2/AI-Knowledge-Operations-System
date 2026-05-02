@@ -12,13 +12,12 @@ class ChatMessage(BaseModel):
     content: str = Field(..., description="The message content")
 
 
-class ProcessMessage(BaseModel):
-    """Incoming message from backend on chat:process channel."""
+class ChatNotification(BaseModel):
+    """Incoming notification from backend on chat:process channel."""
 
     userId: str = Field(..., description="The user ID")
     sessionId: str = Field(..., description="The chat session ID")
     message: str = Field(..., description="The user's message")
-    history: list[ChatMessage] = Field(default_factory=list, description="Chat history")
     projectId: str | None = Field(default=None, description="Optional project ID for RAG")
 
 
