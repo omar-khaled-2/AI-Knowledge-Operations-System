@@ -35,12 +35,15 @@ export class WebSocketServer {
           });
         }
 
-        // Validate auth before upgrade
-        const cookie = req.headers.get('cookie');
-        const result = await this.auth.validateSession(cookie || undefined);
-
+        // Parse URL to get ticket from query params
+        const url = new URL(req.url);
+        const ticket = url.searchParams.get('ticket');
+        
+        // Validate ticket
+        const result = await this.auth.validateTicket(ticket);
+        
         if (!result) {
-          return new Response('Authentication required', { 
+          return new Response('Invalid or expired ticket', { 
             status: 401,
             headers: this.getCorsHeaders(),
           });

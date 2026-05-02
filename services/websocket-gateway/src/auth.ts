@@ -1,61 +1,61 @@
 import type { ServerConfig } from './types';
 import { logger } from './logger';
+import Redis from 'ioredis';
 
 export interface AuthResult {
   userId: string;
-  session: any;
 }
 
 export class AuthService {
-  constructor(private config: ServerConfig) {}
+  private redis: Redis;
 
-  /**
-   * Validate Better-Auth session from cookie.
-   * For MVP: extracts userId from JWT payload.
-   * In production: should call Better-Auth API to validate session.
-   */
-  async validateSession(cookieHeader: string | undefined): Promise<AuthResult | null> {
-    if (!cookieHeader) {
-      logger.warn('No cookie provided');
-      return null;
+  constructor(private config: ServerConfig) {
+    const options: any = {
+      retryStrategy: (times: number) => Math.min(times * 50, 2000),
+    };
+
+    if (config.redisPassword) {
+      options.password = config.redisPassword;
     }
 
-    const sessionMatch = cookieHeader.match(/better-auth\.session_token=([^;]+)/);
-    const sessionToken = sessionMatch ? sessionMatch[1] : null;
+    this.redis = new Redis(config.redisUrl, options);
+  }
 
-    if (!sessionToken) {
-      logger.warn('No session token found in cookie');
+  /**
+   * Validate a one-time ticket from query parameter.
+   * Gets userId from Redis and deletes the ticket (one-time use).
+   */
+  async validateTicket(ticket: string | null): Promise<AuthResult | null> {
+    if (!ticket) {
+      logger.warn('No ticket provided');
       return null;
     }
 
     try {
-      // MVP: Extract userId from JWT payload
-      // TODO: Replace with actual Better-Auth validation API call
-      const userId = this.extractUserIdFromToken(sessionToken);
+      const key = `ws:ticket:${ticket}`;
+      
+      // Get and delete atomically
+      const pipeline = this.redis.pipeline();
+      pipeline.get(key);
+      pipeline.del(key);
+      
+      const results = await pipeline.exec();
+      const userId = results?.[0]?.[1] as string | null;
       
       if (!userId) {
-        logger.warn('Could not extract userId from token');
+        logger.warn(`Invalid or expired ticket: ${ticket}`);
         return null;
       }
 
-      return { userId, session: { token: sessionToken } };
+      logger.debug(`Validated ticket for user ${userId}`);
+      return { userId };
     } catch (error) {
-      logger.error({ err: error }, 'Auth validation error');
+      logger.error({ err: error }, 'Ticket validation error');
       return null;
     }
   }
 
-  private extractUserIdFromToken(token: string): string | null {
-    try {
-      const parts = token.split('.');
-      if (parts.length !== 3) {
-        return `user_${token.substring(0, 8)}`;
-      }
-      
-      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
-      return payload.sub || payload.userId || payload.id || null;
-    } catch {
-      return `user_${token.substring(0, 8)}`;
-    }
+  async disconnect() {
+    await this.redis.quit();
   }
 }
