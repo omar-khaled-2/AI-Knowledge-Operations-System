@@ -9,9 +9,9 @@ export class RedisClient {
   private isConnected: boolean = false;
 
   constructor(config: ServerConfig) {
-    const redisOptions: Redis.RedisOptions = {
+    const redisOptions = {
       password: config.redisPassword || undefined,
-      retryStrategy: (times) => {
+      retryStrategy: (times: number) => {
         const delay = Math.min(times * 50, 2000);
         return delay;
       },
