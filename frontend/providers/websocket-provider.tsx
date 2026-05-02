@@ -1,7 +1,6 @@
 'use client'
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
-import { io, Socket } from 'socket.io-client'
 import type {
   ConnectionStatus,
   WebSocketContextType,
@@ -10,9 +9,9 @@ import type {
 
 const WebSocketContext = createContext<WebSocketContextType | null>(null)
 
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001/ws'
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3002'
 const HEARTBEAT_INTERVAL = 30000 // 30 seconds
-const RECONNECTION_DELAY = 1000 // 1 second base
+const RECONNECTION_DELAY_BASE = 1000 // 1 second base
 const RECONNECTION_DELAY_MAX = 30000 // 30 seconds max
 
 function hasSessionCookie(): boolean {
@@ -22,40 +21,57 @@ function hasSessionCookie(): boolean {
     .some((cookie) => cookie.trim().startsWith('better-auth.session_token='))
 }
 
+function getReconnectDelay(attempt: number): number {
+  const delay = Math.min(
+    RECONNECTION_DELAY_BASE * Math.pow(2, attempt),
+    RECONNECTION_DELAY_MAX
+  )
+  // Add jitter to prevent thundering herd
+  return delay * (0.5 + Math.random() * 0.5)
+}
+
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected')
   const [lastMessage, setLastMessage] = useState<WSMessage | null>(null)
-  const socketRef = useRef<Socket | null>(null)
-  const heartbeatRef = useRef<NodeJS.Timeout | null>(null)
+  const wsRef = useRef<WebSocket | null>(null)
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const reconnectAttemptRef = useRef(0)
+  const isIntentionalCloseRef = useRef(false)
 
-  const send = useCallback((message: WSMessage) => {
-    const socket = socketRef.current
-    if (socket?.connected) {
-      socket.emit('message', message)
-    } else {
-      console.warn('[WebSocket] Cannot send message: socket not connected')
-    }
-  }, [])
-
-  const disconnectSocket = useCallback(() => {
+  const clearHeartbeat = useCallback(() => {
     if (heartbeatRef.current) {
       clearInterval(heartbeatRef.current)
       heartbeatRef.current = null
     }
+  }, [])
 
-    const socket = socketRef.current
-    if (socket) {
-      socket.removeAllListeners()
-      socket.disconnect()
-      socketRef.current = null
+  const clearReconnectTimeout = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
+  }, [])
+
+  const disconnectSocket = useCallback(() => {
+    clearHeartbeat()
+    clearReconnectTimeout()
+    isIntentionalCloseRef.current = true
+
+    const ws = wsRef.current
+    if (ws) {
+      ws.close()
+      wsRef.current = null
     }
 
+    reconnectAttemptRef.current = 0
     setConnectionStatus('disconnected')
-  }, [])
+  }, [clearHeartbeat, clearReconnectTimeout])
 
   const connectSocket = useCallback(() => {
     // Don't connect if already connected or connecting
-    if (socketRef.current?.connected || socketRef.current?.active) {
+    const ws = wsRef.current
+    if (ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) {
       return
     }
 
@@ -66,54 +82,79 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     }
 
     setConnectionStatus('connecting')
+    isIntentionalCloseRef.current = false
 
-    const socket = io(WS_URL, {
-      withCredentials: true,
-      transports: ['websocket', 'polling'],
-      reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: RECONNECTION_DELAY,
-      reconnectionDelayMax: RECONNECTION_DELAY_MAX,
-      randomizationFactor: 0.5,
-    })
+    try {
+      const socket = new WebSocket(WS_URL)
+      wsRef.current = socket
 
-    socketRef.current = socket
+      socket.onopen = () => {
+        console.log('[WebSocket] Connected')
+        reconnectAttemptRef.current = 0
+        setConnectionStatus('connected')
 
-    socket.on('connect', () => {
-      console.log('[WebSocket] Connected')
-      setConnectionStatus('connected')
-    })
-
-    socket.on('disconnect', (reason) => {
-      console.log('[WebSocket] Disconnected:', reason)
-      if (reason === 'io client disconnect') {
-        // Intentional disconnect
-        setConnectionStatus('disconnected')
-      } else if (reason === 'io server disconnect') {
-        // Server disconnected us, will try to reconnect
-        setConnectionStatus('connecting')
-      } else {
-        // Transport error, etc.
-        setConnectionStatus('connecting')
+        // Start heartbeat
+        heartbeatRef.current = setInterval(() => {
+          if (socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ event: 'ping', version: '1.0', timestamp: new Date().toISOString(), userId: '', payload: {} }))
+          }
+        }, HEARTBEAT_INTERVAL)
       }
-    })
 
-    socket.on('connect_error', (error) => {
-      console.error('[WebSocket] Connection error:', error.message)
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data) as WSMessage
+          
+          // Handle pong response
+          if (data.event === 'pong') {
+            return
+          }
+
+          console.log('[WebSocket] Received message:', data)
+          setLastMessage(data)
+        } catch (error) {
+          console.error('[WebSocket] Failed to parse message:', error)
+        }
+      }
+
+      socket.onclose = () => {
+        console.log('[WebSocket] Connection closed')
+        clearHeartbeat()
+        wsRef.current = null
+
+        if (isIntentionalCloseRef.current) {
+          setConnectionStatus('disconnected')
+          return
+        }
+
+        // Attempt reconnection with exponential backoff
+        setConnectionStatus('connecting')
+        const delay = getReconnectDelay(reconnectAttemptRef.current)
+        console.log(`[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectAttemptRef.current + 1})`)
+        
+        reconnectTimeoutRef.current = setTimeout(() => {
+          reconnectAttemptRef.current += 1
+          connectSocket()
+        }, delay)
+      }
+
+      socket.onerror = (error) => {
+        console.error('[WebSocket] Connection error:', error)
+        setConnectionStatus('error')
+      }
+    } catch (error) {
+      console.error('[WebSocket] Failed to create connection:', error)
       setConnectionStatus('error')
-    })
+    }
+  }, [clearHeartbeat, clearReconnectTimeout])
 
-    socket.on('document.status', (message: WSMessage) => {
-      console.log('[WebSocket] Received document.status:', message)
-      setLastMessage(message)
-    })
-
-    // Heartbeat
-    heartbeatRef.current = setInterval(() => {
-      if (socket.connected) {
-        socket.emit('ping')
-      }
-    }, HEARTBEAT_INTERVAL)
+  const send = useCallback((message: WSMessage) => {
+    const ws = wsRef.current
+    if (ws?.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(message))
+    } else {
+      console.warn('[WebSocket] Cannot send message: socket not connected')
+    }
   }, [])
 
   useEffect(() => {
@@ -123,12 +164,14 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     // Monitor auth cookie changes
     const checkCookieInterval = setInterval(() => {
       const hasAuth = hasSessionCookie()
-      const socket = socketRef.current
+      const ws = wsRef.current
+      const isConnected = ws?.readyState === WebSocket.OPEN
+      const isConnecting = ws?.readyState === WebSocket.CONNECTING
 
-      if (!hasAuth && socket?.connected) {
+      if (!hasAuth && isConnected) {
         console.log('[WebSocket] Auth cookie missing, disconnecting')
         disconnectSocket()
-      } else if (hasAuth && !socket?.connected && !socket?.active) {
+      } else if (hasAuth && !isConnected && !isConnecting) {
         console.log('[WebSocket] Auth cookie present, connecting')
         connectSocket()
       }
