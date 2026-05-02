@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Loader2,
   ArrowLeft,
+  Database,
 } from "lucide-react"
 import {
   getProjectById,
@@ -61,6 +62,10 @@ export default function DocumentViewerPage() {
     error: {
       icon: <AlertCircle className="h-5 w-5 text-[#ef4444]" />,
       label: "Error",
+    },
+    embedded: {
+      icon: <Database className="h-5 w-5 text-[#3b82f6]" />,
+      label: "Embedded",
     },
   }
 

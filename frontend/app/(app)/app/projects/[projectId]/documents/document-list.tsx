@@ -11,6 +11,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
+  Database,
 } from "lucide-react";
 import { cn, formatFileSize } from "@/lib/utils";
 import { Document, formatRelativeTime } from "@/lib/mock-data";
@@ -108,6 +109,10 @@ function DocumentCard({
       icon: <AlertCircle className="text-destructive" />,
       badge: <Badge variant="destructive">Error</Badge>,
     },
+    embedded: {
+      icon: <Database className="text-blue-500" />,
+      badge: <Badge variant="outline" className="text-blue-500 border-blue-500">Embedded</Badge>,
+    },
   };
 
   const status = statusConfig[document.status];
@@ -153,6 +158,7 @@ function DocumentListItem({
     processed: <CheckCircle2 className="text-emerald-500" />,
     processing: <Loader2 className="animate-spin text-amber-500" />,
     error: <AlertCircle className="text-destructive" />,
+    embedded: <Database className="text-blue-500" />,
   };
 
   return (

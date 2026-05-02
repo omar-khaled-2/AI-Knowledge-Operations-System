@@ -42,7 +42,7 @@ export interface Document {
   sourceType: "upload" | "notion" | "slack" | "google-drive" | "confluence" | "github";
   createdAt: string;
   size: number | string;
-  status: "processed" | "processing" | "error";
+  status: "processed" | "processing" | "error" | "embedded";
   pageCount?: number;
 }
 
