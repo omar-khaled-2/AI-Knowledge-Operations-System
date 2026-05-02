@@ -9,6 +9,7 @@ import { UsersModule } from "./users/users.module";
 import { AuthModule } from "./auth/auth.module";
 import { ProjectsModule } from "./projects/projects.module";
 import { DocumentsModule } from "./documents/documents.module";
+import { WebSocketModule } from "./websocket/websocket.module";
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { DocumentsModule } from "./documents/documents.module";
     AuthModule,
     ProjectsModule,
     DocumentsModule,
+    WebSocketModule,
   ],
   controllers: [AppController],
 })
