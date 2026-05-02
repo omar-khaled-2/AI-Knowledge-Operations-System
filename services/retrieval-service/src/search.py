@@ -1,7 +1,9 @@
 """Retrieval Service - Search Logic."""
 
-from typing import Optional
+import time
+from typing import List, Optional
 
+import structlog
 from qdrant_client.models import (
     FieldCondition,
     Filter,
@@ -10,7 +12,12 @@ from qdrant_client.models import (
     Range,
 )
 
-from src.models import FilterCondition, SearchFilters
+from src.config import Config
+from src.models import FilterCondition, SearchFilters, SearchRequest, SearchResponse, SearchResult
+from src.openai_client import OpenAIEmbeddingClient
+from src.qdrant_client import QdrantSearchClient
+
+logger = structlog.get_logger()
 
 
 def build_qdrant_filter(filters: Optional[SearchFilters]) -> Optional[Filter]:
@@ -85,3 +92,100 @@ def _translate_condition(condition: FilterCondition) -> FieldCondition:
         )
     else:
         raise ValueError("Filter must have match, match_any, or range")
+
+
+class SearchService:
+    """Orchestrates semantic search: embed query → search Qdrant → format results."""
+
+    def __init__(self, config: Config):
+        """Initialize search service with clients.
+
+        Args:
+            config: Service configuration.
+        """
+        self.config = config
+        self.openai_client = OpenAIEmbeddingClient(
+            api_key=config.openai_api_key,
+            model=config.embedding_model,
+        )
+        self.qdrant_client = QdrantSearchClient(
+            url=config.qdrant_url,
+            collection_name=config.qdrant_collection,
+        )
+
+    def search(self, request: SearchRequest) -> SearchResponse:
+        """Execute semantic search.
+
+        Args:
+            request: Search request with query and filters.
+
+        Returns:
+            Search response with results and timing.
+        """
+        logger.info(
+            "Starting search",
+            query=request.query[:50],
+            limit=request.limit,
+        )
+
+        # Generate query embedding
+        embed_start = time.time()
+        query_vector = self.openai_client.embed(request.query)
+        embed_time_ms = int((time.time() - embed_start) * 1000)
+
+        logger.debug("Query embedded", vector_dim=len(query_vector), time_ms=embed_time_ms)
+
+        # Build Qdrant filter
+        filter_obj = build_qdrant_filter(request.filters)
+
+        # Search Qdrant
+        search_start = time.time()
+        raw_results = self.qdrant_client.search(
+            vector=query_vector,
+            limit=request.limit,
+            offset=request.offset,
+            filter_obj=filter_obj,
+            score_threshold=request.score_threshold,
+        )
+        search_time_ms = int((time.time() - search_start) * 1000)
+
+        logger.info(
+            "Search completed",
+            results_count=len(raw_results),
+            embed_time_ms=embed_time_ms,
+            search_time_ms=search_time_ms,
+        )
+
+        # Transform to response schema
+        results = self._transform_results(raw_results)
+
+        return SearchResponse(
+            results=results,
+            total=len(results),
+            query_embedding_time_ms=embed_time_ms,
+            search_time_ms=search_time_ms,
+        )
+
+    def _transform_results(self, raw_results: List[dict]) -> List[SearchResult]:
+        """Transform Qdrant results to standardized response schema.
+
+        Args:
+            raw_results: Raw results from Qdrant client.
+
+        Returns:
+            List of SearchResult objects.
+        """
+        return [
+            SearchResult(
+                chunk_id=result["id"],
+                document_id=result["payload"].get("document_id", ""),
+                content=result["payload"].get("text", ""),
+                score=result["score"],
+                metadata={
+                    k: v
+                    for k, v in result["payload"].items()
+                    if k not in ("text", "document_id")
+                },
+            )
+            for result in raw_results
+        ]
