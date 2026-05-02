@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
+import { useSession } from '@/lib/auth-client'
 import type {
   ConnectionStatus,
   WebSocketContextType,
@@ -13,13 +14,6 @@ const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3002'
 const HEARTBEAT_INTERVAL = 30000 // 30 seconds
 const RECONNECTION_DELAY_BASE = 1000 // 1 second base
 const RECONNECTION_DELAY_MAX = 30000 // 30 seconds max
-
-function hasSessionCookie(): boolean {
-  if (typeof document === 'undefined') return false
-  return document.cookie
-    .split(';')
-    .some((cookie) => cookie.trim().startsWith('better-auth.session_token='))
-}
 
 function getReconnectDelay(attempt: number): number {
   const delay = Math.min(
@@ -39,7 +33,7 @@ async function fetchTicket(): Promise<string | null> {
 
     if (!response.ok) {
       if (response.status === 401) {
-        console.error('[WebSocket] Unauthorized: user not authenticated')
+        console.log('[WebSocket] Unauthorized: user not authenticated')
       } else {
         console.error('[WebSocket] Failed to fetch ticket:', response.status, response.statusText)
       }
@@ -55,6 +49,9 @@ async function fetchTicket(): Promise<string | null> {
 }
 
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
+  const { data: session } = useSession()
+  const isAuthenticated = !!session
+
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected')
   const [lastMessage, setLastMessage] = useState<WSMessage | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
@@ -96,12 +93,6 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     // Don't connect if already connected or connecting
     const ws = wsRef.current
     if (ws?.readyState === WebSocket.OPEN || ws?.readyState === WebSocket.CONNECTING) {
-      return
-    }
-
-    // Don't connect without auth
-    if (!hasSessionCookie()) {
-      setConnectionStatus('disconnected')
       return
     }
 
@@ -192,34 +183,20 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useEffect(() => {
-    // Initial connection attempt
-    connectSocket().catch((error) => {
-      console.error('[WebSocket] Initial connection failed:', error)
-    })
-
-    // Monitor auth cookie changes
-    const checkCookieInterval = setInterval(() => {
-      const hasAuth = hasSessionCookie()
-      const ws = wsRef.current
-      const isConnected = ws?.readyState === WebSocket.OPEN
-      const isConnecting = ws?.readyState === WebSocket.CONNECTING
-
-      if (!hasAuth && isConnected) {
-        console.log('[WebSocket] Auth cookie missing, disconnecting')
-        disconnectSocket()
-      } else if (hasAuth && !isConnected && !isConnecting) {
-        console.log('[WebSocket] Auth cookie present, connecting')
-        connectSocket().catch((error) => {
-          console.error('[WebSocket] Connection failed:', error)
-        })
-      }
-    }, 5000)
-
-    return () => {
-      clearInterval(checkCookieInterval)
+    if (isAuthenticated) {
+      console.log('[WebSocket] User authenticated, connecting...')
+      connectSocket().catch((error) => {
+        console.error('[WebSocket] Connection failed:', error)
+      })
+    } else {
+      console.log('[WebSocket] User not authenticated, disconnecting...')
       disconnectSocket()
     }
-  }, [connectSocket, disconnectSocket])
+
+    return () => {
+      disconnectSocket()
+    }
+  }, [isAuthenticated, connectSocket, disconnectSocket])
 
   const value: WebSocketContextType = {
     connectionStatus,

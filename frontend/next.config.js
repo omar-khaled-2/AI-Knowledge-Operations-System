@@ -11,6 +11,11 @@ const nextConfig = {
         destination: `${apiUrl}/api/auth/:path*`,
       },
       {
+        // WebSocket ticket endpoint: keep /api/ws prefix
+        source: '/api/ws/:path*',
+        destination: `${apiUrl}/api/ws/:path*`,
+      },
+      {
         // Custom API endpoints: strip /api prefix (backend routes are at /projects, etc.)
         source: '/api/:path*',
         destination: `${apiUrl}/:path*`,

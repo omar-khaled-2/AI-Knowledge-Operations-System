@@ -160,6 +160,6 @@ portForward:
     port: 6333
     localPort: 6333
   - resourceType: service
-    resourceName: websocket-gateway
+    resourceName: websocket-gateway-websocket-gateway
     port: 80
     localPort: 3002
