@@ -7,7 +7,7 @@ from typing import Any
 import structlog
 
 from src.config import Config
-from src.jobs import enqueue_embedding_jobs
+from src.jobs import publish_embedding_jobs
 from src.parsers.factory import get_parser
 from src.s3_client import S3Client
 from src.chunker import SemanticChunker
@@ -71,8 +71,8 @@ def process_document(event_data: dict[str, Any]) -> bool:
             chunks = chunker.chunk(text)
             logger.info("Chunked document", document_id=document_id, chunk_count=len(chunks))
 
-            # Enqueue embedding jobs
-            enqueue_embedding_jobs(
+            # Publish embedding jobs to RabbitMQ
+            publish_embedding_jobs(
                 document_id=document_id,
                 project_id=project_id,
                 chunks=chunks,

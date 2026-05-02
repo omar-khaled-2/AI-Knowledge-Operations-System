@@ -12,9 +12,12 @@ load_dotenv()
 class Config:
     """Service configuration loaded from environment variables."""
 
-    # Redis
-    redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379")
-    stream_key: str = os.getenv("REDIS_STREAM_KEY", "documents:events")
+    # RabbitMQ
+    rabbitmq_url: str = os.getenv("RABBITMQ_URL", "amqp://localhost:5672")
+    rabbitmq_exchange: str = os.getenv("RABBITMQ_EXCHANGE", "documents")
+    rabbitmq_queue: str = os.getenv("RABBITMQ_DOCUMENT_QUEUE", "document-jobs")
+    rabbitmq_routing_key: str = os.getenv("RABBITMQ_ROUTING_KEY", "document.created")
+    embedding_routing_key: str = os.getenv("RABBITMQ_EMBEDDING_ROUTING_KEY", "chunk.embed")
 
     # AWS
     aws_region: str = os.getenv("AWS_REGION", "eu-west-3")
@@ -26,7 +29,6 @@ class Config:
     # OpenAI
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     embedding_model: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
-    embedding_queue_name: str = os.getenv("EMBEDDING_QUEUE_NAME", "embedding-jobs")
 
     # Chunking
     max_chunk_size: int = int(os.getenv("MAX_CHUNK_SIZE", "512"))
