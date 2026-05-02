@@ -1,6 +1,6 @@
 'use client'
 
-import { FileUp, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { Loader2, CheckCircle, AlertCircle, Database } from 'lucide-react'
 import { useDocumentStatus } from '@/hooks/use-websocket-event'
 import { cn } from '@/lib/utils'
 
@@ -10,13 +10,6 @@ interface DocumentStatusIndicatorProps {
 }
 
 const statusConfig = {
-  uploaded: {
-    label: 'Uploaded',
-    icon: FileUp,
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-50',
-    borderColor: 'border-blue-200',
-  },
   processing: {
     label: 'Processing',
     icon: Loader2,
@@ -24,26 +17,19 @@ const statusConfig = {
     bgColor: 'bg-amber-50',
     borderColor: 'border-amber-200',
   },
-  chunking: {
-    label: 'Chunking',
-    icon: Loader2,
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50',
-    borderColor: 'border-amber-200',
-  },
-  embedding: {
-    label: 'Embedding',
-    icon: Loader2,
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50',
-    borderColor: 'border-amber-200',
-  },
-  ready: {
-    label: 'Ready',
+  processed: {
+    label: 'Processed',
     icon: CheckCircle,
     color: 'text-green-600',
     bgColor: 'bg-green-50',
     borderColor: 'border-green-200',
+  },
+  embedded: {
+    label: 'Embedded',
+    icon: Database,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-200',
   },
   error: {
     label: 'Error',
@@ -67,7 +53,7 @@ export function DocumentStatusIndicator({
 
   const config = statusConfig[status.status]
   const Icon = config.icon
-  const isProcessing = ['processing', 'chunking', 'embedding'].includes(status.status)
+  const isProcessing = status.status === 'processing'
   const hasError = status.status === 'error'
 
   return (
