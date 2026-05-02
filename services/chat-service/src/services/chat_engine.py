@@ -49,10 +49,10 @@ class ChatEngine:
             }
             return
 
-        user_id = process_msg.user_id
-        session_id = process_msg.session_id
+        user_id = process_msg.userId
+        session_id = process_msg.sessionId
         user_message = process_msg.message
-        project_id = process_msg.project_id
+        project_id = process_msg.projectId
 
         logger.info(
             f"Processing message for user={user_id}, session={session_id}, "
@@ -69,7 +69,7 @@ class ChatEngine:
                 )
                 sources = [
                     Source(
-                        document_id=r.get("document_id", "unknown"),
+                        documentId=r.get("document_id", "unknown"),
                         title=r.get("title", "Untitled"),
                         snippet=r.get("content", "")[:200],
                         score=r.get("score", 0.0),
@@ -112,7 +112,7 @@ class ChatEngine:
             "sessionId": session_id,
             "chunk": "",
             "done": True,
-            "sources": [s.model_dump(by_alias=True) for s in sources] if sources else None,
+            "sources": [s.model_dump() for s in sources] if sources else None,
         }
 
         logger.info(f"Completed response for session={session_id}")
