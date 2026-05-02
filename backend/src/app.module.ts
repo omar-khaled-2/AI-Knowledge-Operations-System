@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import { Module } from "@nestjs/common";
 import { EventEmitterModule } from "@nestjs/event-emitter";
 import { ConfigModule, ConfigService } from "@nestjs/config";
@@ -29,8 +30,22 @@ import { DocumentsModule } from "./documents/documents.module";
             ? `${encodeURIComponent(user)}:${encodeURIComponent(password)}@`
             : "";
         const uri = `mongodb://${credentials}${host}:${port}/${database}?authSource=admin`;
-        console.log(uri);
-        return { uri };
+        
+        return { 
+          uri,
+          connectionFactory: (connection) => {
+            connection.on('connected', () => {
+              Logger.log('MongoDB connection established successfully');
+            });
+            connection.on('error', (err) => {
+              Logger.error('MongoDB connection error', err.message);
+            });
+            connection.on('disconnected', () => {
+              Logger.warn('MongoDB connection disconnected');
+            });
+            return connection;
+          }
+        };
       },
       inject: [ConfigService],
     }),

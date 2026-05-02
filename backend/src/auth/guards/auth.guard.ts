@@ -2,6 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
@@ -9,6 +10,8 @@ import { AuthService } from '../auth.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
+  private readonly logger = new Logger(AuthGuard.name);
+
   constructor(private authService: AuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -31,6 +34,9 @@ export class AuthGuard implements CanActivate {
     });
 
     if (!session) {
+      this.logger.warn(
+        `Unauthorized access attempt: ${request.method} ${request.path}`,
+      );
       throw new UnauthorizedException('Invalid or expired session');
     }
 

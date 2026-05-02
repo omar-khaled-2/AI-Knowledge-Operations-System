@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
@@ -14,6 +14,7 @@ import { randomUUID } from 'crypto';
 
 @Injectable()
 export class DocumentsService {
+  private readonly logger = new Logger(DocumentsService.name);
   private s3Client: S3Client;
 
   constructor(
@@ -32,6 +33,7 @@ export class DocumentsService {
 
   private toObjectId(id: string): Types.ObjectId {
     if (!Types.ObjectId.isValid(id)) {
+      this.logger.warn(`Invalid ID format: ${id}`);
       throw new BadRequestException(`Invalid ID format: ${id}`);
     }
     return new Types.ObjectId(id);
@@ -42,6 +44,7 @@ export class DocumentsService {
     ownerId: string,
     options: { page: number; limit: number; sortBy: string; sortOrder: 'asc' | 'desc' },
   ): Promise<{ documents: DocumentEntity[]; total: number }> {
+    this.logger.debug(`Fetching documents for project: ${projectId}, owner: ${ownerId}`);
     const skip = (options.page - 1) * options.limit;
     const sortDirection = options.sortOrder === 'asc' ? 1 : -1;
     const sort: Record<string, 1 | -1> = { [options.sortBy]: sortDirection };
@@ -61,10 +64,12 @@ export class DocumentsService {
       this.documentModel.countDocuments(filter),
     ]);
 
+    this.logger.debug(`Retrieved ${documents.length} documents (total: ${total}) for project: ${projectId}`);
     return { documents, total };
   }
 
   async findOne(id: string, ownerId: string): Promise<DocumentEntity | null> {
+    this.logger.debug(`Fetching document: id=${id}, ownerId=${ownerId}`);
     return this.documentModel
       .findOne({
         _id: this.toObjectId(id),
@@ -74,6 +79,7 @@ export class DocumentsService {
   }
 
   async create(createDocumentDto: CreateDocumentDto, ownerId: string): Promise<DocumentDocument> {
+    this.logger.log(`Creating document for project: ${createDocumentDto.projectId}, owner: ${ownerId}`);
     const createdDocument = new this.documentModel({
       ...createDocumentDto,
       projectId: this.toObjectId(createDocumentDto.projectId),
@@ -82,6 +88,7 @@ export class DocumentsService {
     });
 
     const savedDocument = await createdDocument.save();
+    this.logger.log(`Document created successfully: id=${savedDocument._id}, projectId=${createDocumentDto.projectId}`);
 
     // Emit event for document processor
     this.eventEmitter.emit(
@@ -102,7 +109,8 @@ export class DocumentsService {
   }
 
   async update(id: string, updateDocumentDto: UpdateDocumentDto, ownerId: string): Promise<DocumentEntity | null> {
-    return this.documentModel
+    this.logger.log(`Updating document: id=${id}, ownerId=${ownerId}`);
+    const updatedDocument = await this.documentModel
       .findOneAndUpdate(
         {
           _id: this.toObjectId(id),
@@ -114,22 +122,41 @@ export class DocumentsService {
         { new: true },
       )
       .exec();
+
+    if (updatedDocument) {
+      this.logger.log(`Document updated successfully: id=${id}`);
+    } else {
+      this.logger.warn(`Document not found for update: id=${id}, ownerId=${ownerId}`);
+    }
+
+    return updatedDocument;
   }
 
   async remove(id: string, ownerId: string): Promise<DocumentEntity | null> {
-    return this.documentModel
+    this.logger.log(`Deleting document: id=${id}, ownerId=${ownerId}`);
+    const deletedDocument = await this.documentModel
       .findOneAndDelete({
         _id: this.toObjectId(id),
         owner: this.toObjectId(ownerId),
       })
       .exec();
+
+    if (deletedDocument) {
+      this.logger.log(`Document deleted successfully: id=${id}`);
+    } else {
+      this.logger.warn(`Document not found for deletion: id=${id}, ownerId=${ownerId}`);
+    }
+
+    return deletedDocument;
   }
 
   async generateUploadUrl(
     dto: GenerateUploadUrlDto,
   ): Promise<{ uploadUrl: string; objectKey: string }> {
+    this.logger.log(`Generating upload URL for file: ${dto.filename}`);
     const bucket = this.configService.get<string>('app.s3Bucket');
     if (!bucket) {
+      this.logger.error('S3 bucket not configured');
       throw new BadRequestException('S3 bucket not configured');
     }
 
@@ -142,8 +169,15 @@ export class DocumentsService {
       ContentLength: dto.size,
     });
 
-    const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 300 });
-
-    return { uploadUrl, objectKey };
+    try {
+      const uploadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 300 });
+      this.logger.log(`Generated upload URL for objectKey: ${objectKey}`);
+      return { uploadUrl, objectKey };
+    } catch (error) {
+      this.logger.error(
+        `Failed to generate upload URL: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
   }
 }

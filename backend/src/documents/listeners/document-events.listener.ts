@@ -21,13 +21,25 @@ export class DocumentEventsListener {
       retryStrategy: (times) => Math.min(times * 50, 2000),
     });
 
+    this.redis.on('connect', () => {
+      this.logger.log('Redis connection established');
+    });
+
     this.redis.on('error', (err) => {
       this.logger.error('Redis connection error', err.message);
+    });
+
+    this.redis.on('reconnecting', () => {
+      this.logger.warn('Redis reconnecting...');
     });
   }
 
   @OnEvent('document.created')
   async handleDocumentCreated(event: DocumentCreatedEvent) {
+    this.logger.debug(
+      `Processing document.created event: documentId=${event.documentId}`,
+    );
+
     try {
       await this.redis.xadd(
         this.streamKey,

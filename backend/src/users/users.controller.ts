@@ -4,6 +4,7 @@ import {
   Patch,
   Body,
   UseGuards,
+  Logger,
   UnauthorizedException,
   BadRequestException,
 } from "@nestjs/common";
@@ -26,6 +27,8 @@ import { UserResponseDto } from "./dto/user-response.dto";
 @Controller("users")
 @UseGuards(AuthGuard)
 export class UsersController {
+  private readonly logger = new Logger(UsersController.name);
+
   constructor(private readonly usersService: UsersService) {}
 
   /**
@@ -33,18 +36,21 @@ export class UsersController {
    */
   private getUserId(user: any): string {
     if (!user) {
+      this.logger.warn('Authentication failed: user not found in request');
       throw new UnauthorizedException("User not authenticated");
     }
 
     const userId = user.id || user._id || user.userId;
 
     if (!userId) {
+      this.logger.warn('Authentication failed: user ID not found in session');
       throw new UnauthorizedException("User ID not found in session");
     }
 
     const idString = userId.toString();
 
     if (!Types.ObjectId.isValid(idString)) {
+      this.logger.warn(`Invalid user ID format: ${idString}`);
       throw new BadRequestException(`Invalid user ID format: ${idString}`);
     }
 
@@ -58,10 +64,15 @@ export class UsersController {
   @Get("me")
   async getMe(@CurrentUser() user: any) {
     const userId = this.getUserId(user);
+    this.logger.debug(`Fetching current user profile: userId=${userId}`);
+    
     const profile = await this.usersService.findById(userId);
     if (!profile) {
+      this.logger.warn(`User profile not found: userId=${userId}`);
       throw new UnauthorizedException("User profile not found");
     }
+    
+    this.logger.log(`Retrieved user profile: userId=${userId}`);
     return plainToInstance(UserResponseDto, profile);
   }
 
@@ -75,16 +86,21 @@ export class UsersController {
     @CurrentUser() user: any,
   ) {
     const userId = this.getUserId(user);
+    this.logger.log(`Updating user profile: userId=${userId}`);
 
     // Prevent users from changing their googleId via this endpoint
     if (updateUserDto.googleId) {
+      this.logger.warn(`Attempt to modify googleId blocked: userId=${userId}`);
       delete updateUserDto.googleId;
     }
 
     const updated = await this.usersService.update(userId, updateUserDto);
     if (!updated) {
+      this.logger.warn(`User profile not found for update: userId=${userId}`);
       throw new UnauthorizedException("User profile not found");
     }
+    
+    this.logger.log(`User profile updated successfully: userId=${userId}`);
     return plainToInstance(UserResponseDto, updated);
   }
 }

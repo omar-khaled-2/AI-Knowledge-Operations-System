@@ -1,12 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
-import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
+import { ValidationPipe, ClassSerializerInterceptor, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+
+  const environment = configService.get<string>('app.environment') || 'development';
+  const port = configService.get<number>('app.port');
 
   app.enableCors({
     origin: configService.get<string>('app.frontendUrl'),
@@ -18,8 +22,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
-  const port = configService.get<number>('app.port');
   await app.listen(port);
-  console.log(`Application running on port ${port}`);
+  logger.log(`Application started on port ${port} in ${environment} mode`);
 }
 bootstrap();
