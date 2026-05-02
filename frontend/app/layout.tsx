@@ -2,6 +2,7 @@ import './globals.css'
 import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { WebSocketProvider } from "@/providers/websocket-provider";
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -22,7 +23,9 @@ export default function RootLayout({
     <html lang="en" className={cn(inter.variable)}>
       <body className="font-sans">
         <AuthProvider>
-          {children}
+          <WebSocketProvider>
+            {children}
+          </WebSocketProvider>
         </AuthProvider>
       </body>
     </html>
