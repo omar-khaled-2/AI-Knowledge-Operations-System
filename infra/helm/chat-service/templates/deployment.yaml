@@ -28,14 +28,33 @@ spec:
           env:
             - name: REDIS_URL
               value: {{ .Values.redis.url | quote }}
+            - name: BACKEND_URL
+              value: {{ .Values.backend.url | quote }}
+            - name: BACKEND_TIMEOUT
+              value: {{ .Values.backend.timeout | quote }}
             - name: RETRIEVAL_SERVICE_URL
               value: {{ .Values.retrieval.url | quote }}
-            - name: LOG_LEVEL
-              value: {{ .Values.config.logLevel | quote }}
+            - name: RETRIEVAL_TIMEOUT
+              value: {{ .Values.retrieval.timeout | quote }}
+            - name: OPENAI_MODEL
+              value: {{ .Values.openai.model | quote }}
+            {{- if .Values.openai.baseUrl }}
+            - name: OPENAI_BASE_URL
+              value: {{ .Values.openai.baseUrl | quote }}
+            {{- end }}
+            - name: HOST
+              value: {{ .Values.service.host | quote }}
             - name: PORT
               value: {{ .Values.service.targetPort | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.config.logLevel | quote }}
             - name: CHUNK_DELAY_MS
               value: {{ .Values.config.chunkDelayMs | quote }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.llm.existingSecretName }}
+                  key: OPENAI_API_KEY
           livenessProbe:
             httpGet:
               path: {{ .Values.healthCheck.livenessPath }}

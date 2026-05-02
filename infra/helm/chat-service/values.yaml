@@ -11,6 +11,7 @@ service:
   type: ClusterIP
   port: 80
   targetPort: 3000
+  host: "0.0.0.0"
 
 replicaCount: 2
 
@@ -27,9 +28,25 @@ resources:
 redis:
   url: "redis://redis-master:6379"
 
+# Backend API configuration
+backend:
+  url: "http://backend-backend"
+  timeout: 10.0
+
 # Retrieval service configuration
 retrieval:
-  url: "http://retrieval-service:8000"
+  url: "http://retrieval-service"
+  timeout: 10.0
+
+# LLM API keys configuration
+# Reference to the existing llm-secrets Secret
+llm:
+  existingSecretName: "llm-secrets"
+
+# OpenAI configuration
+openai:
+  model: "gpt-5.4-mini"
+  baseUrl: ""
 
 # Chat service application configuration
 config:

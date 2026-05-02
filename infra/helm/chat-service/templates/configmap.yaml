@@ -5,5 +5,16 @@ metadata:
   labels:
     app.kubernetes.io/name: chat-service
 data:
-  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
-  CHUNK_DELAY_MS: {{ .Values.config.chunkDelayMs | quote }}
+  REDIS_URL: {{ .Values.redis.url | default "redis://redis-master:6379" | quote }}
+  BACKEND_URL: {{ .Values.backend.url | default "http://backend-backend" | quote }}
+  BACKEND_TIMEOUT: {{ .Values.backend.timeout | default "10.0" | quote }}
+  RETRIEVAL_SERVICE_URL: {{ .Values.retrieval.url | default "http://retrieval-service" | quote }}
+  RETRIEVAL_TIMEOUT: {{ .Values.retrieval.timeout | default "10.0" | quote }}
+  OPENAI_MODEL: {{ .Values.openai.model | default "gpt-5.4-mini" | quote }}
+  HOST: {{ .Values.service.host | default "0.0.0.0" | quote }}
+  PORT: {{ .Values.service.targetPort | default "3000" | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | default "info" | quote }}
+  CHUNK_DELAY_MS: {{ .Values.config.chunkDelayMs | default "100" | quote }}
+{{- if .Values.openai.baseUrl }}
+  OPENAI_BASE_URL: {{ .Values.openai.baseUrl | quote }}
+{{- end }}
