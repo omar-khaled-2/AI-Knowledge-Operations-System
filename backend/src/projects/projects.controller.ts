@@ -34,14 +34,14 @@ export class ProjectsController {
    */
   private getUserId(user: any): string {
     if (!user) {
-      this.logger.warn('Authentication failed: user not found in request');
+      this.logger.warn("Authentication failed: user not found in request");
       throw new UnauthorizedException("User not authenticated");
     }
 
     const userId = user.id || user._id || user.userId;
 
     if (!userId) {
-      this.logger.warn('Authentication failed: user ID not found in session');
+      this.logger.warn("Authentication failed: user ID not found in session");
       throw new UnauthorizedException("User ID not found in session");
     }
 
@@ -59,10 +59,12 @@ export class ProjectsController {
   async findAll(@CurrentUser() user: any) {
     const userId = this.getUserId(user);
     this.logger.debug(`Fetching all projects for user: ${userId}`);
-    
+
     const projects = await this.projectsService.findAllByOwner(userId);
-    this.logger.log(`Retrieved ${projects.length} projects for user: ${userId}`);
-    
+    this.logger.log(
+      `Retrieved ${projects.length} projects for user: ${userId}`,
+    );
+
     return plainToInstance(ProjectResponseDto, projects);
   }
 
@@ -70,13 +72,13 @@ export class ProjectsController {
   async findOne(@Param("id") id: string, @CurrentUser() user: any) {
     const userId = this.getUserId(user);
     this.logger.debug(`Fetching project: id=${id}, userId=${userId}`);
-    
+
     const project = await this.projectsService.findOne(id, userId);
     if (!project) {
       this.logger.warn(`Project not found: id=${id}, userId=${userId}`);
       throw new NotFoundException("Project not found");
     }
-    
+
     this.logger.log(`Retrieved project: id=${id}`);
     return plainToInstance(ProjectResponseDto, project);
   }
@@ -88,10 +90,10 @@ export class ProjectsController {
   ) {
     const userId = this.getUserId(user);
     this.logger.log(`Creating project for user: ${userId}`);
-    
+
     const project = await this.projectsService.create(createProjectDto, userId);
-    this.logger.log(`Project created: id=${project._id}, userId=${userId}`);
-    
+    this.logger.log(`Project created: userId=${userId}`);
+
     return plainToInstance(ProjectResponseDto, project);
   }
 
@@ -103,17 +105,19 @@ export class ProjectsController {
   ) {
     const userId = this.getUserId(user);
     this.logger.log(`Updating project: id=${id}, userId=${userId}`);
-    
+
     const project = await this.projectsService.update(
       id,
       updateProjectDto,
       userId,
     );
     if (!project) {
-      this.logger.warn(`Project not found for update: id=${id}, userId=${userId}`);
+      this.logger.warn(
+        `Project not found for update: id=${id}, userId=${userId}`,
+      );
       throw new NotFoundException("Project not found");
     }
-    
+
     this.logger.log(`Project updated: id=${id}`);
     return plainToInstance(ProjectResponseDto, project);
   }
@@ -122,13 +126,15 @@ export class ProjectsController {
   async remove(@Param("id") id: string, @CurrentUser() user: any) {
     const userId = this.getUserId(user);
     this.logger.log(`Deleting project: id=${id}, userId=${userId}`);
-    
+
     const project = await this.projectsService.remove(id, userId);
     if (!project) {
-      this.logger.warn(`Project not found for deletion: id=${id}, userId=${userId}`);
+      this.logger.warn(
+        `Project not found for deletion: id=${id}, userId=${userId}`,
+      );
       throw new NotFoundException("Project not found");
     }
-    
+
     this.logger.log(`Project deleted: id=${id}`);
     return plainToInstance(ProjectResponseDto, project);
   }
