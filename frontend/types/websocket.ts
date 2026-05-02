@@ -1,4 +1,4 @@
-export type WSEventType = 'document.status' | 'chat.message' | 'chat.response'
+export type WSEventType = 'document.status' | 'chat.message' | 'message.created'
 
 export interface WSMessage<T extends WSEventType = WSEventType, P = unknown> {
   event: T
@@ -20,21 +20,25 @@ export interface ChatMessagePayload {
   content: string
 }
 
-export interface ChatResponsePayload {
+export interface MessageCreatedPayload {
   sessionId: string
-  chunk: string
-  done: boolean
-  sources?: Array<{
-    documentId: string
-    title: string
-    snippet: string
-    score: number
-  }>
+  message: {
+    id: string
+    role: string
+    content: string
+    sources?: Array<{
+      documentId: string
+      title: string
+      snippet: string
+      score: number
+    }>
+    createdAt: string
+  }
 }
 
 export type DocumentStatusMessage = WSMessage<'document.status', DocumentStatusPayload>
-export type ChatMessage = WSMessage<'chat.message', ChatMessagePayload>
-export type ChatResponseMessage = WSMessage<'chat.response', ChatResponsePayload>
+export type ChatMessageEvent = WSMessage<'chat.message', ChatMessagePayload>
+export type MessageCreatedEvent = WSMessage<'message.created', MessageCreatedPayload>
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 

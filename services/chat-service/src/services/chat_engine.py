@@ -2,28 +2,19 @@
 
 import asyncio
 import logging
-import random
 from typing import AsyncGenerator
 
 from src.config import Config
-from src.schemas.messages import ChatNotification, Source
+from src.schemas.messages import ChatNotification
 from src.services.retrieval_client import RetrievalClient
 from src.services.backend_client import BackendClient
+from src.services.llm_client import LLMClient
 
 logger = logging.getLogger(__name__)
 
-# Sample responses for stub AI
-SAMPLE_RESPONSES = [
-    "Based on the documents provided, I found several relevant sections that address your question. The key information suggests that the implementation should focus on modular design and clear separation of concerns.",
-    "Looking at the available context, there are three main points to consider. First, the architecture supports horizontal scaling. Second, the data model is normalized for efficiency. Third, the API design follows RESTful principles throughout.",
-    "The documents indicate that this approach has been successfully used in production environments. Key benefits include improved performance, better maintainability, and reduced complexity for new team members.",
-    "From the retrieved sources, I can see that the recommended pattern involves using an event-driven architecture with clear message contracts. This ensures loose coupling between services and makes the system more resilient.",
-    "According to the documentation, the best practice here is to implement caching at multiple layers. The retrieval results show that this can reduce response times by up to 80% while maintaining data consistency.",
-]
-
 
 class ChatEngine:
-    """Core chat processing engine."""
+    """Core chat processing engine with LLM-based query generation and response."""
 
     def __init__(self, config: Config):
         self.config = config
@@ -35,123 +26,97 @@ class ChatEngine:
             base_url=config.backend_url,
             timeout=config.backend_timeout,
         )
+        self.llm_client = LLMClient(
+            api_key=config.openai_api_key,
+            model=config.openai_model,
+            base_url=config.openai_base_url,
+        )
 
-    async def process_message(
-        self,
-        message: dict,
-    ) -> AsyncGenerator[dict, None]:
-        """Process a chat message and generate response chunks."""
+    async def process_message(self, message: dict) -> None:
+        """Process a chat message: generate query, retrieve, generate response, save."""
         try:
             notification = ChatNotification.model_validate(message)
         except Exception as e:
-            logger.error(f"Invalid message format: {e}")
-            yield {
-                "userId": message.get("userId", "unknown"),
-                "sessionId": message.get("sessionId", "unknown"),
-                "chunk": f"Invalid message format: {str(e)}",
-                "done": True,
-                "sources": None,
-            }
+            logger.error(f"Invalid notification format: {e}")
             return
 
         user_id = notification.userId
         session_id = notification.sessionId
         project_id = notification.projectId
 
-        logger.info(
-            f"Processing message for user={user_id}, session={session_id}, "
-            f"project={project_id}"
-        )
+        logger.info(f"Processing message for user={user_id}, session={session_id}, project={project_id}")
 
-        # Fetch latest message from backend API
-        latest_message = await self.backend_client.get_latest_message(session_id)
-        if not latest_message:
-            logger.error(f"No messages found for session {session_id}")
-            yield {
-                "userId": user_id,
-                "sessionId": session_id,
-                "chunk": "Error: Could not fetch message from backend",
-                "done": True,
-                "sources": None,
-            }
-            return
+        try:
+            # Step 1: Fetch latest 8 messages with sources from backend API
+            all_messages = await self.backend_client.get_messages(session_id, limit=8)
+            if not all_messages:
+                logger.error(f"No messages found for session {session_id}")
+                return
 
-        user_message = latest_message["content"]
+            logger.info(f"Fetched {len(all_messages)} messages for context")
 
-        # NOTE: If you need full chat history for real AI, fetch it:
-        # history = await self.backend_client.get_messages(session_id)
+            # Step 2: Use LLM to generate optimized search query
+            search_query = await self.llm_client.generate_search_query(all_messages)
+            logger.info(f"Generated search query: {search_query}")
 
-        # Retrieve RAG context if project_id is provided
-        sources: list[Source] | None = None
-        if project_id:
-            try:
-                retrieval_results = await self.retrieval_client.search(
-                    query=user_message,
-                    project_id=project_id,
-                )
-                sources = [
-                    Source(
-                        documentId=r.get("document_id", "unknown"),
-                        title=r.get("title", "Untitled"),
-                        snippet=r.get("content", "")[:200],
-                        score=r.get("score", 0.0),
+            # Step 3: Retrieve from retrieval-service using generated query
+            retrieved_chunks: list[dict] = []
+            if project_id and search_query:
+                try:
+                    retrieval_results = await self.retrieval_client.search(
+                        query=search_query,
+                        project_id=project_id,
+                        top_k=5,
                     )
-                    for r in retrieval_results
-                ]
-                logger.info(f"Retrieved {len(sources)} sources for RAG")
-            except Exception as e:
-                logger.error(f"RAG retrieval failed: {e}")
-                # Continue without RAG sources
+                    retrieved_chunks = retrieval_results
+                    logger.info(f"Retrieved {len(retrieved_chunks)} chunks")
+                except Exception as e:
+                    logger.error(f"Retrieval failed: {e}")
 
-        # Generate stub response
-        response_text = self._generate_stub_response(user_message, sources)
+            # Step 4: Use latest 7 messages as history
+            history = all_messages[:-1]  # All except the latest
+            latest_message = all_messages[-1]
 
-        # Split into chunks and stream
-        chunks = response_text.split()
-        chunk_delay = self.config.chunk_delay_ms / 1000.0
+            # Step 5: Generate response with LLM using history + retrieved chunks
+            response_text = ""
+            async for chunk in self.llm_client.generate_response(
+                history=history,
+                latest_message=latest_message,
+                retrieved_chunks=retrieved_chunks,
+            ):
+                response_text += chunk
 
-        for i, word in enumerate(chunks):
-            # Group words into chunks of 1-3 words for more natural streaming
-            chunk_size = random.randint(1, 3)
-            chunk_words = chunks[i : i + chunk_size]
-            chunk_text = " ".join(chunk_words)
+            logger.info(f"Generated response ({len(response_text)} chars)")
 
-            yield {
-                "userId": user_id,
-                "sessionId": session_id,
-                "chunk": chunk_text + " ",
-                "done": False,
-                "sources": None,
-            }
+            # Step 6: Call backend API to create assistant message
+            sources = [
+                {
+                    "documentId": r.get("document_id", "unknown"),
+                    "title": r.get("title", "Untitled"),
+                    "snippet": r.get("content", "")[:200],
+                    "score": r.get("score", 0.0),
+                }
+                for r in retrieved_chunks
+            ] if retrieved_chunks else None
 
-            # Wait before sending next chunk
-            if i + chunk_size < len(chunks):
-                await asyncio.sleep(chunk_delay)
+            created_message = await self.backend_client.create_message(
+                session_id=session_id,
+                user_id=user_id,
+                role="assistant",
+                content=response_text,
+                sources=sources,
+            )
 
-        # Send final chunk with sources
-        yield {
-            "userId": user_id,
-            "sessionId": session_id,
-            "chunk": "",
-            "done": True,
-            "sources": [s.model_dump() for s in sources] if sources else None,
-        }
+            if created_message:
+                logger.info(f"Saved assistant message for session {session_id}")
+            else:
+                logger.error(f"Failed to save assistant message for session {session_id}")
 
-        logger.info(f"Completed response for session={session_id}")
+        except Exception as e:
+            logger.error(f"Error processing message: {e}", exc_info=True)
 
-    def _generate_stub_response(
-        self,
-        message: str,
-        sources: list[Source] | None,
-    ) -> str:
-        """Generate a stub response (random text)."""
-        # Pick a random sample response
-        base_response = random.choice(SAMPLE_RESPONSES)
-
-        # If we have sources, prepend a reference note
-        if sources:
-            source_titles = ", ".join([s.title for s in sources[:3]])
-            prefix = f"Based on {len(sources)} retrieved documents ({source_titles}), "
-            return prefix + base_response
-
-        return base_response
+    async def close(self):
+        """Close all clients."""
+        await self.retrieval_client.close()
+        await self.backend_client.close()
+        await self.llm_client.close()

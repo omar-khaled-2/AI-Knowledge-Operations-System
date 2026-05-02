@@ -24,30 +24,19 @@ redis_client: RedisClient | None = None
 chat_engine: ChatEngine | None = None
 
 
-async def handle_process_message(message: dict):
-    """Handle incoming chat:process messages."""
-    global chat_engine, redis_client
+async def handle_chat_notification(message: dict):
+    """Handle incoming chat:process notifications."""
+    global chat_engine
     
-    if chat_engine is None or redis_client is None:
-        logger.error("Chat engine or redis client not initialized")
+    if chat_engine is None:
+        logger.error("Chat engine not initialized")
         return
     
     try:
-        # Generate response stream
-        async for chunk in chat_engine.process_message(message):
-            # Publish each chunk to chat:response
-            await redis_client.publish("chat:response", chunk)
+        # Process message (fetch history, retrieve, generate, save)
+        await chat_engine.process_message(message)
     except Exception as e:
-        logger.error(f"Error processing message: {e}", exc_info=True)
-        # Publish error chunk
-        error_response = {
-            "userId": message.get("userId", "unknown"),
-            "sessionId": message.get("sessionId", "unknown"),
-            "chunk": f"Error: {str(e)}",
-            "done": True,
-            "sources": None,
-        }
-        await redis_client.publish("chat:response", error_response)
+        logger.error(f"Error processing chat notification: {e}", exc_info=True)
 
 
 @asynccontextmanager
@@ -65,23 +54,26 @@ async def lifespan(app: FastAPI):
     await redis_client.connect()
     
     # Subscribe to chat:process channel
-    await redis_client.subscribe("chat:process", handle_process_message)
+    await redis_client.subscribe("chat:process", handle_chat_notification)
     
-    logger.info("Chat service started and listening for messages")
+    logger.info("Chat service started and listening for notifications")
     
     yield
     
     # Cleanup
     logger.info("Shutting down chat service...")
-    await redis_client.disconnect()
+    if chat_engine:
+        await chat_engine.close()
+    if redis_client:
+        await redis_client.disconnect()
     logger.info("Chat service stopped")
 
 
 # Create FastAPI app
 app = FastAPI(
     title="Chat Service",
-    description="AI Chat Processing Service - Pub/Sub Worker",
-    version="1.0.0",
+    description="AI Chat Processing Service - LLM-based with Retrieval",
+    version="2.0.0",
     lifespan=lifespan,
 )
 

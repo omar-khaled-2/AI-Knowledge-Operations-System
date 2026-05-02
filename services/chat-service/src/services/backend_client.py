@@ -52,6 +52,43 @@ class BackendClient:
         messages = await self.get_messages(session_id, limit=1)
         return messages[0] if messages else None
 
+    async def create_message(
+        self,
+        session_id: str,
+        user_id: str,
+        role: str,
+        content: str,
+        sources: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any] | None:
+        """Create a new message via backend API."""
+        url = f"{self.base_url}/api/v1/chat/sessions/{session_id}/messages"
+
+        payload = {
+            "sessionId": session_id,
+            "userId": user_id,
+            "role": role,
+            "content": content,
+        }
+        if sources:
+            payload["sources"] = sources
+
+        try:
+            response = await self.client.post(url, json=payload)
+            response.raise_for_status()
+            data = response.json()
+            logger.info(f"Created message via backend API for session {session_id}")
+            return data
+
+        except httpx.HTTPStatusError as e:
+            logger.error(f"Backend API HTTP error creating message: {e.response.status_code} - {e.response.text}")
+            return None
+        except httpx.RequestError as e:
+            logger.error(f"Backend API request error creating message: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Backend API unexpected error creating message: {e}")
+            return None
+
     async def close(self):
         """Close the HTTP client."""
         await self.client.aclose()

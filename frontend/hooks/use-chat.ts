@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useWebSocket } from '@/providers/websocket-provider'
-import type { ChatResponsePayload, WSMessage } from '@/types/websocket'
+import type { MessageCreatedPayload, WSMessage } from '@/types/websocket'
 
 export interface ChatMessage {
   id: string
@@ -48,64 +48,34 @@ export function useChat(projectId?: string): UseChatReturn {
   const [error, setError] = useState<string | null>(null)
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null)
-  const responseBufferRef = useRef('')
 
-  // Handle incoming chat response messages
+  // Handle incoming message.created events
   useEffect(() => {
-    if (!lastMessage || lastMessage.event !== 'chat.response') {
+    if (!lastMessage || lastMessage.event !== 'message.created') {
       return
     }
 
-    const payload = lastMessage.payload as ChatResponsePayload
-    const { sessionId, chunk, done, sources } = payload
+    const payload = lastMessage.payload as MessageCreatedPayload
+    const { sessionId, message } = payload
 
     if (!currentSession || currentSession.id !== sessionId) {
       return
     }
 
-    if (chunk) {
-      responseBufferRef.current += chunk
-      
-      // Update the last assistant message or create a new one
-      setMessages((prev) => {
-        const lastMsg = prev[prev.length - 1]
-        if (lastMsg && lastMsg.role === 'assistant' && !lastMsg.sources) {
-          // Update existing assistant message
-          return [
-            ...prev.slice(0, -1),
-            { ...lastMsg, content: responseBufferRef.current },
-          ]
-        }
-        // Create new assistant message
-        return [
-          ...prev,
-          {
-            id: generateId(),
-            role: 'assistant',
-            content: responseBufferRef.current,
-            timestamp: new Date(),
-          },
-        ]
-      })
+    // Add the new message to the list
+    const newMessage: ChatMessage = {
+      id: message.id,
+      role: message.role as 'user' | 'assistant' | 'system',
+      content: message.content,
+      sources: message.sources,
+      timestamp: new Date(message.createdAt),
     }
 
-    if (done) {
+    setMessages((prev) => [...prev, newMessage])
+    
+    // If it's an assistant message, stop loading
+    if (message.role === 'assistant') {
       setIsLoading(false)
-      
-      if (sources) {
-        setMessages((prev) => {
-          const lastMsg = prev[prev.length - 1]
-          if (lastMsg && lastMsg.role === 'assistant') {
-            return [
-              ...prev.slice(0, -1),
-              { ...lastMsg, sources },
-            ]
-          }
-          return prev
-        })
-      }
-
-      responseBufferRef.current = ''
     }
   }, [lastMessage, currentSession])
 
@@ -119,7 +89,7 @@ export function useChat(projectId?: string): UseChatReturn {
       setError(null)
       setIsLoading(true)
 
-      // Add user message locally
+      // Add user message locally (optimistic)
       const userMessage: ChatMessage = {
         id: generateId(),
         role: 'user',
@@ -165,7 +135,6 @@ export function useChat(projectId?: string): UseChatReturn {
 
     setCurrentSession(session)
     setError(null)
-    responseBufferRef.current = ''
 
     try {
       // Fetch historical messages from REST API
