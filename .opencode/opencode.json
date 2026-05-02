@@ -14,6 +14,10 @@
       "type": "local",
       "command": ["bunx", "-y", "shadcn@latest", "mcp"],
       "enabled": true
+    },
+    "next-devtools": {
+      "type": "local",
+      "command": ["bunx", "-y", "next-devtools-mcp@latest"]
     }
   }
 }
