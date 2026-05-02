@@ -108,14 +108,20 @@ export class DocumentsService {
     return savedDocument;
   }
 
-  async update(id: string, updateDocumentDto: UpdateDocumentDto, ownerId: string): Promise<DocumentEntity | null> {
-    this.logger.log(`Updating document: id=${id}, ownerId=${ownerId}`);
+  async update(id: string, updateDocumentDto: UpdateDocumentDto, ownerId?: string): Promise<DocumentEntity | null> {
+    this.logger.log(`Updating document: id=${id}, ownerId=${ownerId || 'system'}`);
+    
+    const filter: any = {
+      _id: this.toObjectId(id),
+    };
+    
+    if (ownerId) {
+      filter.owner = this.toObjectId(ownerId);
+    }
+    
     const updatedDocument = await this.documentModel
       .findOneAndUpdate(
-        {
-          _id: this.toObjectId(id),
-          owner: this.toObjectId(ownerId),
-        },
+        filter,
         {
           ...updateDocumentDto,
         },

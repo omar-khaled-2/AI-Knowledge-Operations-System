@@ -26,7 +26,6 @@ import { DocumentResponseDto } from "./dto/document-response.dto";
 import { plainToInstance } from "class-transformer";
 
 @Controller("documents")
-@UseGuards(AuthGuard)
 export class DocumentsController {
   private readonly logger = new Logger(DocumentsController.name);
 
@@ -78,6 +77,7 @@ export class DocumentsController {
   }
 
   @Get()
+  @UseGuards(AuthGuard)
   async findAll(
     @Query("projectId") projectId: string,
     @Query("page") pageStr: string,
@@ -118,6 +118,7 @@ export class DocumentsController {
   }
 
   @Get(":id")
+  @UseGuards(AuthGuard)
   async findOne(@Param("id") id: string, @CurrentUser() user: any) {
     const userId = this.getUserId(user);
     this.logger.debug(`Fetching document: id=${id}, userId=${userId}`);
@@ -133,6 +134,7 @@ export class DocumentsController {
   }
 
   @Post()
+  @UseGuards(AuthGuard)
   async create(
     @Body() createDocumentDto: CreateDocumentDto,
     @CurrentUser() user: any,
@@ -156,8 +158,9 @@ export class DocumentsController {
     @Body() updateDocumentDto: UpdateDocumentDto,
     @CurrentUser() user: any,
   ) {
-    const userId = this.getUserId(user);
-    this.logger.log(`Updating document: id=${id}, userId=${userId}`);
+    // If no authenticated user, allow system/service updates (MVP - no auth)
+    const userId = user ? this.getUserId(user) : undefined;
+    this.logger.log(`Updating document: id=${id}, userId=${userId || 'system'}`);
     
     const document = await this.documentsService.update(
       id,
@@ -165,7 +168,7 @@ export class DocumentsController {
       userId,
     );
     if (!document) {
-      this.logger.warn(`Document not found for update: id=${id}, userId=${userId}`);
+      this.logger.warn(`Document not found for update: id=${id}, userId=${userId || 'system'}`);
       throw new NotFoundException("Document not found");
     }
     
@@ -174,6 +177,7 @@ export class DocumentsController {
   }
 
   @Delete(":id")
+  @UseGuards(AuthGuard)
   async remove(@Param("id") id: string, @CurrentUser() user: any) {
     const userId = this.getUserId(user);
     this.logger.log(`Deleting document: id=${id}, userId=${userId}`);
@@ -189,6 +193,7 @@ export class DocumentsController {
   }
 
   @Post("upload-url")
+  @UseGuards(AuthGuard)
   async generateUploadUrl(
     @Body() generateUploadUrlDto: GenerateUploadUrlDto,
     @CurrentUser() user: any,

@@ -32,7 +32,7 @@ export class Document {
 
   @Prop({
     required: true,
-    enum: ['processing', 'processed', 'error'],
+    enum: ['processing', 'processed', 'embedded', 'error'],
     default: 'processing',
   })
   status: string;

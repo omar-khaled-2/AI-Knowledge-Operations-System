@@ -8,7 +8,7 @@ export class UpdateDocumentDto {
 
   @IsString()
   @IsOptional()
-  @IsIn(['processing', 'processed', 'error'])
+  @IsIn(['processing', 'processed', 'embedded', 'error'])
   status?: string;
 
   @IsNumber()
