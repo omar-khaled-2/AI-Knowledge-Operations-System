@@ -11,6 +11,7 @@ import { ProjectsModule } from "./projects/projects.module";
 import { DocumentsModule } from "./documents/documents.module";
 import { SessionsModule } from "./sessions/sessions.module";
 import { WebSocketModule } from "./websocket/websocket.module";
+import { ChatModule } from "./chat/chat.module";
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { WebSocketModule } from "./websocket/websocket.module";
     DocumentsModule,
     SessionsModule,
     WebSocketModule,
+    ChatModule,
   ],
   controllers: [AppController],
 })

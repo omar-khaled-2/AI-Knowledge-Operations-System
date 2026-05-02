@@ -127,6 +127,29 @@ export class WebSocketServer {
         return;
       }
 
+      // Handle chat messages - publish to Redis for backend processing
+      if (data.event === 'chat:message') {
+        const chatMessage = {
+          userId: ws.data.userId,
+          sessionId: data.payload?.sessionId,
+          message: data.payload?.content,
+          timestamp: new Date().toISOString(),
+        };
+
+        this.redis.publish('chat:incoming', JSON.stringify(chatMessage))
+          .then(() => {
+            logger.info({ userId: ws.data.userId, sessionId: data.payload?.sessionId }, 'Chat message published to Redis');
+          })
+          .catch((err) => {
+            logger.error({ err, userId: ws.data.userId }, 'Failed to publish chat message to Redis');
+            ws.send(JSON.stringify({
+              event: 'chat:error',
+              payload: { message: 'Failed to process chat message' },
+            }));
+          });
+        return;
+      }
+
       logger.info({ userId: ws.data.userId, event: data.event }, 'WebSocket message received');
     } catch (error) {
       logger.error({ err: error, userId: ws.data.userId }, 'WebSocket message error');
