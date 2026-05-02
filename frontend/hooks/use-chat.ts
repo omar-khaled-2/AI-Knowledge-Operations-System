@@ -159,13 +159,35 @@ export function useChat(projectId?: string): UseChatReturn {
     setError(null)
   }, [])
 
-  const selectSession = useCallback((sessionId: string) => {
+  const selectSession = useCallback(async (sessionId: string) => {
     const session = sessions.find((s) => s.id === sessionId)
-    if (session) {
-      setCurrentSession(session)
+    if (!session) return
+
+    setCurrentSession(session)
+    setError(null)
+    responseBufferRef.current = ''
+
+    try {
+      // Fetch historical messages from REST API
+      const response = await fetch(`/api/v1/chat/sessions/${sessionId}/messages?limit=50`)
+      if (!response.ok) {
+        throw new Error('Failed to load messages')
+      }
+
+      const data = await response.json()
+      const historicalMessages: ChatMessage[] = data.messages.map((msg: any) => ({
+        id: msg.id,
+        role: msg.role as 'user' | 'assistant' | 'system',
+        content: msg.content,
+        sources: msg.sources,
+        timestamp: new Date(msg.createdAt),
+      }))
+
+      setMessages(historicalMessages)
+    } catch (err) {
+      console.error('Failed to load chat history:', err)
+      setError('Failed to load chat history')
       setMessages([])
-      setError(null)
-      responseBufferRef.current = ''
     }
   }, [sessions])
 

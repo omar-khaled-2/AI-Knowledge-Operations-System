@@ -1,17 +1,14 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
 import { ChatService } from './chat.service';
-import { ChatMessage, ChatMessageSchema } from './schemas/chat-message.schema';
-import { Session, SessionSchema } from '../sessions/schemas/session.schema';
+import { MessagesModule } from '../messages/messages.module';
 import { WebSocketModule } from '../websocket/websocket.module';
+import { SessionsModule } from '../sessions/sessions.module';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: ChatMessage.name, schema: ChatMessageSchema },
-      { name: Session.name, schema: SessionSchema },
-    ]),
+    MessagesModule,
     WebSocketModule,
+    SessionsModule,
   ],
   providers: [ChatService],
   exports: [ChatService],

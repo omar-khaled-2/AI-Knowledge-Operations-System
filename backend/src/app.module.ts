@@ -12,6 +12,7 @@ import { DocumentsModule } from "./documents/documents.module";
 import { SessionsModule } from "./sessions/sessions.module";
 import { WebSocketModule } from "./websocket/websocket.module";
 import { ChatModule } from "./chat/chat.module";
+import { MessagesModule } from "./messages/messages.module";
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { ChatModule } from "./chat/chat.module";
     DocumentsModule,
     SessionsModule,
     WebSocketModule,
+    MessagesModule,
     ChatModule,
   ],
   controllers: [AppController],

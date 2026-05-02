@@ -116,4 +116,19 @@ export class SessionsService {
 
     return deletedSession;
   }
+
+  async incrementMessageCount(id: string, ownerId: string): Promise<Session | null> {
+    this.logger.debug(`Incrementing message count for session: ${id}`);
+    
+    return this.sessionModel
+      .findOneAndUpdate(
+        {
+          _id: this.toObjectId(id),
+          owner: this.toObjectId(ownerId),
+        },
+        { $inc: { messageCount: 1 } },
+        { new: true },
+      )
+      .exec();
+  }
 }
