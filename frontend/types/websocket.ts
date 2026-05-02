@@ -1,4 +1,4 @@
-export type WSEventType = 'document.status'
+export type WSEventType = 'document.status' | 'ping' | 'pong'
 
 export interface WSMessage<T extends WSEventType = WSEventType, P = unknown> {
   event: T
