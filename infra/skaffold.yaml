@@ -34,6 +34,10 @@ build:
       context: ../services/websocket-gateway
       docker:
         dockerfile: Dockerfile
+    - image: chat-service
+      context: ../services/chat-service
+      docker:
+        dockerfile: Dockerfile
   tagPolicy:
     gitCommit: {}
   local:
@@ -125,6 +129,15 @@ deploy:
           image.repository: websocket-gateway
           image.tag: latest
           config.frontendUrl: "http://localhost:3000"
+      - name: chat-service
+        chartPath: helm/chat-service
+        namespace: default
+        createNamespace: true
+        valuesFiles:
+          - values.yaml
+        setValues:
+          image.repository: chat-service
+          image.tag: latest
       - name: grafana
         chartPath: helm/grafana
         namespace: default

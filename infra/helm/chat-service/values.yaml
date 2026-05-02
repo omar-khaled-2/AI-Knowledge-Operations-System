@@ -1,0 +1,63 @@
+# Default values for chat-service
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  repository: chat-service
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+replicaCount: 2
+
+# Resource limits for the Chat Service
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+# Redis configuration
+redis:
+  url: "redis://redis-master:6379"
+
+# Retrieval service configuration
+retrieval:
+  url: "http://retrieval-service:8000"
+
+# Chat service application configuration
+config:
+  logLevel: "info"
+  chunkDelayMs: 100
+
+# Health check configuration
+healthCheck:
+  useHttp: true
+  livenessPath: "/health"
+  readinessPath: "/health"
+  port: 3000
+  liveness:
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Node selector for pod assignment
+nodeSelector: {}
+
+# Tolerations for pod assignment
+tolerations: []
+
+# Affinity for pod assignment
+affinity: {}
