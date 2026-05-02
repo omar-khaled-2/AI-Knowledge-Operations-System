@@ -23,8 +23,9 @@ class Config:
     # Qdrant
     qdrant_url: str = os.getenv("QDRANT_URL", "http://localhost:6333")
 
-    # Embedding
-    embedding_model: str = os.getenv("EMBEDDING_MODEL", "sentence-transformers/multi-qa-MiniLM-L6-cos-v1")
+    # OpenAI
+    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
+    embedding_model: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
     embedding_queue_name: str = os.getenv("EMBEDDING_QUEUE_NAME", "embedding-jobs")
 
     # Chunking

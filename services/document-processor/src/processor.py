@@ -65,7 +65,7 @@ def process_document(event_data: dict[str, Any]) -> bool:
 
             # Chunk text
             chunker = SemanticChunker(
-                model_name=config.embedding_model,
+                model=config.embedding_model,
                 max_chunk_size=config.max_chunk_size,
             )
             chunks = chunker.chunk(text)

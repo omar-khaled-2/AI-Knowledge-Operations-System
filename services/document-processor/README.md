@@ -4,20 +4,16 @@ Service 2 of the 3-service vector ingestion pipeline.
 
 ## Overview
 
-Consumes document upload events from Redis Queue, downloads documents from S3, parses them (PDF/MD/TXT), chunks text, and publishes chunks for embedding.
-
-**Current Status (MVP):** Consumes events and logs them. Full processing pipeline coming next.
+Consumes document upload events from Redis Streams, downloads documents from S3, parses them (PDF/MD/TXT), chunks text semantically using OpenAI embeddings, and publishes chunks for embedding.
 
 ## Architecture
 
 ```
-Redis Queue (document-processing)
+Redis Stream (documents:events)
     ↓
-Document Processor Worker (RQ)
+Document Processor Worker (Redis Streams consumer group)
     ↓
-Logs event (MVP)
-    ↓
-Future: S3 → Parse → Chunk → Publish to embedding queue
+S3 Download → Parse → Semantic Chunk (OpenAI) → Enqueue to embedding-jobs RQ
 ```
 
 ## Quick Start
@@ -39,10 +35,10 @@ cp .env.example .env
 ### 3. Run the worker
 
 ```bash
-python -m src.main
+python main.py
 ```
 
-The worker will start and listen for jobs on the configured Redis queue.
+The worker will start and listen for jobs on the configured Redis stream.
 
 ## Configuration
 
@@ -51,21 +47,25 @@ All configuration is via environment variables:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `REDIS_URL` | `redis://localhost:6379` | Redis connection URL |
-| `QUEUE_NAME` | `document-processing` | RQ queue name to consume |
+| `REDIS_STREAM_KEY` | `documents:events` | Redis stream key to consume |
 | `AWS_REGION` | `eu-west-3` | AWS region for S3 |
 | `S3_BUCKET_NAME` | `lalo-documents-omar` | S3 bucket for documents |
+| `OPENAI_API_KEY` | *(required)* | OpenAI API key for semantic chunking |
+| `EMBEDDING_MODEL` | `text-embedding-3-small` | OpenAI embedding model for chunking |
+| `EMBEDDING_QUEUE_NAME` | `embedding-jobs` | RQ queue for embedding jobs |
+| `MAX_CHUNK_SIZE` | `512` | Max chunk size in characters |
 | `LOG_LEVEL` | `info` | Logging level (debug, info, warning, error) |
 
 ## Event Payload
 
-The worker expects jobs with the following event structure:
+The worker expects messages with the following structure:
 
 ```json
 {
   "version": 1,
   "event": "document.uploaded",
   "documentId": "uuid",
-  "s3Key": "projects/uuid/document.pdf",
+  "objectKey": "projects/uuid/document.pdf",
   "mimeType": "application/pdf",
   "filename": "document.pdf",
   "projectId": "uuid",
@@ -81,10 +81,21 @@ The worker expects jobs with the following event structure:
 services/document-processor/
 ├── src/
 │   ├── __init__.py
+│   ├── app.py           # FastAPI app with health checks
 │   ├── main.py          # Entry point
 │   ├── config.py        # Environment configuration
-│   ├── worker.py        # RQ worker setup
-│   └── processor.py     # Document processing logic
+│   ├── worker.py        # Redis Streams worker
+│   ├── processor.py     # Document processing logic
+│   ├── chunker.py       # OpenAI semantic chunker
+│   ├── s3_client.py     # S3 download client
+│   ├── jobs.py          # RQ job enqueueing
+│   └── parsers/         # Document parsers
+│       ├── base.py
+│       ├── factory.py
+│       ├── pdf_parser.py
+│       ├── markdown_parser.py
+│       └── text_parser.py
+├── tests/
 ├── requirements.txt
 ├── Dockerfile
 └── README.md
@@ -104,42 +115,21 @@ docker run --env-file .env document-processor
 ### Running tests
 
 ```bash
-# TODO: Add pytest and tests
+python -m pytest tests/ -v
 ```
 
-### Enqueueing test jobs
+## Supported Document Types
 
-```python
-from redis import Redis
-from rq import Queue
+- `application/pdf` — Extracted using pdfplumber
+- `text/markdown` — Raw markdown content
+- `text/plain` — Raw text content
 
-redis_conn = Redis.from_url("redis://localhost:6379")
-queue = Queue("document-processing", connection=redis_conn)
+## Semantic Chunking
 
-job = queue.enqueue(
-    "src.processor.process_document",
-    {
-        "version": 1,
-        "event": "document.uploaded",
-        "documentId": "test-doc-123",
-        "s3Key": "projects/test/project-doc.pdf",
-        "mimeType": "application/pdf",
-        "filename": "project-doc.pdf",
-        "projectId": "project-123",
-        "uploadedBy": "user-123",
-        "fileSize": 1024,
-        "checksum": "abc123",
-    }
-)
-```
+Uses OpenAI's embedding API to split documents at semantic boundaries:
+1. Splits text into sentences
+2. Generates embeddings for each sentence
+3. Compares cosine similarity between adjacent sentences
+4. Creates chunks when semantic similarity drops below threshold
 
-## Future Work
-
-- [ ] S3 document download
-- [ ] PDF parsing
-- [ ] Markdown parsing
-- [ ] Text parsing
-- [ ] Text chunking with configurable strategies
-- [ ] Publish chunks to embedding queue
-- [ ] Dead letter queue for failed jobs
-- [ ] Metrics and monitoring
+This produces more coherent chunks than fixed-size splitting.
