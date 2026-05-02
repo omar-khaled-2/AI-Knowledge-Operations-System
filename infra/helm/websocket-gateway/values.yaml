@@ -1,0 +1,83 @@
+image:
+  repository: websocket-gateway
+  tag: ""
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3002
+
+replicaCount: 1
+
+imagePullPolicy: IfNotPresent
+
+# Resource limits for the Bun WebSocket gateway
+# Bun is memory-efficient but WebSocket connections are long-lived
+# Adjust based on expected concurrent connections
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Init container configuration
+# Only Redis wait is needed since websocket-gateway only depends on Redis
+initContainers:
+  redisWait:
+    enabled: true
+    image:
+      repository: busybox
+      tag: "1.36"
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 100m
+        memory: 64Mi
+      requests:
+        cpu: 10m
+        memory: 16Mi
+    timeout: 120 # seconds
+    interval: 2 # seconds between retries
+
+# Kubernetes Secrets configuration
+# Sensitive values MUST be provided via Kubernetes Secrets.
+# Never hardcode credentials in this file.
+#
+# Required Secret:
+# 1. websocket-gateway-secrets: Better Auth secret
+#    kubectl create secret generic websocket-gateway-secrets \
+#      --from-literal=BETTER_AUTH_SECRET='your-secure-random-secret' \
+#      -n default
+#
+# Optional Secret (if Redis requires authentication):
+# 2. redis-secrets: Redis password
+#    kubectl create secret generic redis-secrets \
+#      --from-literal=REDIS_PASSWORD='your-redis-password' \
+#      -n default
+
+secrets:
+  # Name of existing secret containing Better Auth credentials
+  # REQUIRED: Must be created before deployment
+  existingSecretName: websocket-gateway-secrets
+
+# Redis connection configuration (non-sensitive parts)
+# Redis runs without auth in local dev (auth.enabled: false in redis subchart)
+# Service name format: <release-name>-master (Bitnami standalone chart)
+redis:
+  host: redis-master
+  port: 6379
+
+# Non-sensitive configuration
+config:
+  frontendUrl: ""
+  betterAuthUrl: ""
+  wsHeartbeatInterval: 30000
+  logLevel: info
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

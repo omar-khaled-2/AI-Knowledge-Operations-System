@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-websocket-gateway
+  labels:
+    app: websocket-gateway
+    release: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: websocket-gateway
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: websocket-gateway
+        release: {{ .Release.Name }}
+    spec:
+      {{- if .Values.initContainers.redisWait.enabled }}
+      initContainers:
+        - name: wait-for-redis
+          image: "{{ .Values.initContainers.redisWait.image.repository }}:{{ .Values.initContainers.redisWait.image.tag }}"
+          imagePullPolicy: {{ .Values.initContainers.redisWait.image.pullPolicy | default .Values.imagePullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Redis at ${REDIS_HOST}:${REDIS_PORT}..."
+              timeout {{ .Values.initContainers.redisWait.timeout }} sh -c '
+                until nc -z "${REDIS_HOST}" "${REDIS_PORT}" 2>/dev/null; do
+                  echo "Redis not ready, waiting {{ .Values.initContainers.redisWait.interval }}s..."
+                  sleep {{ .Values.initContainers.redisWait.interval }}
+                done
+              ' && echo "Redis is ready!" || { echo "ERROR: Timeout waiting for Redis after {{ .Values.initContainers.redisWait.timeout }} seconds"; exit 1; }
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-websocket-gateway-config
+          resources:
+            {{- toYaml .Values.initContainers.redisWait.resources | nindent 12 }}
+      {{- end }}
+      containers:
+        - name: websocket-gateway
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+              name: websocket
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-websocket-gateway-config
+            - secretRef:
+                name: {{ .Values.secrets.existingSecretName }}
+          env:
+            # Optional Redis password (if Redis requires authentication)
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: REDIS_PASSWORD
+                  optional: true
+          # WebSocket servers use TCP socket probes since HTTP probes
+          # may interfere with the WebSocket upgrade handshake
+          livenessProbe:
+            tcpSocket:
+              port: websocket
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: websocket
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

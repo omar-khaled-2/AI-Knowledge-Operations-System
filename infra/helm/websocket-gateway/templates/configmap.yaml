@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-websocket-gateway-config
+  labels:
+    app: websocket-gateway
+    release: {{ .Release.Name }}
+data:
+  PORT: "3002"
+  NODE_ENV: "production"
+  REDIS_URL: {{ printf "redis://%s:%s" .Values.redis.host (toString .Values.redis.port) | quote }}
+  REDIS_HOST: {{ .Values.redis.host | default "redis-master" | quote }}
+  REDIS_PORT: {{ .Values.redis.port | default "6379" | quote }}
+  FRONTEND_URL: {{ .Values.config.frontendUrl | default (printf "http://%s-frontend.%s.svc.cluster.local" .Release.Name .Release.Namespace) | quote }}
+  BETTER_AUTH_URL: {{ .Values.config.betterAuthUrl | default (printf "http://%s-backend.%s.svc.cluster.local" .Release.Name .Release.Namespace) | quote }}
+  WS_HEARTBEAT_INTERVAL: {{ .Values.config.wsHeartbeatInterval | default "30000" | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | default "info" | quote }}
