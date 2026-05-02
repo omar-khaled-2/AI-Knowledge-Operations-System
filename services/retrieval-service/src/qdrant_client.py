@@ -74,6 +74,12 @@ class QdrantSearchClient:
             for result in results
         ]
 
+    def close(self) -> None:
+        """Close the Qdrant client connection."""
+        if self._client is not None:
+            self._client.close()
+            self._client = None
+
     def health_check(self) -> bool:
         """Check if Qdrant is accessible and collection exists.
 

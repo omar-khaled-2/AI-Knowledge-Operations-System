@@ -1,6 +1,6 @@
 """Tests for FastAPI application endpoints."""
 
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -68,7 +68,7 @@ class TestSearchEndpoint:
             query_embedding_time_ms=100,
             search_time_ms=10,
         )
-        mock_service.search.return_value = mock_response
+        mock_service.search = AsyncMock(return_value=mock_response)
         app.state.search_service = mock_service
 
         try:
@@ -91,7 +91,7 @@ class TestSearchEndpoint:
             query_embedding_time_ms=50,
             search_time_ms=5,
         )
-        mock_service.search.return_value = mock_response
+        mock_service.search = AsyncMock(return_value=mock_response)
         app.state.search_service = mock_service
 
         try:
@@ -120,7 +120,7 @@ class TestSearchEndpoint:
 
     def test_search_service_error(self):
         mock_service = Mock()
-        mock_service.search.side_effect = Exception("Search failed")
+        mock_service.search = AsyncMock(side_effect=Exception("Search failed"))
         app.state.search_service = mock_service
 
         try:
@@ -128,6 +128,60 @@ class TestSearchEndpoint:
             response = client.post("/search", json={"query": "test query"})
             
             assert response.status_code == 500
-            assert "Search failed" in response.json()["detail"]
+            data = response.json()
+            assert data["code"] == "SEARCH_FAILED"
+            assert "Search operation failed" in data["detail"]
+        finally:
+            delattr(app.state, "search_service")
+
+    def test_search_invalid_filters(self):
+        mock_service = Mock()
+        mock_service.search = AsyncMock(side_effect=ValueError("Filter must have match, match_any, or range"))
+        app.state.search_service = mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.post("/search", json={"query": "test query"})
+            
+            assert response.status_code == 400
+            data = response.json()
+            assert data["code"] == "INVALID_FILTERS"
+            assert "Invalid filters" in data["detail"]
+        finally:
+            delattr(app.state, "search_service")
+
+    def test_search_openai_error(self):
+        class FakeOpenAIError(Exception):
+            pass
+        FakeOpenAIError.__module__ = "openai"
+
+        mock_service = Mock()
+        mock_service.search = AsyncMock(side_effect=FakeOpenAIError("API Error"))
+        app.state.search_service = mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.post("/search", json={"query": "test query"})
+            
+            assert response.status_code == 500
+            data = response.json()
+            assert data["code"] == "EMBEDDING_FAILED"
+            assert "Embedding generation failed" in data["detail"]
+        finally:
+            delattr(app.state, "search_service")
+
+    def test_search_connection_error(self):
+        mock_service = Mock()
+        mock_service.search = AsyncMock(side_effect=ConnectionError("Qdrant down"))
+        app.state.search_service = mock_service
+
+        try:
+            client = TestClient(app)
+            response = client.post("/search", json={"query": "test query"})
+            
+            assert response.status_code == 503
+            data = response.json()
+            assert data["code"] == "SERVICE_UNAVAILABLE"
+            assert "Vector database unavailable" in data["detail"]
         finally:
             delattr(app.state, "search_service")

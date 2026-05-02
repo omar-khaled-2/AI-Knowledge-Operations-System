@@ -1,5 +1,6 @@
 """Retrieval Service - Search Logic."""
 
+import asyncio
 import time
 from typing import List, Optional
 
@@ -114,13 +115,14 @@ class SearchService:
         self.openai_client = openai_client or OpenAIEmbeddingClient(
             api_key=config.openai_api_key,
             model=config.embedding_model,
+            timeout=config.request_timeout,
         )
         self.qdrant_client = qdrant_client or QdrantSearchClient(
             url=config.qdrant_url,
             collection_name=config.qdrant_collection,
         )
 
-    def search(self, request: SearchRequest) -> SearchResponse:
+    async def search(self, request: SearchRequest) -> SearchResponse:
         """Execute semantic search.
 
         Args:
@@ -135,9 +137,9 @@ class SearchService:
             limit=request.limit,
         )
 
-        # Generate query embedding
+        # Generate query embedding (offload blocking call to thread)
         embed_start = time.time()
-        query_vector = self.openai_client.embed(request.query)
+        query_vector = await asyncio.to_thread(self.openai_client.embed, request.query)
         embed_time_ms = int((time.time() - embed_start) * 1000)
 
         logger.debug("Query embedded", vector_dim=len(query_vector), time_ms=embed_time_ms)

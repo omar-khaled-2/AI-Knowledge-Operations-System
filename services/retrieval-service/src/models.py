@@ -25,7 +25,11 @@ class SearchFilters(BaseModel):
 class SearchRequest(BaseModel):
     """Request body for semantic search."""
 
-    query: str = Field(..., description="Natural language search query")
+    query: str = Field(
+        ...,
+        description="Natural language search query",
+        max_length=4000,
+    )
     filters: Optional[SearchFilters] = None
     limit: int = Field(default=10, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
@@ -49,3 +53,10 @@ class SearchResponse(BaseModel):
     total: int
     query_embedding_time_ms: int = Field(ge=0)
     search_time_ms: int = Field(ge=0)
+
+
+class ErrorResponse(BaseModel):
+    """Standardized error response."""
+
+    detail: str
+    code: str

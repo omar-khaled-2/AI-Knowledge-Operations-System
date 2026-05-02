@@ -29,5 +29,12 @@ class Config:
 
     @classmethod
     def from_env(cls) -> "Config":
-        """Create configuration from environment variables."""
-        return cls()
+        """Create configuration from environment variables.
+
+        Raises:
+            ValueError: If OPENAI_API_KEY is not set.
+        """
+        config = cls()
+        if not config.openai_api_key:
+            raise ValueError("OPENAI_API_KEY environment variable is required")
+        return config

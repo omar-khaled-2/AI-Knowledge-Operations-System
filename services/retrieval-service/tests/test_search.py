@@ -1,15 +1,15 @@
 """Tests for search orchestration."""
 
-from unittest.mock import Mock, patch
-
 import pytest
+from unittest.mock import Mock
 
-from src.models import SearchFilters, FilterCondition, SearchRequest
+from src.models import FilterCondition, SearchFilters, SearchRequest
 from src.search import SearchService
 
 
 class TestSearchService:
-    def test_search_success(self, test_config):
+    @pytest.mark.asyncio
+    async def test_search_success(self, test_config):
         # Mock OpenAI client
         mock_openai = Mock()
         mock_openai.embed.return_value = [0.1] * 384
@@ -37,7 +37,7 @@ class TestSearchService:
         )
 
         request = SearchRequest(query="test query", limit=5)
-        response = service.search(request)
+        response = await service.search(request)
 
         assert response.total == 1
         assert len(response.results) == 1
@@ -50,7 +50,8 @@ class TestSearchService:
         mock_openai.embed.assert_called_once_with("test query")
         mock_qdrant.search.assert_called_once()
 
-    def test_search_with_filters(self, test_config):
+    @pytest.mark.asyncio
+    async def test_search_with_filters(self, test_config):
         mock_openai = Mock()
         mock_openai.embed.return_value = [0.1] * 384
 
@@ -70,7 +71,7 @@ class TestSearchService:
             ),
             limit=10,
         )
-        response = service.search(request)
+        response = await service.search(request)
 
         assert response.total == 0
         assert len(response.results) == 0
@@ -79,7 +80,8 @@ class TestSearchService:
         call_args = mock_qdrant.search.call_args
         assert call_args.kwargs['filter_obj'] is not None
 
-    def test_search_empty_results(self, test_config):
+    @pytest.mark.asyncio
+    async def test_search_empty_results(self, test_config):
         mock_openai = Mock()
         mock_openai.embed.return_value = [0.1] * 384
 
@@ -93,12 +95,13 @@ class TestSearchService:
         )
 
         request = SearchRequest(query="test query")
-        response = service.search(request)
+        response = await service.search(request)
 
         assert response.total == 0
         assert len(response.results) == 0
 
-    def test_search_offset_and_score_threshold(self, test_config):
+    @pytest.mark.asyncio
+    async def test_search_offset_and_score_threshold(self, test_config):
         mock_openai = Mock()
         mock_openai.embed.return_value = [0.1] * 384
 
@@ -117,14 +120,15 @@ class TestSearchService:
             offset=10,
             score_threshold=0.5,
         )
-        response = service.search(request)
+        response = await service.search(request)
 
         assert response.total == 0
         call_args = mock_qdrant.search.call_args
         assert call_args.kwargs["offset"] == 10
         assert call_args.kwargs["score_threshold"] == 0.5
 
-    def test_search_embedding_error(self, test_config):
+    @pytest.mark.asyncio
+    async def test_search_embedding_error(self, test_config):
         mock_openai = Mock()
         mock_openai.embed.side_effect = Exception("OpenAI API Error")
 
@@ -136,9 +140,10 @@ class TestSearchService:
         request = SearchRequest(query="test query")
 
         with pytest.raises(Exception, match="OpenAI API Error"):
-            service.search(request)
+            await service.search(request)
 
-    def test_search_qdrant_error(self, test_config):
+    @pytest.mark.asyncio
+    async def test_search_qdrant_error(self, test_config):
         mock_openai = Mock()
         mock_openai.embed.return_value = [0.1] * 384
 
@@ -154,9 +159,10 @@ class TestSearchService:
         request = SearchRequest(query="test query")
 
         with pytest.raises(Exception, match="Qdrant Error"):
-            service.search(request)
+            await service.search(request)
 
-    def test_result_mapping(self, test_config):
+    @pytest.mark.asyncio
+    async def test_result_mapping(self, test_config):
         """Test that Qdrant payload is correctly mapped to response schema."""
         mock_openai = Mock()
         mock_openai.embed.return_value = [0.1] * 384
@@ -184,7 +190,7 @@ class TestSearchService:
         )
 
         request = SearchRequest(query="test")
-        response = service.search(request)
+        response = await service.search(request)
 
         result = response.results[0]
         assert result.chunk_id == "chunk-1"

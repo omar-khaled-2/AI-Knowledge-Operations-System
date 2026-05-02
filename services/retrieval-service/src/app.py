@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 
 from src.config import Config
-from src.models import SearchRequest, SearchResponse
+from src.models import ErrorResponse, SearchRequest, SearchResponse
 from src.search import SearchService
 
 logger = structlog.get_logger()
@@ -42,6 +42,19 @@ async def lifespan(app: FastAPI):
     yield
 
     logger.info("Shutting down Retrieval Service")
+
+    # Graceful cleanup of clients
+    try:
+        if hasattr(app.state.search_service, "openai_client"):
+            app.state.search_service.openai_client.close()
+    except Exception as e:
+        logger.warning("Failed to close OpenAI client", error=str(e))
+
+    try:
+        if hasattr(app.state.search_service, "qdrant_client"):
+            app.state.search_service.qdrant_client.close()
+    except Exception as e:
+        logger.warning("Failed to close Qdrant client", error=str(e))
 
 
 app = FastAPI(
@@ -97,11 +110,65 @@ async def search(request: SearchRequest):
         Search results with timing metadata.
     """
     try:
-        response = app.state.search_service.search(request)
+        response = await app.state.search_service.search(request)
         return response
+    except ValueError as e:
+        logger.warning(
+            "Invalid filters",
+            error=str(e),
+            query=safe_truncate(request.query, 50),
+        )
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content=ErrorResponse(
+                detail="Invalid filters provided",
+                code="INVALID_FILTERS",
+            ).model_dump(),
+        )
     except Exception as e:
-        logger.error("Search failed", error=str(e), query=safe_truncate(request.query, 50))
-        raise HTTPException(
+        error_module = type(e).__module__
+        error_type = type(e).__name__
+
+        # OpenAI errors
+        if "openai" in error_module:
+            logger.error(
+                "Embedding failed",
+                error=str(e),
+                query=safe_truncate(request.query, 50),
+            )
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content=ErrorResponse(
+                    detail="Embedding generation failed",
+                    code="EMBEDDING_FAILED",
+                ).model_dump(),
+            )
+
+        # Connection errors (Qdrant unreachable)
+        if any(conn in error_type for conn in ("ConnectionError", "ConnectTimeout", "MaxRetryError")):
+            logger.error(
+                "Qdrant unreachable",
+                error=str(e),
+                query=safe_truncate(request.query, 50),
+            )
+            return JSONResponse(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                content=ErrorResponse(
+                    detail="Vector database unavailable",
+                    code="SERVICE_UNAVAILABLE",
+                ).model_dump(),
+            )
+
+        # Qdrant or other errors
+        logger.error(
+            "Search failed",
+            error=str(e),
+            query=safe_truncate(request.query, 50),
+        )
+        return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
+            content=ErrorResponse(
+                detail="Search operation failed",
+                code="SEARCH_FAILED",
+            ).model_dump(),
         )
