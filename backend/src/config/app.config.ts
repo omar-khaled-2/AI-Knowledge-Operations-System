@@ -25,4 +25,9 @@ export default registerAs('app', () => ({
   rabbitmqExchange: process.env.RABBITMQ_EXCHANGE || 'documents',
   rabbitmqDocumentQueue: process.env.RABBITMQ_DOCUMENT_QUEUE || 'document-jobs',
   rabbitmqEmbeddingQueue: process.env.RABBITMQ_EMBEDDING_QUEUE || 'embedding-jobs',
+  // Redis configuration
+  redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
+  redisPassword: process.env.REDIS_PASSWORD || '',
+  wsHeartbeatInterval: parseInt(process.env.WS_HEARTBEAT_INTERVAL, 10) || 30000,
+  wsRedisTtl: parseInt(process.env.WS_REDIS_TTL, 10) || 300,
 }));
