@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { Plus, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { createSignedUrl, createDocument } from "./actions";
@@ -15,9 +14,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import type { Document } from "@/lib/mock-data";
 
 interface UploadButtonProps {
   projectId: string;
+  onDocumentCreated?: (doc: Document) => void;
 }
 
 const ALLOWED_TYPES = [
@@ -32,8 +33,7 @@ const ALLOWED_EXTENSIONS = ".pdf,.doc,.docx,.txt,.md";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
-export function UploadButton({ projectId }: UploadButtonProps) {
-  const router = useRouter();
+export function UploadButton({ projectId, onDocumentCreated }: UploadButtonProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -107,7 +107,7 @@ export function UploadButton({ projectId }: UploadButtonProps) {
       }
 
       // Step 3: Create document record
-      await createDocument({
+      const newDoc = await createDocument({
         name: file.name,
         projectId,
         size: file.size,
@@ -118,7 +118,7 @@ export function UploadButton({ projectId }: UploadButtonProps) {
 
       toast.success(`"${file.name}" uploaded successfully`);
       setOpen(false);
-      router.refresh();
+      onDocumentCreated?.(newDoc);
     } catch (error) {
       console.error("Upload error:", error);
       toast.error(

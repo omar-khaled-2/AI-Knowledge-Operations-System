@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   FileText,
@@ -45,6 +45,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getDocuments } from "./actions";
+import { useWebSocket } from "@/providers/websocket-provider";
+import type { DocumentStatusPayload } from "@/types/websocket";
 
 const sourceTypeLabels: Record<string, string> = {
   upload: "Uploaded",
@@ -228,17 +230,64 @@ function getPageNumbers(
 
 interface DocumentListProps {
   projectId: string;
+  documents: Document[];
+  totalCount: number;
+  onDocumentsLoaded: (documents: Document[], total: number) => void;
 }
 
-export function DocumentList({ projectId }: DocumentListProps) {
+/**
+ * Map WebSocket document status to frontend Document status.
+ * Backend model is source of truth: ['processing', 'processed', 'embedded', 'error']
+ */
+function mapWsStatusToDocumentStatus(
+  wsStatus: DocumentStatusPayload["status"]
+): Document["status"] | null {
+  // Backend emits exact Document statuses — pass through directly
+  return wsStatus as Document["status"];
+}
+
+export function DocumentList({
+  projectId,
+  documents,
+  totalCount,
+  onDocumentsLoaded,
+}: DocumentListProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(12);
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [totalCount, setTotalCount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { lastMessage } = useWebSocket();
+  const processedMessageRef = useRef<string | null>(null);
+
+  // Listen for WebSocket document.status events and update local state
+  useEffect(() => {
+    if (!lastMessage || lastMessage.event !== "document.status") {
+      return;
+    }
+
+    // Prevent processing the same message multiple times
+    const messageKey = `${lastMessage.event}-${lastMessage.timestamp}-${(lastMessage.payload as DocumentStatusPayload)?.documentId}`;
+    if (processedMessageRef.current === messageKey) {
+      return;
+    }
+    processedMessageRef.current = messageKey;
+
+    const payload = lastMessage.payload as DocumentStatusPayload;
+    if (!payload?.documentId) return;
+
+    const newStatus = mapWsStatusToDocumentStatus(payload.status);
+    if (!newStatus) return;
+
+    onDocumentsLoaded(
+      documents.map((doc) =>
+        doc.id === payload.documentId ? { ...doc, status: newStatus } : doc
+      ),
+      totalCount
+    );
+  }, [lastMessage]);
 
   const fetchDocuments = useCallback(
     async (page: number, limit: number) => {
@@ -251,8 +300,7 @@ export function DocumentList({ projectId }: DocumentListProps) {
           sortBy: "createdAt",
           sortOrder: "desc",
         });
-        setDocuments(response.data);
-        setTotalCount(response.total);
+        onDocumentsLoaded(response.data, response.total);
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Failed to load documents";
@@ -262,7 +310,7 @@ export function DocumentList({ projectId }: DocumentListProps) {
         setIsLoading(false);
       }
     },
-    [projectId]
+    [projectId, onDocumentsLoaded]
   );
 
   useEffect(() => {
