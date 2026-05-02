@@ -145,7 +145,20 @@ class SearchService:
         logger.debug("Query embedded", vector_dim=len(query_vector), time_ms=embed_time_ms)
 
         # Build Qdrant filter
-        filter_obj = build_qdrant_filter(request.filters)
+        filters = request.filters or SearchFilters()
+        
+        # Auto-add project_id filter if provided
+        if request.project_id:
+            logger.info("Filtering by project_id", project_id=request.project_id)
+            project_condition = FilterCondition(
+                key="project_id",
+                match=request.project_id,
+            )
+            if filters.must is None:
+                filters.must = []
+            filters.must.append(project_condition)
+        
+        filter_obj = build_qdrant_filter(filters)
 
         # Search Qdrant
         search_start = time.time()

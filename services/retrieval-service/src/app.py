@@ -109,8 +109,22 @@ async def search(request: SearchRequest):
     Returns:
         Search results with timing metadata.
     """
+    logger.info(
+        "Search request received",
+        query=safe_truncate(request.query, 100),
+        project_id=request.project_id,
+        limit=request.limit,
+        score_threshold=request.score_threshold,
+        has_filters=request.filters is not None,
+    )
     try:
         response = await app.state.search_service.search(request)
+        logger.info(
+            "Search request completed",
+            query=safe_truncate(request.query, 50),
+            results_count=len(response.results),
+            total=response.total,
+        )
         return response
     except ValueError as e:
         logger.warning(

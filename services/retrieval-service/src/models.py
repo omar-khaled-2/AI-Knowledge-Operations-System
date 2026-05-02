@@ -30,6 +30,10 @@ class SearchRequest(BaseModel):
         description="Natural language search query",
         max_length=4000,
     )
+    project_id: Optional[str] = Field(
+        default=None,
+        description="Project ID to filter results by",
+    )
     filters: Optional[SearchFilters] = None
     limit: int = Field(default=10, ge=1, le=100)
     offset: int = Field(default=0, ge=0)

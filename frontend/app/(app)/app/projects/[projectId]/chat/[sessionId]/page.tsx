@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getProject } from "@/app/(app)/app/projects/actions";
-import { getSession, getSessions } from "../actions";
+import { getSession, getSessions, getMessages } from "../actions";
 import { ChatClient } from "./chat-client";
 
 export default async function ChatSessionPage({
@@ -8,8 +8,8 @@ export default async function ChatSessionPage({
 }: {
   params: { projectId: string; sessionId: string };
 }) {
-  // Fetch project, session, and all sessions in parallel
-  const [project, session, sessionsResult] = await Promise.all([
+  // Fetch project, session, all sessions, and messages in parallel
+  const [project, session, sessionsResult, messagesResult] = await Promise.all([
     getProject(params.projectId),
     getSession(params.sessionId),
     getSessions(params.projectId, {
@@ -18,6 +18,7 @@ export default async function ChatSessionPage({
       sortBy: "updatedAt",
       sortOrder: "desc",
     }),
+    getMessages(params.sessionId, { page: 1, limit: 100 }).catch(() => ({ messages: [], total: 0 })),
   ]);
 
   if (!project) {
@@ -41,8 +42,19 @@ export default async function ChatSessionPage({
     );
   }
 
-  // TODO: Replace with real messages when messages API is available
-  const initialMessages: any[] = [];
+  // Map backend message format to frontend message format
+  const initialMessages = messagesResult.messages.map((msg) => ({
+    id: msg.id,
+    sessionId: msg.sessionId,
+    role: msg.role as "user" | "assistant",
+    content: msg.content,
+    timestamp: msg.createdAt,
+    sources: msg.sources?.map((source) => ({
+      id: source.documentId,
+      documentName: source.title,
+      snippet: source.snippet,
+    })),
+  }));
 
   return (
     <ChatClient

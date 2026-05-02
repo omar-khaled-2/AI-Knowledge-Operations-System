@@ -131,3 +131,69 @@ export async function deleteSession(id: string): Promise<void> {
     throw new Error(message);
   }
 }
+
+export interface Message {
+  id: string;
+  sessionId: string;
+  userId: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  sources?: Array<{
+    documentId: string;
+    title: string;
+    snippet: string;
+    score: number;
+  }>;
+  createdAt: string;
+}
+
+export interface PaginatedMessagesResponse {
+  messages: Message[];
+  total: number;
+}
+
+export async function getMessages(
+  sessionId: string,
+  options?: { page?: number; limit?: number }
+): Promise<PaginatedMessagesResponse> {
+  try {
+    const params = new URLSearchParams();
+    if (options?.page) params.set("page", String(options.page));
+    if (options?.limit) params.set("limit", String(options.limit));
+    const query = params.toString();
+    const path = `/api/v1/chat/sessions/${sessionId}/messages${query ? `?${query}` : ""}`;
+    return await fetchWithAuth<PaginatedMessagesResponse>(path);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch messages";
+    console.error("[getMessages] Failed:", message, "| Session ID:", sessionId);
+    throw new Error(message);
+  }
+}
+
+export async function createMessage(
+  sessionId: string,
+  data: {
+    role: "user" | "assistant" | "system";
+    content: string;
+    sources?: Array<{
+      documentId: string;
+      title: string;
+      snippet: string;
+      score: number;
+    }>;
+  }
+): Promise<Message> {
+  try {
+    const path = `/api/v1/chat/sessions/${sessionId}/messages`;
+    return await fetchWithAuth<Message>(path, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to create message";
+    console.error("[createMessage] Failed:", message, "| Session ID:", sessionId);
+    throw new Error(message);
+  }
+}

@@ -1,17 +1,20 @@
-import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards, Logger } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Logger } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { MessagesService } from './messages.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { ChatService } from '../chat/chat.service';
 import { CreateMessageDto, ListMessagesQueryDto, MessageResponseDto } from './dto/message.dto';
-import { AuthGuard } from '../auth/guards/auth.guard';
-import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { WebSocketPublisher } from '../websocket/websocket-publisher.service';
 
-@Controller('api/v1/chat/sessions/:sessionId/messages')
-@UseGuards(AuthGuard)
-export class MessagesController {
-  private readonly logger = new Logger(MessagesController.name);
+/**
+ * Internal Messages Controller - No Auth Guard
+ * 
+ * Used by internal services (chat-service) to create/fetch messages.
+ * Should NOT be exposed externally - only accessible within the cluster.
+ */
+@Controller('internal/chat/sessions/:sessionId/messages')
+export class InternalMessagesController {
+  private readonly logger = new Logger(InternalMessagesController.name);
 
   constructor(
     private readonly messagesService: MessagesService,
@@ -23,7 +26,6 @@ export class MessagesController {
   @Get()
   async findAll(
     @Param('sessionId') sessionId: string,
-    @CurrentUser() user: { id: string },
     @Query() query: ListMessagesQueryDto,
   ) {
     const page = query.page ? parseInt(query.page.toString(), 10) : 1;
@@ -35,21 +37,19 @@ export class MessagesController {
   @Post()
   async create(
     @Param('sessionId') sessionId: string,
-    @CurrentUser() user: { id: string },
     @Body() createMessageDto: CreateMessageDto,
   ) {
     const message = await this.messagesService.create({
       ...createMessageDto,
       sessionId,
-      userId: user.id,
     });
 
     // Emit message.created event to user's WebSocket channel
-    await this.wsPublisher.sendToUser(user.id, {
+    await this.wsPublisher.sendToUser(message.userId.toString(), {
       event: 'message.created',
       version: '1.0',
       timestamp: new Date().toISOString(),
-      userId: user.id,
+      userId: message.userId.toString(),
       payload: {
         sessionId,
         message: {
@@ -62,15 +62,15 @@ export class MessagesController {
       },
     });
 
-    this.logger.debug(`Emitted message.created event for user ${user.id}, session ${sessionId}`);
+    this.logger.debug(`Emitted message.created event for user ${message.userId.toString()}, session ${sessionId}`);
 
     // Only trigger AI processing for user messages to avoid infinite loops
     if (message.role === 'user') {
       try {
-        const session = await this.sessionsService.findOne(sessionId, user.id);
+        const session = await this.sessionsService.findOne(sessionId, message.userId.toString());
         if (session) {
           await this.chatService.publishProcessNotification(
-            user.id,
+            message.userId.toString(),
             sessionId,
             session.projectId ? session.projectId.toString() : null,
           );
@@ -83,13 +83,5 @@ export class MessagesController {
     }
 
     return plainToInstance(MessageResponseDto, message);
-  }
-
-  @Delete()
-  async removeAll(
-    @Param('sessionId') sessionId: string,
-  ) {
-    const deletedCount = await this.messagesService.deleteBySession(sessionId);
-    return { deletedCount };
   }
 }

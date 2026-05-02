@@ -1,59 +1,31 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { RedisService } from '../websocket/redis.service';
-import { MessagesService } from '../messages/messages.service';
-
-interface ChatNotification {
-  userId: string;
-  sessionId: string;
-  projectId: string | null;
-  message: string;
-}
 
 @Injectable()
-export class ChatService implements OnModuleInit, OnModuleDestroy {
+export class ChatService {
   private readonly logger = new Logger(ChatService.name);
 
-  constructor(
-    private readonly messagesService: MessagesService,
-    private readonly redisService: RedisService,
-  ) {}
+  constructor(private readonly redisService: RedisService) {}
 
-  async onModuleInit() {
-    await this.redisService.subscribe('chat:incoming', this.handleIncomingMessage.bind(this));
-    this.logger.log('ChatService subscribed to chat:incoming');
-  }
+  async publishProcessNotification(
+    userId: string,
+    sessionId: string,
+    projectId: string | null,
+  ): Promise<void> {
+    const notification = {
+      userId,
+      sessionId,
+      projectId,
+    };
 
-  async onModuleDestroy() {
-    await this.redisService.unsubscribe('chat:incoming');
-    this.logger.log('ChatService unsubscribed from chat:incoming');
-  }
-
-  private async handleIncomingMessage(message: string): Promise<void> {
     try {
-      const data = JSON.parse(message) as ChatNotification;
-      this.logger.debug(`Received chat:incoming for session ${data.sessionId}`);
-
-      // Save user message
-      await this.messagesService.create({
-        sessionId: data.sessionId,
-        userId: data.userId,
-        role: 'user',
-        content: data.message || '',
-      });
-
-      // Publish light notification to chat:process
-      const notification = {
-        userId: data.userId,
-        sessionId: data.sessionId,
-        projectId: data.projectId,
-      };
-
       await this.redisService.publish('chat:process', JSON.stringify(notification));
-      this.logger.debug(`Published chat:process notification for session ${data.sessionId}`);
+      this.logger.debug(`Published chat:process for session ${sessionId}`);
     } catch (error) {
       this.logger.error(
-        `Error handling incoming message: ${error instanceof Error ? error.message : String(error)}`,
+        `Failed to publish chat:process: ${error instanceof Error ? error.message : String(error)}`,
       );
+      throw error;
     }
   }
 }

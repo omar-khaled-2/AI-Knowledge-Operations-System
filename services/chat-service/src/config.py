@@ -17,6 +17,8 @@ class Config(BaseSettings):
     # Retrieval Service
     retrieval_service_url: str = "http://localhost:3000"
     retrieval_timeout: float = 10.0
+    retrieval_score_threshold: float = 0.5
+    retrieval_limit: int = 5
 
     # OpenAI / LLM
     openai_api_key: str = ""

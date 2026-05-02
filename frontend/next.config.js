@@ -16,7 +16,12 @@ const nextConfig = {
         destination: `${apiUrl}/api/ws/:path*`,
       },
       {
-        // Custom API endpoints: strip /api prefix (backend routes are at /projects, etc.)
+        // API v1 endpoints: preserve /api/v1 prefix (messages controller, etc.)
+        source: '/api/v1/:path*',
+        destination: `${apiUrl}/api/v1/:path*`,
+      },
+      {
+        // Custom API endpoints: strip /api prefix (backend routes are at /projects, /sessions, etc.)
         source: '/api/:path*',
         destination: `${apiUrl}/:path*`,
       },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -12,9 +12,20 @@ import {
   User,
   Bot,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type Session } from "@/lib/mock-data";
+import { useWebSocket } from "@/providers/websocket-provider";
+import type { MessageCreatedPayload } from "@/types/websocket";
+import { createMessage } from "../actions";
+
+interface Source {
+  id: string;
+  documentName: string;
+  pageNumber?: number;
+  snippet: string;
+}
 
 interface Message {
   id: string;
@@ -22,12 +33,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: string;
-  sources?: Array<{
-    id: string;
-    documentName: string;
-    pageNumber?: number;
-    snippet: string;
-  }>;
+  sources?: Source[];
 }
 
 interface Project {
@@ -131,8 +137,15 @@ export function ChatClient({
   const [isLoading, setIsLoading] = useState(false);
   const [chatMessages, setChatMessages] = useState<Message[]>(initialMessages);
   const [searchQuery, setSearchQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { lastMessage } = useWebSocket();
+
+  // Track processed message IDs to avoid duplicates from WebSocket
+  const processedIdsRef = useRef<Set<string>>(
+    new Set(initialMessages.map((m) => m.id))
+  );
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -148,41 +161,75 @@ export function ChatClient({
     }
   }, [inputValue]);
 
-  const handleSend = () => {
-    if (!inputValue.trim() || isLoading) return;
+  // Listen for WebSocket message.created events
+  useEffect(() => {
+    if (!lastMessage || lastMessage.event !== "message.created") {
+      return;
+    }
+
+    const payload = lastMessage.payload as MessageCreatedPayload;
+    const { sessionId, message } = payload;
+
+    // Only handle messages for the current session
+    if (sessionId !== session.id) {
+      return;
+    }
+
+    // Skip if we've already processed this message
+    if (processedIdsRef.current.has(message.id)) {
+      return;
+    }
+
+    processedIdsRef.current.add(message.id);
 
     const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      sessionId: session.id,
-      role: "user",
-      content: inputValue.trim(),
-      timestamp: new Date().toISOString(),
+      id: message.id,
+      sessionId: sessionId,
+      role: message.role as "user" | "assistant",
+      content: message.content,
+      timestamp: message.createdAt,
+      sources: message.sources?.map((source) => ({
+        id: source.documentId,
+        documentName: source.title,
+        snippet: source.snippet,
+      })),
     };
 
     setChatMessages((prev) => [...prev, newMessage]);
+
+    // If it's an assistant message, stop loading
+    if (message.role === "assistant") {
+      setIsLoading(false);
+    }
+  }, [lastMessage, session.id]);
+
+  const handleSend = useCallback(async () => {
+    if (!inputValue.trim() || isLoading) return;
+
+    const content = inputValue.trim();
     setInputValue("");
+    setError(null);
+
+
     setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiResponse: Message = {
-        id: `msg-${Date.now() + 1}`,
-        sessionId: session.id,
-        role: "assistant",
-        content: `I&apos;ve analyzed your question about "${newMessage.content}". Based on the available documents and previous conversations, here&apos;s what I found:\n\nThis is a simulated response. In the actual implementation, this would query the vector database and generate a contextual answer based on your project&apos;s knowledge base.`,
-        timestamp: new Date().toISOString(),
-        sources: [
-          {
-            id: "src-sim",
-            documentName: "Relevant Document",
-            snippet: "Matching content...",
-          },
-        ],
-      };
-      setChatMessages((prev) => [...prev, aiResponse]);
+    try {
+      const data = await createMessage(session.id, {
+        role: "user",
+        content,
+      });
+
+      // Replace optimistic message with the real one from server
+      processedIdsRef.current.add(data.id);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to send message";
+      console.error("[ChatClient] Failed to send message:", message);
+      setError(message);
       setIsLoading(false);
-    }, 1500);
-  };
+
+    }
+  }, [inputValue, isLoading, session.id]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -315,6 +362,18 @@ export function ChatClient({
 
         {/* Input Area */}
         <div className="border-t border-[#e5e5e5] bg-[#fffaf0] px-4 lg:px-6 py-4">
+          {error && (
+            <div className="flex items-center gap-2 max-w-3xl mx-auto mb-3 px-4 py-2.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span>{error}</span>
+              <button
+                onClick={() => setError(null)}
+                className="ml-auto text-red-500 hover:text-red-700 text-xs underline"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
           <div className="flex items-end gap-3 max-w-3xl mx-auto">
             <textarea
               ref={inputRef}
@@ -323,7 +382,8 @@ export function ChatClient({
               onKeyDown={handleKeyDown}
               placeholder="Ask anything about your project..."
               rows={1}
-              className="flex-1 min-h-[44px] max-h-[200px] px-4 py-3 bg-[#fffaf0] border border-[#e5e5e5] rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#0a0a0a]"
+              disabled={isLoading}
+              className="flex-1 min-h-[44px] max-h-[200px] px-4 py-3 bg-[#fffaf0] border border-[#e5e5e5] rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#0a0a0a] disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               onClick={handleSend}

@@ -1,5 +1,5 @@
-import Link from "next/link"
-import { notFound } from "next/navigation"
+import Link from "next/link";
+import { notFound } from "next/navigation";
 import {
   FileText,
   MessageSquare,
@@ -7,62 +7,62 @@ import {
   Lightbulb,
   Settings,
   Clock,
-} from "lucide-react"
-import { formatFileSize } from "@/lib/utils"
+} from "lucide-react";
+import { formatFileSize } from "@/lib/utils";
 import {
   getSessionsByProjectId,
   getInsightsByProjectId,
   formatRelativeTime,
   getBrandColor,
   type Document,
-} from "@/lib/mock-data"
-import { getProject } from "@/app/(app)/app/projects/actions"
-import { getDocuments } from "@/app/(app)/app/projects/[projectId]/documents/actions"
-import { Card, CardContent } from "@/components/ui/card"
-import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { Breadcrumbs } from "@/components/app/breadcrumbs"
-import { StatCard } from "@/components/stat-card"
-import { PageHeader } from "@/components/page-header"
-import { SectionHeader } from "@/components/section-header"
-import { ActionButton } from "@/components/action-button"
-import { ListContainer, ListItem } from "@/components/list-container"
+} from "@/lib/mock-data";
+import { getProject } from "@/app/(app)/app/projects/actions";
+import { getDocuments } from "@/app/(app)/app/projects/[projectId]/documents/actions";
+import { Card, CardContent } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Breadcrumbs } from "@/components/app/breadcrumbs";
+import { StatCard } from "@/components/stat-card";
+import { PageHeader } from "@/components/page-header";
+import { SectionHeader } from "@/components/section-header";
+import { ActionButton } from "@/components/action-button";
+import { ListContainer, ListItem } from "@/components/list-container";
 
 export default async function ProjectHomePage({
   params,
 }: {
-  params: { projectId: string }
+  params: { projectId: string };
 }) {
-  const project = await getProject(params.projectId)
+  const project = await getProject(params.projectId);
 
   if (!project) {
-    notFound()
+    notFound();
   }
 
   // TODO: Replace with real data when sessions module is built
-  const sessions = getSessionsByProjectId(project.id)
+  const sessions = getSessionsByProjectId(project.id);
   // Fetch recent documents from API (server-side pagination)
-  let recentDocuments: Document[] = []
+  let recentDocuments: Document[] = [];
   try {
     const result = await getDocuments(params.projectId, {
       page: 1,
       limit: 5,
       sortBy: "createdAt",
       sortOrder: "desc",
-    })
-    recentDocuments = result.data
+    });
+    recentDocuments = result.data;
   } catch (error) {
-    console.error("Failed to fetch documents:", error)
+    console.error("Failed to fetch documents:", error);
   }
   // TODO: Replace with real data when insights module is built
-  const insights = getInsightsByProjectId(project.id)
-  const brandColor = getBrandColor(project.color)
+  const insights = getInsightsByProjectId(project.id);
+  const brandColor = getBrandColor(project.color);
 
   function getDisplaySize(doc: Document): string {
     if (typeof doc.size === "number") {
-      return formatFileSize(doc.size)
+      return formatFileSize(doc.size);
     }
-    return doc.size
+    return doc.size;
   }
 
   return (
@@ -118,14 +118,25 @@ export default async function ProjectHomePage({
 
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-3">
-        <ActionButton variant="primary" icon={<MessageSquare className="size-4" />}>
+        <ActionButton
+          variant="primary"
+          icon={<MessageSquare className="size-4" />}
+        >
           <Link href={`/app/projects/${project.id}/chat`}>New Chat</Link>
         </ActionButton>
-        <ActionButton variant="secondary" icon={<FileText className="size-4" />}>
+        <ActionButton
+          variant="secondary"
+          icon={<FileText className="size-4" />}
+        >
           Upload Document
         </ActionButton>
-        <ActionButton variant="secondary" icon={<Database className="size-4" />}>
-          <Link href={`/app/projects/${project.id}/sources`}>Connect Source</Link>
+        <ActionButton
+          variant="secondary"
+          icon={<Database className="size-4" />}
+        >
+          <Link href={`/app/projects/${project.id}/sources`}>
+            Connect Source
+          </Link>
         </ActionButton>
       </div>
 
@@ -152,7 +163,9 @@ export default async function ProjectHomePage({
                   >
                     <FileText className="size-5 text-muted-foreground flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{doc.name}</p>
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {doc.name}
+                      </p>
                       <p className="text-xs text-muted-foreground/70">
                         {doc.status} · {getDisplaySize(doc)}
                       </p>
@@ -183,8 +196,12 @@ export default async function ProjectHomePage({
               >
                 <MessageSquare className="size-5 text-[var(--muted-soft)] flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[var(--ink)] truncate">{session.name}</p>
-                  <p className="text-xs text-[var(--muted-soft)] truncate">{session.preview}</p>
+                  <p className="text-sm font-medium text-[var(--ink)] truncate">
+                    {session.name}
+                  </p>
+                  <p className="text-xs text-[var(--muted-soft)] truncate">
+                    {session.preview}
+                  </p>
                 </div>
                 <span className="text-xs text-[var(--muted-soft)] flex-shrink-0">
                   {formatRelativeTime(session.updatedAt)}
@@ -214,8 +231,12 @@ export default async function ProjectHomePage({
                       {insight.type.replace("-", " ")}
                     </span>
                   </div>
-                  <h3 className="text-sm font-semibold text-[var(--ink)]">{insight.title}</h3>
-                  <p className="text-sm text-[var(--body)] line-clamp-2">{insight.description}</p>
+                  <h3 className="text-sm font-semibold text-[var(--ink)]">
+                    {insight.title}
+                  </h3>
+                  <p className="text-sm text-[var(--body)] line-clamp-2">
+                    {insight.description}
+                  </p>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-[var(--muted-soft)]">
                       {Math.round(insight.confidence * 100)}% confidence
@@ -231,5 +252,5 @@ export default async function ProjectHomePage({
         </div>
       )}
     </div>
-  )
+  );
 }

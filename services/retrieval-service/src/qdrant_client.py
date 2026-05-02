@@ -49,9 +49,9 @@ class QdrantSearchClient:
         Returns:
             List of search results with id, score, and payload.
         """
-        results = self.client.search(
+        response = self.client.query_points(
             collection_name=self.collection_name,
-            query_vector=vector,
+            query=vector,
             limit=limit,
             offset=offset,
             query_filter=filter_obj,
@@ -62,16 +62,16 @@ class QdrantSearchClient:
             "Qdrant search completed",
             collection=self.collection_name,
             limit=limit,
-            results_count=len(results),
+            results_count=len(response.points),
         )
 
         return [
             {
-                "id": str(result.id),
-                "score": result.score,
-                "payload": result.payload,
+                "id": str(point.id),
+                "score": point.score,
+                "payload": point.payload,
             }
-            for result in results
+            for point in response.points
         ]
 
     def close(self) -> None:

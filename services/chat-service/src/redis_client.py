@@ -22,29 +22,46 @@ class RedisClient:
 
     async def connect(self):
         """Connect to Redis."""
-        self.redis = await redis.from_url(
-            self.redis_url,
-            decode_responses=True,
-        )
-        self.pubsub = self.redis.pubsub()
-        logger.info(f"Connected to Redis at {self.redis_url}")
+        logger.info(f"[REDIS] Connecting to {self.redis_url}")
+        try:
+            self.redis = await redis.from_url(
+                self.redis_url,
+                decode_responses=True,
+            )
+            self.pubsub = self.redis.pubsub()
+            logger.info(f"[REDIS] Connected successfully")
+            
+            # Log Redis server info
+            try:
+                info = await self.redis.info('server')
+                logger.info(f"[REDIS] Server version: {info.get('redis_version', 'unknown')}")
+            except Exception as e:
+                logger.warning(f"[REDIS] Could not get server info: {e}")
+                
+        except Exception as e:
+            logger.error(f"[REDIS] Connection failed: {e}", exc_info=True)
+            raise
 
     async def disconnect(self):
         """Disconnect from Redis."""
+        logger.info("[REDIS] Disconnecting...")
         if self._listener_task:
+            logger.debug("[REDIS] Cancelling listener task...")
             self._listener_task.cancel()
             try:
                 await self._listener_task
             except asyncio.CancelledError:
-                pass
+                logger.debug("[REDIS] Listener task cancelled")
 
         if self.pubsub:
+            logger.debug("[REDIS] Closing pubsub...")
             await self.pubsub.close()
 
         if self.redis:
+            logger.debug("[REDIS] Closing Redis connection...")
             await self.redis.close()
 
-        logger.info("Disconnected from Redis")
+        logger.info("[REDIS] Disconnected")
 
     async def subscribe(
         self,
@@ -55,66 +72,89 @@ class RedisClient:
         if self.pubsub is None:
             raise RuntimeError("Redis client not connected")
 
+        logger.info(f"[REDIS] Subscribing to channel: {channel}")
         self._handlers[channel] = handler
         await self.pubsub.subscribe(channel)
+        logger.info(f"[REDIS] Subscribed to channel: {channel}")
 
         # Start listener if not already running
         if self._listener_task is None or self._listener_task.done():
+            logger.debug("[REDIS] Starting message listener...")
             self._listener_task = asyncio.create_task(self._listen())
-
-        logger.info(f"Subscribed to channel: {channel}")
+            logger.debug("[REDIS] Message listener started")
 
     async def unsubscribe(self, channel: str):
         """Unsubscribe from a Redis channel."""
         if self.pubsub is None:
             return
 
+        logger.info(f"[REDIS] Unsubscribing from channel: {channel}")
         if channel in self._handlers:
             del self._handlers[channel]
 
         await self.pubsub.unsubscribe(channel)
-        logger.info(f"Unsubscribed from channel: {channel}")
+        logger.info(f"[REDIS] Unsubscribed from channel: {channel}")
 
-    async def publish(self, channel: str, message: dict):
+    async def publish(self, channel: str, message: str):
         """Publish a message to a Redis channel."""
         if self.redis is None:
             raise RuntimeError("Redis client not connected")
 
+        logger.debug(f"[REDIS] Publishing to {channel}: {message[:200]}...")
         try:
-            message_json = json.dumps(message)
-            await self.redis.publish(channel, message_json)
+            result = await self.redis.publish(channel, message)
+            logger.debug(f"[REDIS] Published to {channel}, subscribers: {result}")
         except Exception as e:
-            logger.error(f"Failed to publish message to {channel}: {e}")
+            logger.error(f"[REDIS] Failed to publish to {channel}: {e}")
             raise
 
     async def _listen(self):
         """Listen for messages on subscribed channels."""
         if self.pubsub is None:
+            logger.error("[REDIS] Cannot listen, pubsub is None")
             return
 
+        logger.info("[REDIS] Listener started")
         try:
             async for message in self.pubsub.listen():
+                logger.debug(f"[REDIS] Raw message received: {message}")
+                
                 if message["type"] == "message":
                     channel = message["channel"]
                     data = message["data"]
+                    
+                    logger.info(f"[REDIS] Message on channel '{channel}': {data[:200]}...")
 
                     try:
                         parsed_data = json.loads(data)
-                    except json.JSONDecodeError:
-                        logger.error(f"Failed to parse message on {channel}: {data}")
+                        logger.debug(f"[REDIS] Parsed data: {json.dumps(parsed_data, default=str)}")
+                    except json.JSONDecodeError as e:
+                        logger.error(f"[REDIS] Failed to parse message on {channel}: {data}")
+                        logger.error(f"[REDIS] Parse error: {e}")
                         continue
 
                     handler = self._handlers.get(channel)
                     if handler:
+                        logger.info(f"[REDIS] Found handler for channel: {channel}")
                         try:
                             await handler(parsed_data)
+                            logger.info(f"[REDIS] Handler completed for channel: {channel}")
                         except Exception as e:
                             logger.error(
-                                f"Error handling message on {channel}: {e}",
+                                f"[REDIS] Error handling message on {channel}: {e}",
                                 exc_info=True,
                             )
+                    else:
+                        logger.warning(f"[REDIS] No handler registered for channel: {channel}")
+                elif message["type"] == "subscribe":
+                    logger.info(f"[REDIS] Subscription confirmed: {message['channel']}")
+                elif message["type"] == "unsubscribe":
+                    logger.info(f"[REDIS] Unsubscription confirmed: {message['channel']}")
+                else:
+                    logger.debug(f"[REDIS] Other message type: {message['type']}")
+                    
         except asyncio.CancelledError:
-            logger.info("Redis listener cancelled")
+            logger.info("[REDIS] Listener cancelled")
             raise
         except Exception as e:
-            logger.error(f"Redis listener error: {e}", exc_info=True)
+            logger.error(f"[REDIS] Listener error: {e}", exc_info=True)
