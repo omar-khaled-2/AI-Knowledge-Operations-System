@@ -45,9 +45,10 @@ initContainers:
 # Sensitive values MUST be provided via Kubernetes Secrets.
 # Never hardcode credentials in this file.
 #
-# Required Secret:
-# 1. websocket-gateway-secrets: Better Auth secret
-#    kubectl create secret generic websocket-gateway-secrets \
+# Optional Secret (if Better Auth credentials are required):
+# Create a secret with Better Auth credentials, then set existingSecretName above
+# Example:
+#    kubectl create secret generic my-websocket-secrets \
 #      --from-literal=BETTER_AUTH_SECRET='your-secure-random-secret' \
 #      -n default
 #
@@ -59,8 +60,8 @@ initContainers:
 
 secrets:
   # Name of existing secret containing Better Auth credentials
-  # REQUIRED: Must be created before deployment
-  existingSecretName: websocket-gateway-secrets
+  # If not set, no secret will be mounted
+  existingSecretName: ""
 
 # Redis connection configuration (non-sensitive parts)
 # Redis runs without auth in local dev (auth.enabled: false in redis subchart)

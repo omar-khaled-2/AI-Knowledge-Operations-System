@@ -50,8 +50,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: {{ .Release.Name }}-websocket-gateway-config
+            {{- if .Values.secrets.existingSecretName }}
             - secretRef:
                 name: {{ .Values.secrets.existingSecretName }}
+            {{- end }}
           env:
             # Optional Redis password (if Redis requires authentication)
             - name: REDIS_PASSWORD
