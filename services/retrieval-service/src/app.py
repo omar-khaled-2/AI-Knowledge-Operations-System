@@ -13,14 +13,19 @@ from src.search import SearchService
 
 logger = structlog.get_logger()
 
-# Global search service instance
-search_service: SearchService = None
+
+def safe_truncate(text: str, max_length: int) -> str:
+    """Safely truncate text to max_length without splitting multi-byte characters."""
+    if len(text) <= max_length:
+        return text
+    return text[:max_length]
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Configure logging on startup."""
+    """Configure logging and initialize services on startup."""
     config = Config.from_env()
+    app.state.config = config
 
     structlog.configure(
         wrapper_class=structlog.make_filtering_bound_logger(getattr(logging, config.log_level)),
@@ -29,6 +34,8 @@ async def lifespan(app: FastAPI):
             structlog.processors.JSONRenderer(),
         ],
     )
+
+    app.state.search_service = SearchService(config)
 
     logger.info("Starting Retrieval Service")
 
@@ -54,10 +61,7 @@ async def health_check():
 @app.get("/ready")
 async def readiness_check():
     """Readiness probe - returns 200 if Qdrant is accessible."""
-    config = Config.from_env()
-    service = SearchService(config)
-
-    if service.qdrant_client.health_check():
+    if app.state.search_service.qdrant_client.health_check():
         return {
             "status": "ready",
             "qdrant_connected": True,
@@ -92,14 +96,11 @@ async def search(request: SearchRequest):
     Returns:
         Search results with timing metadata.
     """
-    config = Config.from_env()
-    service = SearchService(config)
-
     try:
-        response = service.search(request)
+        response = app.state.search_service.search(request)
         return response
     except Exception as e:
-        logger.error("Search failed", error=str(e), query=request.query[:50])
+        logger.error("Search failed", error=str(e), query=safe_truncate(request.query, 50))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e),
