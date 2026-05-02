@@ -33,6 +33,9 @@ class Config:
     # Chunking
     max_chunk_size: int = int(os.getenv("MAX_CHUNK_SIZE", "512"))
 
+    # Backend API URL for status updates
+    backend_url: str = os.getenv("BACKEND_URL", "")
+
     # Logging
     log_level: str = os.getenv("LOG_LEVEL", "info").upper()
 

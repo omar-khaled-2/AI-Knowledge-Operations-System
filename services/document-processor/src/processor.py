@@ -4,6 +4,7 @@ import os
 import tempfile
 from typing import Any
 
+import requests
 import structlog
 
 from src.config import Config
@@ -78,6 +79,26 @@ def process_document(event_data: dict[str, Any]) -> bool:
                 chunks=chunks,
                 filename=filename,
             )
+
+            # Update document status to "processed"
+            if config.backend_url:
+                try:
+                    response = requests.patch(
+                        f"{config.backend_url}/documents/{document_id}",
+                        json={"status": "processed"},
+                        timeout=10,
+                    )
+                    response.raise_for_status()
+                    logger.info(
+                        "Document status updated to processed",
+                        document_id=document_id,
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "Failed to update document status",
+                        document_id=document_id,
+                        error=str(e),
+                    )
 
             logger.info(
                 "Document processing complete",
