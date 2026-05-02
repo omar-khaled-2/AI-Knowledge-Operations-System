@@ -2,6 +2,7 @@ import type { ServerWebSocket } from 'bun';
 import type { ServerConfig } from './types';
 import { RedisClient } from './redis';
 import { AuthService } from './auth';
+import { logger } from './logger';
 
 interface WSState {
   userId: string;
@@ -72,7 +73,7 @@ export class WebSocketServer {
       },
     });
 
-    console.log(`[Server] WebSocket gateway running on port ${this.config.port}`);
+    logger.info({ port: this.config.port }, 'WebSocket gateway running');
   }
 
   private async handleOpen(ws: ServerWebSocket<WSState>) {
@@ -95,7 +96,7 @@ export class WebSocketServer {
     
     this.userSockets.get(userId)!.add(ws);
 
-    console.log(`[WS] User ${userId} connected (${ws.data.socketId})`);
+    logger.info({ userId, socketId: ws.data.socketId }, 'User connected');
 
     // Start heartbeat
     const timer = setInterval(() => {
@@ -123,15 +124,15 @@ export class WebSocketServer {
         return;
       }
 
-      console.log(`[WS] Message from ${ws.data.userId}:`, data.event);
+      logger.info({ userId: ws.data.userId, event: data.event }, 'WebSocket message received');
     } catch (error) {
-      console.error('[WS] Message error:', error);
+      logger.error({ err: error, userId: ws.data.userId }, 'WebSocket message error');
     }
   }
 
   private handleClose(ws: ServerWebSocket<WSState>) {
     const userId = ws.data.userId;
-    console.log(`[WS] User ${userId} disconnected (${ws.data.socketId})`);
+    logger.info({ userId, socketId: ws.data.socketId }, 'User disconnected');
     
     if (userId) {
       const sockets = this.userSockets.get(userId);

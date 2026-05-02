@@ -1,5 +1,6 @@
 import Redis from 'ioredis';
 import type { ServerConfig } from './types';
+import { logger } from './logger';
 
 export class RedisClient {
   private publisher: Redis;
@@ -25,11 +26,11 @@ export class RedisClient {
 
   private setupEventHandlers(): void {
     this.publisher.on('error', (err) => {
-      console.error('Redis publisher error:', err.message);
+      logger.error({ err }, 'Redis publisher error');
     });
 
     this.subscriber.on('error', (err) => {
-      console.error('Redis subscriber error:', err.message);
+      logger.error({ err }, 'Redis subscriber error');
     });
 
     this.subscriber.on('message', (channel: string, message: string) => {
@@ -38,33 +39,33 @@ export class RedisClient {
         try {
           handler(message);
         } catch (err) {
-          console.error(`Error handling message on channel ${channel}:`, err);
+          logger.error({ err, channel }, 'Error handling Redis message');
         }
       }
     });
 
     this.publisher.on('connect', () => {
-      console.log('Redis publisher connected');
+      logger.info('Redis publisher connected');
       this.isConnected = true;
     });
 
     this.subscriber.on('connect', () => {
-      console.log('Redis subscriber connected');
+      logger.info('Redis subscriber connected');
     });
 
     this.publisher.on('disconnect', () => {
-      console.log('Redis publisher disconnected');
+      logger.info('Redis publisher disconnected');
       this.isConnected = false;
     });
 
     this.subscriber.on('disconnect', () => {
-      console.log('Redis subscriber disconnected');
+      logger.info('Redis subscriber disconnected');
     });
   }
 
   async publish(channel: string, message: string): Promise<void> {
     if (!this.isConnected) {
-      console.warn('Redis not connected, cannot publish');
+      logger.warn('Redis not connected, cannot publish');
       return;
     }
     await this.publisher.publish(channel, message);
@@ -73,18 +74,18 @@ export class RedisClient {
   async subscribe(channel: string, handler: (message: string) => void): Promise<void> {
     this.handlers.set(channel, handler);
     await this.subscriber.subscribe(channel);
-    console.log(`Subscribed to Redis channel: ${channel}`);
+    logger.info({ channel }, 'Subscribed to Redis channel');
   }
 
   async unsubscribe(channel: string): Promise<void> {
     this.handlers.delete(channel);
     await this.subscriber.unsubscribe(channel);
-    console.log(`Unsubscribed from Redis channel: ${channel}`);
+    logger.info({ channel }, 'Unsubscribed from Redis channel');
   }
 
   async disconnect(): Promise<void> {
     await this.subscriber.quit();
     await this.publisher.quit();
-    console.log('Redis connections closed');
+    logger.info('Redis connections closed');
   }
 }

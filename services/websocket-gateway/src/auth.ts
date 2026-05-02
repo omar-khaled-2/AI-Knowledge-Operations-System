@@ -1,4 +1,5 @@
 import type { ServerConfig } from './types';
+import { logger } from './logger';
 
 export interface AuthResult {
   userId: string;
@@ -15,7 +16,7 @@ export class AuthService {
    */
   async validateSession(cookieHeader: string | undefined): Promise<AuthResult | null> {
     if (!cookieHeader) {
-      console.log('[Auth] No cookie provided');
+      logger.warn('No cookie provided');
       return null;
     }
 
@@ -23,7 +24,7 @@ export class AuthService {
     const sessionToken = sessionMatch ? sessionMatch[1] : null;
 
     if (!sessionToken) {
-      console.log('[Auth] No session token found in cookie');
+      logger.warn('No session token found in cookie');
       return null;
     }
 
@@ -33,13 +34,13 @@ export class AuthService {
       const userId = this.extractUserIdFromToken(sessionToken);
       
       if (!userId) {
-        console.log('[Auth] Could not extract userId from token');
+        logger.warn('Could not extract userId from token');
         return null;
       }
 
       return { userId, session: { token: sessionToken } };
     } catch (error) {
-      console.error('[Auth] Validation error:', error instanceof Error ? error.message : String(error));
+      logger.error({ err: error }, 'Auth validation error');
       return null;
     }
   }

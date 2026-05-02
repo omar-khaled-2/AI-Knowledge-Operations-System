@@ -22,4 +22,5 @@ export interface ServerConfig {
   betterAuthSecret: string;
   frontendUrl: string;
   heartbeatInterval: number;
+  nodeEnv: string;
 }
