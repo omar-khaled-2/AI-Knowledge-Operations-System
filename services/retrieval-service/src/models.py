@@ -2,7 +2,7 @@
 
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 
 class FilterCondition(BaseModel):
@@ -38,7 +38,7 @@ class SearchResult(BaseModel):
     chunk_id: str
     document_id: str
     content: str
-    score: float
+    score: float = Field(ge=0.0)
     metadata: Dict[str, Any]
 
 
@@ -47,5 +47,5 @@ class SearchResponse(BaseModel):
 
     results: List[SearchResult]
     total: int
-    query_embedding_time_ms: int
-    search_time_ms: int
+    query_embedding_time_ms: int = Field(ge=0)
+    search_time_ms: int = Field(ge=0)
