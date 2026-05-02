@@ -14,6 +14,23 @@ spec:
       labels:
         {{- include "embedding-service.selectorLabels" . | nindent 8 }}
     spec:
+      {{- if .Values.initContainers.rabbitmqWait.enabled }}
+      initContainers:
+        - name: wait-for-rabbitmq
+          image: "{{ .Values.initContainers.rabbitmqWait.image.repository }}:{{ .Values.initContainers.rabbitmqWait.image.tag }}"
+          imagePullPolicy: {{ .Values.initContainers.rabbitmqWait.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.initContainers.rabbitmqWait.resources | nindent 12 }}
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z {{ .Values.rabbitmq.host }} {{ .Values.rabbitmq.port }}; do
+                echo "Waiting for RabbitMQ..."
+                sleep {{ .Values.initContainers.rabbitmqWait.interval }}
+              done
+              echo "RabbitMQ is available!"
+      {{- end }}
       containers:
         - name: embedding-service
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -28,6 +45,14 @@ spec:
           env:
             - name: REDIS_URL
               value: "redis://{{ .Values.redis.host }}:{{ .Values.redis.port }}"
+            - name: RABBITMQ_URL
+              value: "amqp://{{ .Values.rabbitmq.host }}:{{ .Values.rabbitmq.port }}"
+            - name: RABBITMQ_EXCHANGE
+              value: {{ .Values.rabbitmq.exchange | quote }}
+            - name: RABBITMQ_EMBEDDING_QUEUE
+              value: {{ .Values.rabbitmq.queue | quote }}
+            - name: RABBITMQ_EMBEDDING_ROUTING_KEY
+              value: {{ .Values.rabbitmq.routingKey | quote }}
             - name: QDRANT_URL
               value: "http://{{ .Values.qdrant.host }}:{{ .Values.qdrant.port }}"
             - name: QDRANT_COLLECTION

@@ -18,6 +18,11 @@ data:
   # Redis connection (non-sensitive parts)
   REDIS_HOST: {{ .Values.redis.host | default "redis" | quote }}
   REDIS_PORT: {{ .Values.redis.port | default "6379" | quote }}
+  # RabbitMQ connection (non-sensitive parts)
+  RABBITMQ_URL: "amqp://{{ .Values.rabbitmq.host }}:{{ .Values.rabbitmq.port }}"
+  RABBITMQ_EXCHANGE: {{ .Values.rabbitmq.exchange | quote }}
+  RABBITMQ_DOCUMENT_QUEUE: {{ .Values.rabbitmq.documentQueue | quote }}
+  RABBITMQ_EMBEDDING_QUEUE: {{ .Values.rabbitmq.embeddingQueue | quote }}
   # S3 configuration (non-sensitive parts)
   S3_REGION: {{ .Values.s3.region | default "us-east-1" | quote }}
   S3_BUCKET: {{ .Values.s3.bucket | quote }}

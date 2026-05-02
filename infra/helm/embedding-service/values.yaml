@@ -28,6 +28,14 @@ redis:
   host: "redis-master"
   port: 6379
 
+# RabbitMQ connection configuration
+rabbitmq:
+  host: "rabbitmq"
+  port: 5672
+  exchange: "documents"
+  queue: "embedding-jobs"
+  routingKey: "chunk.embed"
+
 # Qdrant vector database configuration
 qdrant:
   host: "qdrant"
@@ -61,6 +69,24 @@ healthCheck:
     periodSeconds: 5
     timeoutSeconds: 3
     failureThreshold: 3
+
+# Init containers to wait for dependencies before starting
+initContainers:
+  rabbitmqWait:
+    enabled: true
+    image:
+      repository: busybox
+      tag: "1.36"
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 100m
+        memory: 64Mi
+      requests:
+        cpu: 10m
+        memory: 16Mi
+    timeout: 120
+    interval: 2
 
 # Node selector for pod assignment
 # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector

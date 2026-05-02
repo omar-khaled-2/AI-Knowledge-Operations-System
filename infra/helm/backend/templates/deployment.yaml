@@ -17,7 +17,7 @@ spec:
         app: backend
         release: {{ .Release.Name }}
     spec:
-      {{- if or .Values.initContainers.mongodbWait.enabled .Values.initContainers.redisWait.enabled }}
+      {{- if or .Values.initContainers.mongodbWait.enabled .Values.initContainers.redisWait.enabled .Values.initContainers.rabbitmqWait.enabled }}
       initContainers:
         {{- if .Values.initContainers.mongodbWait.enabled }}
         - name: wait-for-mongodb
@@ -60,6 +60,29 @@ spec:
                 name: {{ .Release.Name }}-backend-config
           resources:
             {{- toYaml .Values.initContainers.redisWait.resources | nindent 12 }}
+        {{- end }}
+        {{- if .Values.initContainers.rabbitmqWait.enabled }}
+        - name: wait-for-rabbitmq
+          image: "{{ .Values.initContainers.rabbitmqWait.image.repository }}:{{ .Values.initContainers.rabbitmqWait.image.tag }}"
+          imagePullPolicy: {{ .Values.initContainers.rabbitmqWait.image.pullPolicy | default .Values.imagePullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for RabbitMQ at ${RABBITMQ_HOST}:${RABBITMQ_PORT}..."
+              timeout {{ .Values.initContainers.rabbitmqWait.timeout }} sh -c '
+                until nc -z "${RABBITMQ_HOST}" "${RABBITMQ_PORT}" 2>/dev/null; do
+                  echo "RabbitMQ not ready, waiting {{ .Values.initContainers.rabbitmqWait.interval }}s..."
+                  sleep {{ .Values.initContainers.rabbitmqWait.interval }}
+                done
+              ' && echo "RabbitMQ is ready!" || { echo "ERROR: Timeout waiting for RabbitMQ after {{ .Values.initContainers.rabbitmqWait.timeout }} seconds"; exit 1; }
+          env:
+            - name: RABBITMQ_HOST
+              value: {{ .Values.rabbitmq.host | quote }}
+            - name: RABBITMQ_PORT
+              value: {{ .Values.rabbitmq.port | quote }}
+          resources:
+            {{- toYaml .Values.initContainers.rabbitmqWait.resources | nindent 12 }}
         {{- end }}
       {{- end }}
       containers:

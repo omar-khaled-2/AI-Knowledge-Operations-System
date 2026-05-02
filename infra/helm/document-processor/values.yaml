@@ -25,6 +25,14 @@ redis:
   host: "redis-master"
   port: 6379
 
+# RabbitMQ connection configuration
+rabbitmq:
+  host: "rabbitmq"
+  port: 5672
+  exchange: "documents"
+  queue: "document-jobs"
+  embeddingRoutingKey: "chunk.embed"
+
 # AWS S3 configuration for document downloads
 aws:
   region: "eu-west-3"
@@ -85,9 +93,24 @@ healthCheck:
     timeoutSeconds: 3
     failureThreshold: 3
 
-# Init container to wait for Redis before starting
+# Init containers to wait for dependencies before starting
 initContainers:
   redisWait:
+    enabled: true
+    image:
+      repository: busybox
+      tag: "1.36"
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 100m
+        memory: 64Mi
+      requests:
+        cpu: 10m
+        memory: 16Mi
+    timeout: 120
+    interval: 2
+  rabbitmqWait:
     enabled: true
     image:
       repository: busybox

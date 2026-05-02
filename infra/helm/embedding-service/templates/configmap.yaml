@@ -7,6 +7,10 @@ metadata:
 data:
   REDIS_HOST: {{ .Values.redis.host | default "redis-master" | quote }}
   REDIS_PORT: {{ .Values.redis.port | default "6379" | quote }}
+  RABBITMQ_URL: "amqp://{{ .Values.rabbitmq.host }}:{{ .Values.rabbitmq.port }}"
+  RABBITMQ_EXCHANGE: {{ .Values.rabbitmq.exchange | quote }}
+  RABBITMQ_EMBEDDING_QUEUE: {{ .Values.rabbitmq.queue | quote }}
+  RABBITMQ_EMBEDDING_ROUTING_KEY: {{ .Values.rabbitmq.routingKey | quote }}
   QDRANT_HOST: {{ .Values.qdrant.host | default "qdrant" | quote }}
   QDRANT_PORT: {{ .Values.qdrant.port | default "6333" | quote }}
   QDRANT_COLLECTION: {{ .Values.qdrant.collection | default "documents" | quote }}

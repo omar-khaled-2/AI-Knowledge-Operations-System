@@ -14,6 +14,10 @@ data:
   LOG_LEVEL: {{ .Values.config.logLevel | default "info" | quote }}
   REDIS_HOST: {{ .Values.redis.host | default "redis-master" | quote }}
   REDIS_PORT: {{ .Values.redis.port | default "6379" | quote }}
+  RABBITMQ_URL: "amqp://{{ .Values.rabbitmq.host }}:{{ .Values.rabbitmq.port }}"
+  RABBITMQ_EXCHANGE: {{ .Values.rabbitmq.exchange | quote }}
+  RABBITMQ_DOCUMENT_QUEUE: {{ .Values.rabbitmq.queue | quote }}
+  RABBITMQ_EMBEDDING_ROUTING_KEY: {{ .Values.rabbitmq.embeddingRoutingKey | quote }}
   AWS_REGION: {{ .Values.aws.region | default "eu-west-3" | quote }}
   S3_BUCKET_NAME: {{ .Values.s3.bucketName | quote }}
   QDRANT_URL: "http://{{ .Values.qdrant.host }}:{{ .Values.qdrant.port }}"

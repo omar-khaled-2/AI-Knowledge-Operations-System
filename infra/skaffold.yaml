@@ -45,6 +45,13 @@ deploy:
         valuesFiles:
           - values.yaml
         skipBuildDependencies: false
+      - name: rabbitmq
+        chartPath: helm/rabbitmq
+        namespace: default
+        createNamespace: true
+        valuesFiles:
+          - values.yaml
+        skipBuildDependencies: false
       - name: qdrant
         chartPath: helm/qdrant
         namespace: default
@@ -127,6 +134,10 @@ portForward:
     resourceName: redis-master
     port: 6379
     localPort: 6379
+  - resourceType: service
+    resourceName: rabbitmq
+    port: 15672
+    localPort: 15672
   - resourceType: service
     resourceName: qdrant
     port: 6333

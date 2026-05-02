@@ -52,6 +52,21 @@ initContainers:
         memory: 16Mi
     timeout: 120 # seconds
     interval: 2 # seconds between retries
+  rabbitmqWait:
+    enabled: true
+    image:
+      repository: busybox
+      tag: "1.36"
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 100m
+        memory: 64Mi
+      requests:
+        cpu: 10m
+        memory: 16Mi
+    timeout: 120 # seconds
+    interval: 2 # seconds between retries
 
 # Kubernetes Secrets configuration
 # Sensitive values MUST be provided via Kubernetes Secrets.
@@ -101,6 +116,14 @@ mongodb:
 redis:
   host: redis-master
   port: 6379
+
+# RabbitMQ connection configuration
+rabbitmq:
+  host: "rabbitmq"
+  port: 5672
+  exchange: "documents"
+  documentQueue: "document-jobs"
+  embeddingQueue: "embedding-jobs"
 
 # S3 configuration for document uploads
 s3:
