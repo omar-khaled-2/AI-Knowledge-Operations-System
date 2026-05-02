@@ -3,6 +3,8 @@ FROM oven/bun:1 as builder
 ARG API_URL
 # NEXT_PUBLIC_API_URL: Client-side fallback (not used directly since auth goes through proxy)
 ARG NEXT_PUBLIC_API_URL
+# NEXT_PUBLIC_WS_URL: WebSocket gateway URL for real-time updates
+ARG NEXT_PUBLIC_WS_URL
 WORKDIR /app
 COPY package.json bun.lockb* ./
 RUN bun install

@@ -15,3 +15,7 @@ config:
   # Next.js server uses this to reach backend directly.
   # In K8s, this should be the backend service name.
   internalApiUrl: "http://backend-backend"
+  # WebSocket Gateway URL for real-time updates
+  # Must use NEXT_PUBLIC_ prefix to be available in client-side code
+  # In K8s, this should be the websocket-gateway service name
+  websocketGatewayUrl: "ws://localhost:3002"

@@ -11,6 +11,9 @@ build:
           # Internal backend service URL for Next.js server-side proxy
           # In K8s, this is the backend service DNS name
           API_URL: "http://backend-backend"
+          # WebSocket gateway URL for real-time updates (client-side)
+          # Must use NEXT_PUBLIC_ prefix to be available in browser
+          NEXT_PUBLIC_WS_URL: "ws://localhost:3002"
     - image: backend
       context: ../backend
       docker:
@@ -21,6 +24,10 @@ build:
         dockerfile: Dockerfile
     - image: embedding-service
       context: ../services/embedding-service
+      docker:
+        dockerfile: Dockerfile
+    - image: websocket-gateway
+      context: ../services/websocket-gateway
       docker:
         dockerfile: Dockerfile
   tagPolicy:
@@ -95,6 +102,16 @@ deploy:
         setValues:
           image.repository: embedding-service
           image.tag: latest
+      - name: websocket-gateway
+        chartPath: helm/websocket-gateway
+        namespace: default
+        createNamespace: true
+        valuesFiles:
+          - values.yaml
+        setValues:
+          image.repository: websocket-gateway
+          image.tag: latest
+          config.frontendUrl: "http://localhost:3000"
       - name: grafana
         chartPath: helm/grafana
         namespace: default
@@ -142,3 +159,7 @@ portForward:
     resourceName: qdrant
     port: 6333
     localPort: 6333
+  - resourceType: service
+    resourceName: websocket-gateway
+    port: 80
+    localPort: 3002

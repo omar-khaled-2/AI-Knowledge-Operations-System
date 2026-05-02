@@ -28,6 +28,8 @@ spec:
               value: {{ .Values.config.apiUrl | quote }}
             - name: API_URL
               value: {{ .Values.config.internalApiUrl | quote }}
+            - name: NEXT_PUBLIC_WS_URL
+              value: {{ .Values.config.websocketGatewayUrl | quote }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
