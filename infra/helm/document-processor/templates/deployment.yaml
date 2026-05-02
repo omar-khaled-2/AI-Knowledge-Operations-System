@@ -59,6 +59,13 @@ spec:
               value: {{ .Values.embedding.queueName | quote }}
             - name: MAX_CHUNK_SIZE
               value: {{ .Values.embedding.maxChunkSize | quote }}
+            {{- if .Values.llm.existingSecretName }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.llm.existingSecretName }}
+                  key: OPENAI_API_KEY
+            {{- end }}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -69,13 +76,6 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.aws.secretName }}
                   key: AWS_SECRET_ACCESS_KEY
-            {{- if .Values.redis.existingSecretName }}
-            - name: REDIS_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.redis.existingSecretName }}
-                  key: {{ .Values.redis.passwordKey }}
-            {{- end }}
           livenessProbe:
             httpGet:
               path: {{ .Values.healthCheck.livenessPath }}

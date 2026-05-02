@@ -24,10 +24,6 @@ resources:
 redis:
   host: "redis-master"
   port: 6379
-  # Name of existing secret containing Redis password
-  # Set to empty string if Redis has no auth (dev mode)
-  existingSecretName: "redis-secrets"
-  passwordKey: "redis-password"
 
 # AWS S3 configuration for document downloads
 aws:
@@ -46,9 +42,14 @@ qdrant:
 
 # Embedding service configuration
 embedding:
-  modelName: "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
+  modelName: "text-embedding-3-small"
   queueName: "embedding-jobs"
   maxChunkSize: "512"
+
+# LLM API keys configuration
+# Reference to the existing llm-secrets Secret
+llm:
+  existingSecretName: "llm-secrets"
 
 # Document processor application configuration (non-sensitive)
 config:

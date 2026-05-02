@@ -27,8 +27,6 @@ resources:
 redis:
   host: "redis-master"
   port: 6379
-  existingSecretName: "redis-secrets"
-  passwordKey: "redis-password"
 
 # Qdrant vector database configuration
 qdrant:
@@ -39,8 +37,13 @@ qdrant:
 # Embedding service application configuration
 config:
   queueName: "embedding-jobs"
-  modelName: "sentence-transformers/multi-qa-MiniLM-L6-cos-v1"
+  embeddingModel: "text-embedding-3-small"
   logLevel: "info"
+
+# LLM API keys configuration
+# Reference to the existing llm-secrets Secret
+llm:
+  existingSecretName: "llm-secrets"
 
 # Health check configuration
 healthCheck:

@@ -113,6 +113,11 @@ s3:
   #   - AWS_SECRET_ACCESS_KEY
   existingSecretName: "aws-secrets"
 
+# LLM API keys configuration
+# Reference to the existing llm-secrets Secret
+llm:
+  existingSecretName: "llm-secrets"
+
 # Non-sensitive configuration
 config:
   # These will be auto-populated with service names if left empty
