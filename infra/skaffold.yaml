@@ -88,8 +88,33 @@ deploy:
         setValues:
           image.repository: embedding-service
           image.tag: latest
+      - name: grafana
+        chartPath: helm/grafana
+        namespace: default
+        createNamespace: true
+        valuesFiles:
+          - values.yaml
+        skipBuildDependencies: false
+      - name: alloy
+        chartPath: helm/alloy
+        namespace: default
+        createNamespace: true
+        valuesFiles:
+          - values.yaml
+        skipBuildDependencies: false
+      - name: loki
+        chartPath: helm/loki
+        namespace: default
+        createNamespace: true
+        valuesFiles:
+          - values.yaml
+        skipBuildDependencies: false
 
 portForward:
+  - resourceType: service
+    resourceName: grafana
+    port: 3000
+    localPort: 9000
   - resourceType: service
     resourceName: frontend-frontend
     port: 80
