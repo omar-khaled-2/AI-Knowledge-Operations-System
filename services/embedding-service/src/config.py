@@ -20,8 +20,9 @@ class Config:
     qdrant_url: str = os.getenv("QDRANT_URL", "http://localhost:6333")
     qdrant_collection: str = os.getenv("QDRANT_COLLECTION", "documents")
 
-    # Model
-    model_name: str = os.getenv("MODEL_NAME", "sentence-transformers/multi-qa-MiniLM-L6-cos-v1")
+    # OpenAI
+    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
+    embedding_model: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 
     # Logging
     log_level: str = os.getenv("LOG_LEVEL", "info").upper()

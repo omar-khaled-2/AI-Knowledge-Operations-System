@@ -2,7 +2,7 @@ fastapi==0.109.0
 uvicorn[standard]==0.27.0
 rq==1.15.1
 redis==5.0.1
-qdrant-client==1.7.0
-sentence-transformers==2.2.2
+qdrant-client==1.17.1
+openai==1.59.9
 python-dotenv==1.0.0
 structlog==24.1.0

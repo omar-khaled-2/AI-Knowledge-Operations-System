@@ -40,8 +40,8 @@ def embed_chunk(chunk_data: Dict[str, Any]) -> None:
         chunk_index=chunk_index,
     )
 
-    # Load model (singleton)
-    model = EmbeddingModel(config.model_name)
+    # Load model
+    model = EmbeddingModel()
 
     # Embed text
     vector = model.embed(text)

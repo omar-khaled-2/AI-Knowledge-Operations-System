@@ -4,13 +4,13 @@ Embedding service for the document ingestion pipeline.
 
 ## Overview
 
-This service consumes embedding jobs from an RQ queue, generates vector embeddings using sentence-transformers, and upserts them to Qdrant.
+This service consumes embedding jobs from an RQ queue, generates vector embeddings using OpenAI's API, and upserts them to Qdrant.
 
 ## Architecture
 
 - **FastAPI** app with health/readiness checks
 - **RQ Worker** consumes from `embedding-jobs` queue
-- **Sentence Transformers** model (`multi-qa-MiniLM-L6-cos-v1`) for embeddings
+- **OpenAI Embeddings API** (`text-embedding-3-small` by default)
 - **Qdrant** vector database for storage
 
 ## Configuration
@@ -23,14 +23,16 @@ Environment variables:
 | `QUEUE_NAME` | `embedding-jobs` | RQ queue name |
 | `QDRANT_URL` | `http://localhost:6333` | Qdrant server URL |
 | `QDRANT_COLLECTION` | `documents` | Qdrant collection name |
-| `MODEL_NAME` | `sentence-transformers/multi-qa-MiniLM-L6-cos-v1` | Embedding model |
+| `OPENAI_API_KEY` | *(required)* | OpenAI API key |
+| `EMBEDDING_MODEL` | `text-embedding-3-small` | OpenAI embedding model |
 | `LOG_LEVEL` | `info` | Logging level |
 
 ## Running Locally
 
 ```bash
 pip install -r requirements.txt
-python src/main.py
+export OPENAI_API_KEY=sk-...
+python main.py
 ```
 
 ## Building Docker Image
