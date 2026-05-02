@@ -1,6 +1,5 @@
 """Tests for search orchestration."""
 
-import time
 from unittest.mock import Mock, patch
 
 import pytest
@@ -31,9 +30,11 @@ class TestSearchService:
             }
         ]
 
-        service = SearchService(test_config)
-        service.openai_client = mock_openai
-        service.qdrant_client = mock_qdrant
+        service = SearchService(
+            test_config,
+            openai_client=mock_openai,
+            qdrant_client=mock_qdrant,
+        )
 
         request = SearchRequest(query="test query", limit=5)
         response = service.search(request)
@@ -56,9 +57,11 @@ class TestSearchService:
         mock_qdrant = Mock()
         mock_qdrant.search.return_value = []
 
-        service = SearchService(test_config)
-        service.openai_client = mock_openai
-        service.qdrant_client = mock_qdrant
+        service = SearchService(
+            test_config,
+            openai_client=mock_openai,
+            qdrant_client=mock_qdrant,
+        )
 
         request = SearchRequest(
             query="test query",
@@ -83,9 +86,11 @@ class TestSearchService:
         mock_qdrant = Mock()
         mock_qdrant.search.return_value = []
 
-        service = SearchService(test_config)
-        service.openai_client = mock_openai
-        service.qdrant_client = mock_qdrant
+        service = SearchService(
+            test_config,
+            openai_client=mock_openai,
+            qdrant_client=mock_qdrant,
+        )
 
         request = SearchRequest(query="test query")
         response = service.search(request)
@@ -93,12 +98,40 @@ class TestSearchService:
         assert response.total == 0
         assert len(response.results) == 0
 
+    def test_search_offset_and_score_threshold(self, test_config):
+        mock_openai = Mock()
+        mock_openai.embed.return_value = [0.1] * 384
+
+        mock_qdrant = Mock()
+        mock_qdrant.search.return_value = []
+
+        service = SearchService(
+            test_config,
+            openai_client=mock_openai,
+            qdrant_client=mock_qdrant,
+        )
+
+        request = SearchRequest(
+            query="test query",
+            limit=5,
+            offset=10,
+            score_threshold=0.5,
+        )
+        response = service.search(request)
+
+        assert response.total == 0
+        call_args = mock_qdrant.search.call_args
+        assert call_args.kwargs["offset"] == 10
+        assert call_args.kwargs["score_threshold"] == 0.5
+
     def test_search_embedding_error(self, test_config):
         mock_openai = Mock()
         mock_openai.embed.side_effect = Exception("OpenAI API Error")
 
-        service = SearchService(test_config)
-        service.openai_client = mock_openai
+        service = SearchService(
+            test_config,
+            openai_client=mock_openai,
+        )
 
         request = SearchRequest(query="test query")
 
@@ -112,9 +145,11 @@ class TestSearchService:
         mock_qdrant = Mock()
         mock_qdrant.search.side_effect = Exception("Qdrant Error")
 
-        service = SearchService(test_config)
-        service.openai_client = mock_openai
-        service.qdrant_client = mock_qdrant
+        service = SearchService(
+            test_config,
+            openai_client=mock_openai,
+            qdrant_client=mock_qdrant,
+        )
 
         request = SearchRequest(query="test query")
 
@@ -142,9 +177,11 @@ class TestSearchService:
             }
         ]
 
-        service = SearchService(test_config)
-        service.openai_client = mock_openai
-        service.qdrant_client = mock_qdrant
+        service = SearchService(
+            test_config,
+            openai_client=mock_openai,
+            qdrant_client=mock_qdrant,
+        )
 
         request = SearchRequest(query="test")
         response = service.search(request)
@@ -154,7 +191,7 @@ class TestSearchService:
         assert result.content == "content text"
         assert result.document_id == "doc-1"
         assert result.score == 0.88
-        # Known fields should be in metadata too for completeness
+        # Additional payload fields should be in metadata
         assert result.metadata["project_id"] == "proj-1"
         assert result.metadata["chunk_index"] == 5
         assert result.metadata["filename"] == "file.pdf"

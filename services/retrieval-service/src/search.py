@@ -97,18 +97,25 @@ def _translate_condition(condition: FilterCondition) -> FieldCondition:
 class SearchService:
     """Orchestrates semantic search: embed query → search Qdrant → format results."""
 
-    def __init__(self, config: Config):
+    def __init__(
+        self,
+        config: Config,
+        openai_client: Optional[OpenAIEmbeddingClient] = None,
+        qdrant_client: Optional[QdrantSearchClient] = None,
+    ):
         """Initialize search service with clients.
 
         Args:
             config: Service configuration.
+            openai_client: Optional pre-configured OpenAI embedding client.
+            qdrant_client: Optional pre-configured Qdrant search client.
         """
         self.config = config
-        self.openai_client = OpenAIEmbeddingClient(
+        self.openai_client = openai_client or OpenAIEmbeddingClient(
             api_key=config.openai_api_key,
             model=config.embedding_model,
         )
-        self.qdrant_client = QdrantSearchClient(
+        self.qdrant_client = qdrant_client or QdrantSearchClient(
             url=config.qdrant_url,
             collection_name=config.qdrant_collection,
         )
@@ -178,12 +185,12 @@ class SearchService:
         return [
             SearchResult(
                 chunk_id=result["id"],
-                document_id=result["payload"].get("document_id", ""),
-                content=result["payload"].get("text", ""),
+                document_id=(payload := result.get("payload", {})).get("document_id", ""),
+                content=payload.get("text", ""),
                 score=result["score"],
                 metadata={
                     k: v
-                    for k, v in result["payload"].items()
+                    for k, v in payload.items()
                     if k not in ("text", "document_id")
                 },
             )
