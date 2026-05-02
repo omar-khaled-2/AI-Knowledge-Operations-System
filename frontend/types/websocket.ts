@@ -10,7 +10,7 @@ export interface WSMessage<T extends WSEventType = WSEventType, P = unknown> {
 
 export interface DocumentStatusPayload {
   documentId: string
-  status: 'uploaded' | 'processing' | 'chunking' | 'embedding' | 'ready' | 'error'
+  status: 'processing' | 'processed' | 'embedded' | 'error'
   progress?: number
   error?: string
 }
