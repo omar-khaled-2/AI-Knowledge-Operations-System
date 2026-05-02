@@ -5,7 +5,8 @@ metadata:
   labels:
     app.kubernetes.io/name: chat-service
 data:
-  REDIS_URL: {{ .Values.redis.url | default "redis://redis-master:6379" | quote }}
+  REDIS_HOST: "redis-master"
+  REDIS_PORT: "6379"
   BACKEND_URL: {{ .Values.backend.url | default "http://backend-backend" | quote }}
   BACKEND_TIMEOUT: {{ .Values.backend.timeout | default "10.0" | quote }}
   RETRIEVAL_SERVICE_URL: {{ .Values.retrieval.url | default "http://retrieval-service" | quote }}

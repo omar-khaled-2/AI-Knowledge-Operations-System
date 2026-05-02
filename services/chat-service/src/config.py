@@ -7,7 +7,8 @@ class Config(BaseSettings):
     """Service configuration loaded from environment variables."""
 
     # Redis
-    redis_url: str = "redis://localhost:6379"
+    redis_host: str = "localhost"
+    redis_port: int = 6379
 
     # Backend API
     backend_url: str = "http://localhost:3001"

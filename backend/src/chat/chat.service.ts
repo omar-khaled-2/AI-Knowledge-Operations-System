@@ -6,6 +6,7 @@ interface ChatNotification {
   userId: string;
   sessionId: string;
   projectId: string | null;
+  message: string;
 }
 
 @Injectable()

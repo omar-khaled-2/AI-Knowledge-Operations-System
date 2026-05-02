@@ -47,7 +47,8 @@ async def lifespan(app: FastAPI):
     logger.info("Starting chat service...")
     
     # Initialize services
-    redis_client = RedisClient(config.redis_url)
+    redis_url = f"redis://{config.redis_host}:{config.redis_port}"
+    redis_client = RedisClient(redis_url)
     chat_engine = ChatEngine(config)
     
     # Connect to Redis

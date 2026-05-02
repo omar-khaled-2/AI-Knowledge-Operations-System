@@ -9,6 +9,6 @@ import { WebSocketTicketController } from './websocket-ticket.controller';
   imports: [AuthModule],
   controllers: [WebSocketTicketController],
   providers: [RedisService, WebSocketPublisher, WebSocketTicketService],
-  exports: [WebSocketPublisher, WebSocketTicketService],
+  exports: [RedisService, WebSocketPublisher, WebSocketTicketService],
 })
 export class WebSocketModule {}

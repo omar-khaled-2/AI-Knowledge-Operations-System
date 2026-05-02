@@ -26,6 +26,9 @@ export class ChatMessage {
     snippet: string;
     score: number;
   }>;
+
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export const ChatMessageSchema = SchemaFactory.createForClass(ChatMessage);

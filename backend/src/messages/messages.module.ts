@@ -4,6 +4,7 @@ import { MessagesService } from './messages.service';
 import { MessagesController } from './messages.controller';
 import { ChatMessage, ChatMessageSchema } from './schemas/chat-message.schema';
 import { WebSocketModule } from '../websocket/websocket.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { WebSocketModule } from '../websocket/websocket.module';
       { name: ChatMessage.name, schema: ChatMessageSchema },
     ]),
     WebSocketModule,
+    AuthModule,
   ],
   controllers: [MessagesController],
   providers: [MessagesService],

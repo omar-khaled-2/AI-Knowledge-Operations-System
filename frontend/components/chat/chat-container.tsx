@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { cn } from '@/lib/utils'
 import { ChatSidebar } from './chat-sidebar'
 import { ChatMessages } from './chat-messages'
 import { ChatInput } from './chat-input'
@@ -30,7 +29,6 @@ export function ChatContainer({
   createSession,
   selectSession,
   deleteSession,
-  projectId,
 }: ChatContainerProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 

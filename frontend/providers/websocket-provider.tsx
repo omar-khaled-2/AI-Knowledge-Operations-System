@@ -126,13 +126,14 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
 
       socket.onmessage = (event) => {
         try {
-          const data = JSON.parse(event.data) as WSMessage
+          const rawData = JSON.parse(event.data)
           
           // Handle pong response
-          if (data.event === 'pong') {
+          if (rawData.event === 'pong') {
             return
           }
 
+          const data = rawData as WSMessage
           console.log('[WebSocket] Received message:', data)
           setLastMessage(data)
         } catch (error) {

@@ -114,8 +114,8 @@ export function AppSidebar({ isOpen, onClose, onToggle }: AppSidebarProps) {
       try {
         const projects = await getProjects();
         setProjects(projects);
-      } catch (error) {
-        console.error("Failed to load projects:", error);
+      } catch {
+        // Silently handle error - UI will show empty state
       } finally {
         setLoading(false);
       }

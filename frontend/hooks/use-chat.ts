@@ -100,7 +100,7 @@ export function useChat(projectId?: string): UseChatReturn {
 
       // Send via WebSocket
       const wsMessage: WSMessage = {
-        event: 'chat:message',
+        event: 'chat.message',
         version: '1.0',
         timestamp: new Date().toISOString(),
         userId: '',

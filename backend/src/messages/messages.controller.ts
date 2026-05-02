@@ -65,7 +65,6 @@ export class MessagesController {
   @Delete()
   async removeAll(
     @Param('sessionId') sessionId: string,
-    @CurrentUser() user: { id: string },
   ) {
     const deletedCount = await this.messagesService.deleteBySession(sessionId);
     return { deletedCount };

@@ -47,7 +47,6 @@ export async function getProjects(): Promise<Project[]> {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch projects";
-    console.error("[getProjects] Failed:", message);
     throw new Error(message);
   }
 }
@@ -78,7 +77,6 @@ export async function getProject(id: string): Promise<Project | null> {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch project";
-    console.error("[getProject] Failed:", message, "| ID:", id);
     throw new Error(message);
   }
 }
@@ -92,7 +90,6 @@ export async function createProject(data: CreateProjectData): Promise<Project> {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to create project";
-    console.error("[createProject] Failed:", message, "| Data:", data);
     throw new Error(message);
   }
 }
@@ -109,7 +106,6 @@ export async function updateProject(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to update project";
-    console.error("[updateProject] Failed:", message, "| ID:", id, "| Data:", data);
     throw new Error(message);
   }
 }
@@ -122,7 +118,6 @@ export async function deleteProject(id: string): Promise<void> {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to delete project";
-    console.error("[deleteProject] Failed:", message, "| ID:", id);
     throw new Error(message);
   }
 }

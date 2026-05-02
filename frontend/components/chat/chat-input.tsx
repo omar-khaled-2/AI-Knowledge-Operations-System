@@ -10,7 +10,7 @@ interface ChatInputProps {
   disabled?: boolean
 }
 
-export function ChatInput({ onSend, isLoading, disabled }: ChatInputProps) {
+export function ChatInput({ onSend, isLoading, disabled = false }: ChatInputProps) {
   const [content, setContent] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -53,7 +53,7 @@ export function ChatInput({ onSend, isLoading, disabled }: ChatInputProps) {
         onChange={(e) => setContent(e.target.value)}
         onKeyDown={handleKeyDown}
         onInput={handleInput}
-        placeholder={disabled ? 'Select a chat to start messaging' : 'Type a message...'}
+        placeholder={disabled ?? false ? 'Select a chat to start messaging' : 'Type a message...'}
         disabled={disabled || isLoading}
         rows={1}
         className={cn(
