@@ -14,7 +14,16 @@ from qdrant_client.models import (
 )
 
 from src.config import Config
-from src.models import FilterCondition, SearchFilters, SearchRequest, SearchResponse, SearchResult
+from src.models import (
+    FilterCondition,
+    SearchFilters,
+    SearchRequest,
+    SearchResponse,
+    SearchResult,
+    SimilarDocumentsRequest,
+    SimilarDocumentsResponse,
+    SimilarDocumentResult,
+)
 from src.openai_client import OpenAIEmbeddingClient
 from src.qdrant_client import QdrantSearchClient
 from src.sparse_model import SparseEmbeddingModel
@@ -202,6 +211,106 @@ class SearchService:
         results = self._transform_results(raw_results)
 
         return SearchResponse(
+            results=results,
+            total=len(results),
+            query_embedding_time_ms=embed_time_ms,
+            search_time_ms=search_time_ms,
+        )
+
+    async def find_similar_documents(
+        self,
+        project_id: str,
+        exclude_document_id: str,
+        query_text: str,
+        limit: int = 5,
+    ) -> SimilarDocumentsResponse:
+        """Find documents similar to the given text within a project.
+
+        Args:
+            project_id: Project ID to filter results by.
+            exclude_document_id: Document ID to exclude from results.
+            query_text: Text to search for similar documents.
+            limit: Maximum number of similar documents to return.
+
+        Returns:
+            SimilarDocumentsResponse with grouped results by document.
+        """
+        logger.info(
+            "Finding similar documents",
+            project_id=project_id,
+            exclude_document_id=exclude_document_id,
+            query_length=len(query_text),
+            limit=limit,
+        )
+
+        # Generate query embeddings
+        embed_start = time.time()
+        dense_vector = await asyncio.to_thread(self.openai_client.embed, query_text)
+        sparse_vector = await asyncio.to_thread(self.sparse_model.embed, query_text)
+        embed_time_ms = int((time.time() - embed_start) * 1000)
+
+        # Build filter: must match project_id, must not match exclude_document_id
+        filter_obj = Filter(
+            must=[
+                FieldCondition(
+                    key="project_id",
+                    match=MatchValue(value=project_id),
+                ),
+            ],
+            must_not=[
+                FieldCondition(
+                    key="document_id",
+                    match=MatchValue(value=exclude_document_id),
+                ),
+            ],
+        )
+
+        # Search Qdrant (hybrid)
+        search_start = time.time()
+        raw_results = self.qdrant_client.search(
+            dense_vector=dense_vector,
+            sparse_vector=sparse_vector,
+            limit=limit * 3,  # Fetch more to allow for document grouping
+            filter_obj=filter_obj,
+        )
+        search_time_ms = int((time.time() - search_start) * 1000)
+
+        # Group results by document_id, keep highest scoring chunk per document
+        document_scores: dict[str, tuple[float, str]] = {}
+        for result in raw_results:
+            payload = result.get("payload", {})
+            doc_id = payload.get("document_id", "")
+            if not doc_id:
+                continue
+            score = result["score"]
+            text = payload.get("text", "")
+            if doc_id not in document_scores or score > document_scores[doc_id][0]:
+                document_scores[doc_id] = (score, text)
+
+        # Build response
+        results = [
+            SimilarDocumentResult(
+                document_id=doc_id,
+                content=text,
+                score=score,
+            )
+            for doc_id, (score, text) in sorted(
+                document_scores.items(),
+                key=lambda x: x[1][0],
+                reverse=True,
+            )[:limit]
+        ]
+
+        logger.info(
+            "Similar documents found",
+            project_id=project_id,
+            chunks_found=len(raw_results),
+            documents_found=len(results),
+            embed_time_ms=embed_time_ms,
+            search_time_ms=search_time_ms,
+        )
+
+        return SimilarDocumentsResponse(
             results=results,
             total=len(results),
             query_embedding_time_ms=embed_time_ms,

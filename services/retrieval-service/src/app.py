@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import JSONResponse
 
 from src.config import Config
-from src.models import ErrorResponse, SearchRequest, SearchResponse
+from src.models import ErrorResponse, SearchRequest, SearchResponse, SimilarDocumentsRequest, SimilarDocumentsResponse
 from src.search import SearchService
 
 logger = structlog.get_logger()
@@ -186,6 +186,98 @@ async def search(request: SearchRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=ErrorResponse(
                 detail="Search operation failed",
+                code="SEARCH_FAILED",
+            ).model_dump(),
+        )
+
+
+@app.post("/search/similar-documents", response_model=SimilarDocumentsResponse)
+async def find_similar_documents(request: SimilarDocumentsRequest):
+    """Find documents similar to the provided text within a project.
+
+    Args:
+        request: Query text with project and exclusion filters.
+
+    Returns:
+        Similar documents ranked by relevance.
+    """
+    logger.info(
+        "Similar documents request received",
+        project_id=request.project_id,
+        exclude_document_id=request.exclude_document_id,
+        query=safe_truncate(request.query_text, 100),
+        limit=request.limit,
+    )
+    try:
+        response = await app.state.search_service.find_similar_documents(
+            project_id=request.project_id,
+            exclude_document_id=request.exclude_document_id,
+            query_text=request.query_text,
+            limit=request.limit,
+        )
+        logger.info(
+            "Similar documents request completed",
+            project_id=request.project_id,
+            results_count=len(response.results),
+        )
+        return response
+    except ValueError as e:
+        logger.warning(
+            "Invalid request",
+            error=str(e),
+            project_id=request.project_id,
+        )
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content=ErrorResponse(
+                detail="Invalid request",
+                code="INVALID_REQUEST",
+            ).model_dump(),
+        )
+    except Exception as e:
+        error_module = type(e).__module__
+        error_type = type(e).__name__
+
+        # OpenAI errors
+        if "openai" in error_module:
+            logger.error(
+                "Embedding failed",
+                error=str(e),
+                project_id=request.project_id,
+            )
+            return JSONResponse(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content=ErrorResponse(
+                    detail="Embedding generation failed",
+                    code="EMBEDDING_FAILED",
+                ).model_dump(),
+            )
+
+        # Connection errors (Qdrant unreachable)
+        if any(conn in error_type for conn in ("ConnectionError", "ConnectTimeout", "MaxRetryError")):
+            logger.error(
+                "Qdrant unreachable",
+                error=str(e),
+                project_id=request.project_id,
+            )
+            return JSONResponse(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                content=ErrorResponse(
+                    detail="Vector database unavailable",
+                    code="SERVICE_UNAVAILABLE",
+                ).model_dump(),
+            )
+
+        # Other errors
+        logger.error(
+            "Similar documents search failed",
+            error=str(e),
+            project_id=request.project_id,
+        )
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=ErrorResponse(
+                detail="Similar documents search failed",
                 code="SEARCH_FAILED",
             ).model_dump(),
         )

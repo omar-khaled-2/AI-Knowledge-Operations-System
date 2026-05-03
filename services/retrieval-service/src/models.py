@@ -59,6 +59,39 @@ class SearchResponse(BaseModel):
     search_time_ms: int = Field(ge=0)
 
 
+class SimilarDocumentsRequest(BaseModel):
+    """Request body for finding similar documents."""
+
+    project_id: str = Field(..., description="Project ID to filter results by")
+    exclude_document_id: str = Field(
+        ...,
+        description="Document ID to exclude from results (the source document)",
+    )
+    query_text: str = Field(
+        ...,
+        description="Text to search for similar documents (full document or chunks)",
+        max_length=8000,
+    )
+    limit: int = Field(default=5, ge=1, le=20)
+
+
+class SimilarDocumentResult(BaseModel):
+    """Single similar document result."""
+
+    document_id: str
+    content: str = Field(..., description="Matching text chunk from the document")
+    score: float = Field(ge=0.0)
+
+
+class SimilarDocumentsResponse(BaseModel):
+    """Response body for similar documents search."""
+
+    results: List[SimilarDocumentResult]
+    total: int
+    query_embedding_time_ms: int = Field(ge=0)
+    search_time_ms: int = Field(ge=0)
+
+
 class ErrorResponse(BaseModel):
     """Standardized error response."""
 
