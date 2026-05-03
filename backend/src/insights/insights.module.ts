@@ -1,0 +1,18 @@
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { InsightsService } from './insights.service';
+import { InsightsController } from './insights.controller';
+import { InternalInsightsController } from './internal-insights.controller';
+import { Insight, InsightSchema } from './schemas/insight.schema';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: Insight.name, schema: InsightSchema },
+    ]),
+  ],
+  controllers: [InsightsController, InternalInsightsController],
+  providers: [InsightsService],
+  exports: [InsightsService],
+})
+export class InsightsModule {}
