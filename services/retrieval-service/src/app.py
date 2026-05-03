@@ -36,6 +36,9 @@ async def lifespan(app: FastAPI):
     )
 
     app.state.search_service = SearchService(config)
+    
+    # Ensure Qdrant collection exists with hybrid support
+    app.state.search_service.qdrant_client.ensure_collection()
 
     logger.info("Starting Retrieval Service")
 

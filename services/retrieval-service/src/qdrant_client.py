@@ -97,6 +97,30 @@ class QdrantSearchClient:
             for point in response.points
         ]
 
+    def ensure_collection(self, vector_size: int = 1536) -> None:
+        """Ensure collection exists, create with hybrid support if not.
+        
+        Args:
+            vector_size: Dimension of dense vectors.
+        """
+        from qdrant_client.models import Distance, VectorParams, SparseVectorParams
+        
+        try:
+            self.client.get_collection(self.collection_name)
+            logger.info("Collection exists", collection=self.collection_name)
+        except Exception:
+            logger.info("Creating collection with hybrid support", collection=self.collection_name)
+            self.client.create_collection(
+                collection_name=self.collection_name,
+                vectors_config={
+                    "dense": VectorParams(size=vector_size, distance=Distance.COSINE),
+                },
+                sparse_vectors_config={
+                    "sparse": SparseVectorParams(),
+                },
+            )
+            logger.info("Collection created with hybrid support", collection=self.collection_name)
+
     def close(self) -> None:
         """Close the Qdrant client connection."""
         if self._client is not None:
