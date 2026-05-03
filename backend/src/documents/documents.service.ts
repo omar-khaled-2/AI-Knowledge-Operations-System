@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Document as DocumentEntity, DocumentDocument } from './schemas/document.schema';
@@ -231,6 +231,40 @@ export class DocumentsService {
     } catch (error) {
       this.logger.error(
         `Failed to generate upload URL: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw error;
+    }
+  }
+
+  async generateDownloadUrl(
+    id: string,
+    ownerId: string,
+  ): Promise<{ downloadUrl: string; mimeType: string; name: string }> {
+    this.logger.log(`Generating download URL for document: ${id}`);
+    const document = await this.findOne(id, ownerId);
+    if (!document) {
+      this.logger.warn(`Document not found for download: id=${id}, ownerId=${ownerId}`);
+      throw new BadRequestException('Document not found');
+    }
+
+    const bucket = this.configService.get<string>('app.s3Bucket');
+    if (!bucket) {
+      this.logger.error('S3 bucket not configured');
+      throw new BadRequestException('S3 bucket not configured');
+    }
+
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: document.objectKey,
+    });
+
+    try {
+      const downloadUrl = await getSignedUrl(this.s3Client, command, { expiresIn: 300 });
+      this.logger.log(`Generated download URL for document: ${id}`);
+      return { downloadUrl, mimeType: document.mimeType, name: document.name };
+    } catch (error) {
+      this.logger.error(
+        `Failed to generate download URL: ${error instanceof Error ? error.message : String(error)}`,
       );
       throw error;
     }

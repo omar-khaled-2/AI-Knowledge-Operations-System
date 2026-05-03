@@ -207,4 +207,19 @@ export class DocumentsController {
     this.logger.log(`Upload URL generated for project: ${generateUploadUrlDto.projectId}`);
     return result;
   }
+
+  @Get(":id/download-url")
+  @UseGuards(AuthGuard)
+  async generateDownloadUrl(
+    @Param("id") id: string,
+    @CurrentUser() user: any,
+  ) {
+    const userId = this.getUserId(user);
+    this.logger.log(`Generating download URL for document: ${id}, userId=${userId}`);
+    
+    const result = await this.documentsService.generateDownloadUrl(id, userId);
+    
+    this.logger.log(`Download URL generated for document: ${id}`);
+    return result;
+  }
 }
