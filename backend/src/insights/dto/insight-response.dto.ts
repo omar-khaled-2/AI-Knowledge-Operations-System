@@ -3,7 +3,6 @@ import { Exclude, Expose, Transform } from 'class-transformer';
 @Exclude()
 export class InsightResponseDto {
   @Expose()
-  @Transform(({ obj }) => obj._id.toString())
   id: string;
 
   @Expose()

@@ -28,7 +28,8 @@ export class InsightsService {
       status: 'active' as const,
     }));
 
-    const result = await this.insightModel.insertMany(insights);
+    this.logger.log(`Creating ${insights.length} insights for document ${dto.sourceDocumentId}: ${JSON.stringify(insights.map(i => ({ type: i.type, title: i.title, confidence: i.confidence })))}`);
+    const result = await this.insightModel.create(insights);
     this.logger.log(`Created ${result.length} insights for document ${dto.sourceDocumentId}`);
 
     return { createdCount: result.length };
@@ -42,7 +43,7 @@ export class InsightsService {
       page: number;
       limit: number;
     },
-  ): Promise<{ insights: Insight[]; total: number }> {
+  ) {
     const skip = (options.page - 1) * options.limit;
     const filter: any = { projectId: new Types.ObjectId(projectId) };
 

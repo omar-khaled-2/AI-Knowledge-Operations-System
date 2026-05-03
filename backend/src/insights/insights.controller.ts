@@ -97,6 +97,15 @@ export class InsightsController {
       page,
       limit,
     });
+    for (const insight of result.insights) {
+      if ("_id" in insight) {
+        this.logger.debug(`Insight _id: ${insight._id}`);
+      }else{
+        this.logger.debug(`Insight _id: none`);
+      }
+    }
+    this.logger.debug(`Found ${result.insights.length} insights, total: ${result.total}`);
+    this.logger.debug(`Insights: ${JSON.stringify(result.insights.map((i, idx) => ({ idx, type: i?.type, title: i?.title })))}`);
 
     return {
       data: plainToInstance(InsightResponseDto, result.insights),
