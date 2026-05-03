@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   ArrowLeft,
   MessageSquare,
@@ -84,13 +86,24 @@ function ChatMessageComponent({ message }: { message: Message }) {
       >
         <div
           className={cn(
-            "rounded-2xl px-5 py-3.5",
-            isUser ? "bg-[#0a0a0a] text-white" : "bg-[#f5f0e0] text-[#0a0a0a]",
+            "rounded-2xl px-5 py-3.5 prose prose-sm max-w-none",
+            isUser ? "bg-[#0a0a0a] text-white prose-invert" : "bg-[#f5f0e0] text-[#0a0a0a]",
           )}
         >
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              p: ({ children }) => <p className="m-0 leading-relaxed">{children}</p>,
+              pre: ({ children }) => (
+                <pre className="bg-black/10 rounded-lg p-3 overflow-x-auto my-2">{children}</pre>
+              ),
+              code: ({ children }) => (
+                <code className="bg-black/10 rounded px-1 py-0.5 text-xs font-mono">{children}</code>
+              ),
+            }}
+          >
             {message.content}
-          </p>
+          </ReactMarkdown>
         </div>
 
         {/* Sources */}
