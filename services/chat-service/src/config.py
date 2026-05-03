@@ -1,5 +1,6 @@
 """Chat Service - Configuration."""
 
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
@@ -7,18 +8,18 @@ class Config(BaseSettings):
     """Service configuration loaded from environment variables."""
 
     # Redis
-    redis_host: str = "localhost"
-    redis_port: int = 6379
+    redis_host: str = Field(default="localhost")
+    redis_port: int = Field(default=6379)
 
     # Backend API
-    backend_url: str = "http://localhost:3001"
-    backend_timeout: float = 10.0
+    backend_url: str = Field(default="http://localhost:3001")
+    backend_timeout: float = Field(default=10.0)
 
     # Retrieval Service
-    retrieval_service_url: str = "http://localhost:3000"
-    retrieval_timeout: float = 10.0
-    retrieval_score_threshold: float = 0.5
-    retrieval_limit: int = 5
+    retrieval_service_url: str = Field(default="http://localhost:3000")
+    retrieval_timeout: float = Field(default=10.0)
+    retrieval_score_threshold: float = Field(default=0.5)
+    retrieval_limit: int = Field(default=5)
 
     # OpenAI / LLM
     openai_api_key: str = ""
