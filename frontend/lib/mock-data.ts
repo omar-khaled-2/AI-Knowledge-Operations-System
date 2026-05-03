@@ -44,6 +44,8 @@ export interface Document {
   size: number | string;
   status: "processed" | "processing" | "error" | "embedded";
   pageCount?: number;
+  mimeType?: string;
+  objectKey?: string;
 }
 
 export interface KnowledgeSource {
