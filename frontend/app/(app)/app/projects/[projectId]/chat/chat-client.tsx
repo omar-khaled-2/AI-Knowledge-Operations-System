@@ -16,11 +16,16 @@ import { ActionButton } from "@/components/action-button";
 interface ChatSessionsClientProps {
   projectId: string;
   projectName: string;
+  initialSessions: PaginatedSessionsResponse["data"];
 }
 
-export function ChatSessionsClient({ projectId, projectName }: ChatSessionsClientProps) {
-  const [sessions, setSessions] = useState<PaginatedSessionsResponse["data"]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export function ChatSessionsClient({
+  projectId,
+  projectName,
+  initialSessions,
+}: ChatSessionsClientProps) {
+  const [sessions, setSessions] = useState<PaginatedSessionsResponse["data"]>(initialSessions);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -38,15 +43,17 @@ export function ChatSessionsClient({ projectId, projectName }: ChatSessionsClien
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to load sessions";
       setError(message);
-      console.error("[ChatSessionsClient] Failed to load sessions:", err);
     } finally {
       setIsLoading(false);
     }
   }, [projectId]);
 
   useEffect(() => {
-    loadSessions();
-  }, [loadSessions]);
+    // Only fetch if no initial sessions were provided
+    if (initialSessions.length === 0) {
+      loadSessions();
+    }
+  }, [loadSessions, initialSessions.length]);
 
   const formatRelativeTime = (dateString: string): string => {
     const date = new Date(dateString);

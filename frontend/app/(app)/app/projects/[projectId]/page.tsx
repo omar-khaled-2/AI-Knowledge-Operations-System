@@ -10,14 +10,15 @@ import {
 } from "lucide-react";
 import { formatFileSize } from "@/lib/utils";
 import {
-  getSessionsByProjectId,
   getInsightsByProjectId,
   formatRelativeTime,
   getBrandColor,
   type Document,
+  type Session,
 } from "@/lib/mock-data";
 import { getProject } from "@/app/(app)/app/projects/actions";
 import { getDocuments } from "@/app/(app)/app/projects/[projectId]/documents/actions";
+import { getSessions } from "@/app/(app)/app/projects/[projectId]/chat/actions";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -39,8 +40,20 @@ export default async function ProjectHomePage({
     notFound();
   }
 
-  // TODO: Replace with real data when sessions module is built
-  const sessions = getSessionsByProjectId(project.id);
+  // Fetch recent sessions from API (server-side pagination)
+  let recentSessions: Session[] = [];
+  try {
+    const result = await getSessions(params.projectId, {
+      page: 1,
+      limit: 5,
+      sortBy: "updatedAt",
+      sortOrder: "desc",
+    });
+    recentSessions = result.data;
+  } catch (error) {
+    console.error("Failed to fetch sessions:", error);
+  }
+
   // Fetch recent documents from API (server-side pagination)
   let recentDocuments: Document[] = [];
   try {
@@ -188,26 +201,32 @@ export default async function ProjectHomePage({
             href={`/app/projects/${project.id}/chat`}
           />
           <ListContainer>
-            {sessions.slice(0, 5).map((session) => (
-              <ListItem
-                key={session.id}
-                href={`/app/projects/${project.id}/chat/${session.id}`}
-                className="gap-3"
-              >
-                <MessageSquare className="size-5 text-[var(--muted-soft)] flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[var(--ink)] truncate">
-                    {session.name}
-                  </p>
-                  <p className="text-xs text-[var(--muted-soft)] truncate">
-                    {session.preview}
-                  </p>
-                </div>
-                <span className="text-xs text-[var(--muted-soft)] flex-shrink-0">
-                  {formatRelativeTime(session.updatedAt)}
-                </span>
-              </ListItem>
-            ))}
+            {recentSessions.length === 0 ? (
+              <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                No conversations yet. Start your first chat.
+              </div>
+            ) : (
+              recentSessions.map((session) => (
+                <ListItem
+                  key={session.id}
+                  href={`/app/projects/${project.id}/chat/${session.id}`}
+                  className="gap-3"
+                >
+                  <MessageSquare className="size-5 text-[var(--muted-soft)] flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-[var(--ink)] truncate">
+                      {session.name}
+                    </p>
+                    <p className="text-xs text-[var(--muted-soft)] truncate">
+                      {session.preview}
+                    </p>
+                  </div>
+                  <span className="text-xs text-[var(--muted-soft)] flex-shrink-0">
+                    {formatRelativeTime(session.updatedAt)}
+                  </span>
+                </ListItem>
+              ))
+            )}
           </ListContainer>
         </div>
       </div>
