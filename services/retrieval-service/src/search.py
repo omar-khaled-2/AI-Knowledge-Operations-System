@@ -17,6 +17,7 @@ from src.config import Config
 from src.models import FilterCondition, SearchFilters, SearchRequest, SearchResponse, SearchResult
 from src.openai_client import OpenAIEmbeddingClient
 from src.qdrant_client import QdrantSearchClient
+from src.sparse_model import SparseEmbeddingModel
 
 logger = structlog.get_logger()
 
@@ -96,13 +97,14 @@ def _translate_condition(condition: FilterCondition) -> FieldCondition:
 
 
 class SearchService:
-    """Orchestrates semantic search: embed query → search Qdrant → format results."""
+    """Orchestrates hybrid semantic search: embed query → search Qdrant → format results."""
 
     def __init__(
         self,
         config: Config,
         openai_client: Optional[OpenAIEmbeddingClient] = None,
         qdrant_client: Optional[QdrantSearchClient] = None,
+        sparse_model: Optional[SparseEmbeddingModel] = None,
     ):
         """Initialize search service with clients.
 
@@ -110,6 +112,7 @@ class SearchService:
             config: Service configuration.
             openai_client: Optional pre-configured OpenAI embedding client.
             qdrant_client: Optional pre-configured Qdrant search client.
+            sparse_model: Optional pre-configured sparse embedding model.
         """
         self.config = config
         self.openai_client = openai_client or OpenAIEmbeddingClient(
@@ -121,9 +124,19 @@ class SearchService:
             url=config.qdrant_url,
             collection_name=config.qdrant_collection,
         )
+        self._sparse_model = sparse_model
+
+    @property
+    def sparse_model(self) -> SparseEmbeddingModel:
+        """Lazy initialization of sparse embedding model."""
+        if self._sparse_model is None:
+            self._sparse_model = SparseEmbeddingModel(
+                model_name=getattr(self.config, 'sparse_embedding_model', 'Qdrant/bm25')
+            )
+        return self._sparse_model
 
     async def search(self, request: SearchRequest) -> SearchResponse:
-        """Execute semantic search.
+        """Execute hybrid semantic search.
 
         Args:
             request: Search request with query and filters.
@@ -132,17 +145,23 @@ class SearchService:
             Search response with results and timing.
         """
         logger.info(
-            "Starting search",
+            "Starting hybrid search",
             query=request.query[:50],
             limit=request.limit,
         )
 
-        # Generate query embedding (offload blocking call to thread)
+        # Generate query embeddings (offload blocking calls to threads)
         embed_start = time.time()
-        query_vector = await asyncio.to_thread(self.openai_client.embed, request.query)
+        dense_vector = await asyncio.to_thread(self.openai_client.embed, request.query)
+        sparse_vector = await asyncio.to_thread(self.sparse_model.embed, request.query)
         embed_time_ms = int((time.time() - embed_start) * 1000)
 
-        logger.debug("Query embedded", vector_dim=len(query_vector), time_ms=embed_time_ms)
+        logger.debug(
+            "Query embedded",
+            dense_dim=len(dense_vector),
+            sparse_dim=len(sparse_vector.indices),
+            time_ms=embed_time_ms,
+        )
 
         # Build Qdrant filter
         filters = request.filters or SearchFilters()
@@ -160,10 +179,11 @@ class SearchService:
         
         filter_obj = build_qdrant_filter(filters)
 
-        # Search Qdrant
+        # Search Qdrant (hybrid)
         search_start = time.time()
         raw_results = self.qdrant_client.search(
-            vector=query_vector,
+            dense_vector=dense_vector,
+            sparse_vector=sparse_vector,
             limit=request.limit,
             offset=request.offset,
             filter_obj=filter_obj,

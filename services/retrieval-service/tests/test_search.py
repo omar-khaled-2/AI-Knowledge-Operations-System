@@ -1,7 +1,7 @@
 """Tests for search orchestration."""
 
 import pytest
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock, patch
 
 from src.models import FilterCondition, SearchFilters, SearchRequest
 from src.search import SearchService
@@ -30,10 +30,14 @@ class TestSearchService:
             }
         ]
 
+        mock_sparse = Mock()
+        mock_sparse.embed.return_value = Mock(indices=[], values=[])
+        
         service = SearchService(
             test_config,
             openai_client=mock_openai,
             qdrant_client=mock_qdrant,
+            sparse_model=mock_sparse,
         )
 
         request = SearchRequest(query="test query", limit=5)
@@ -58,10 +62,14 @@ class TestSearchService:
         mock_qdrant = Mock()
         mock_qdrant.search.return_value = []
 
+        mock_sparse = Mock()
+        mock_sparse.embed.return_value = Mock(indices=[], values=[])
+        
         service = SearchService(
             test_config,
             openai_client=mock_openai,
             qdrant_client=mock_qdrant,
+            sparse_model=mock_sparse,
         )
 
         request = SearchRequest(
@@ -88,10 +96,14 @@ class TestSearchService:
         mock_qdrant = Mock()
         mock_qdrant.search.return_value = []
 
+        mock_sparse = Mock()
+        mock_sparse.embed.return_value = Mock(indices=[], values=[])
+        
         service = SearchService(
             test_config,
             openai_client=mock_openai,
             qdrant_client=mock_qdrant,
+            sparse_model=mock_sparse,
         )
 
         request = SearchRequest(query="test query")
@@ -108,10 +120,14 @@ class TestSearchService:
         mock_qdrant = Mock()
         mock_qdrant.search.return_value = []
 
+        mock_sparse = Mock()
+        mock_sparse.embed.return_value = Mock(indices=[], values=[])
+        
         service = SearchService(
             test_config,
             openai_client=mock_openai,
             qdrant_client=mock_qdrant,
+            sparse_model=mock_sparse,
         )
 
         request = SearchRequest(
@@ -132,9 +148,13 @@ class TestSearchService:
         mock_openai = Mock()
         mock_openai.embed.side_effect = Exception("OpenAI API Error")
 
+        mock_sparse = Mock()
+        mock_sparse.embed.return_value = Mock(indices=[], values=[])
+        
         service = SearchService(
             test_config,
             openai_client=mock_openai,
+            sparse_model=mock_sparse,
         )
 
         request = SearchRequest(query="test query")
@@ -150,10 +170,14 @@ class TestSearchService:
         mock_qdrant = Mock()
         mock_qdrant.search.side_effect = Exception("Qdrant Error")
 
+        mock_sparse = Mock()
+        mock_sparse.embed.return_value = Mock(indices=[], values=[])
+        
         service = SearchService(
             test_config,
             openai_client=mock_openai,
             qdrant_client=mock_qdrant,
+            sparse_model=mock_sparse,
         )
 
         request = SearchRequest(query="test query")
@@ -183,10 +207,14 @@ class TestSearchService:
             }
         ]
 
+        mock_sparse = Mock()
+        mock_sparse.embed.return_value = Mock(indices=[], values=[])
+        
         service = SearchService(
             test_config,
             openai_client=mock_openai,
             qdrant_client=mock_qdrant,
+            sparse_model=mock_sparse,
         )
 
         request = SearchRequest(query="test")
@@ -202,3 +230,34 @@ class TestSearchService:
         assert result.metadata["chunk_index"] == 5
         assert result.metadata["filename"] == "file.pdf"
         assert result.metadata["custom_field"] == "custom_value"
+
+    @pytest.mark.asyncio
+    @patch("src.search.asyncio.to_thread")
+    @patch("src.search.SparseEmbeddingModel")
+    async def test_search_service_hybrid(self, mock_sparse_model, mock_to_thread, test_config):
+        """SearchService should use hybrid search."""
+        mock_qdrant = Mock()
+        mock_qdrant.search.return_value = [
+            {"id": "chunk-1", "score": 0.72, "payload": {"text": "Backend Engineer", "document_id": "doc-1", "project_id": "proj-1"}}
+        ]
+        
+        mock_openai = Mock()
+        mock_openai.embed.return_value = [0.1, 0.2, 0.3]
+        
+        mock_sparse = Mock()
+        mock_sparse.embed.return_value = MagicMock(indices=[], values=[])
+        mock_sparse_model.return_value = mock_sparse
+        
+        service = SearchService(test_config, openai_client=mock_openai, qdrant_client=mock_qdrant)
+        
+        request = SearchRequest(query="what is my job", project_id="proj-1")
+        response = await service.search(request)
+        
+        assert len(response.results) == 1
+        assert response.results[0].score == 0.72
+        mock_qdrant.search.assert_called_once()
+        
+        # Verify hybrid parameters
+        call_kwargs = mock_qdrant.search.call_args[1]
+        assert "dense_vector" in call_kwargs
+        assert "sparse_vector" in call_kwargs
