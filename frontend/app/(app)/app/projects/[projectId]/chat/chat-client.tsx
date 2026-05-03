@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { MessageSquare, Plus, Search, Clock, ChevronDown } from "lucide-react";
+import { MessageSquare, Plus, Search, Clock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   getSessions,
@@ -12,8 +12,6 @@ import { Breadcrumbs } from "@/components/app/breadcrumbs";
 import { PageHeader } from "@/components/page-header";
 import { ListContainer, ListItem } from "@/components/list-container";
 import { ActionButton } from "@/components/action-button";
-import { ResourceIndicator } from "./components/resource-indicator";
-import { ResourcePanel } from "./components/resource-panel";
 
 interface ChatSessionsClientProps {
   projectId: string;
@@ -30,7 +28,6 @@ export function ChatSessionsClient({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
 
   const loadSessions = useCallback(async () => {
     try {
@@ -71,10 +68,6 @@ export function ChatSessionsClient({
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  };
-
-  const toggleSessionExpansion = (sessionId: string) => {
-    setExpandedSessionId((prev) => (prev === sessionId ? null : sessionId));
   };
 
   const filteredSessions = searchQuery
@@ -154,57 +147,32 @@ export function ChatSessionsClient({
       {/* Sessions List */}
       {!isLoading && !error && filteredSessions.length > 0 && (
         <ListContainer>
-          {filteredSessions.map((session) => {
-            const isExpanded = expandedSessionId === session.id;
-
-            return (
-              <div key={session.id}>
-                <ListItem
-                  href={`/app/projects/${projectId}/chat/${session.id}`}
-                  className="gap-4 px-6 py-5"
-                >
-                  <div className="size-10 rounded-xl bg-background flex items-center justify-center flex-shrink-0">
-                    <MessageSquare className="size-5 text-[var(--muted-soft)]" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-semibold text-[var(--ink)]">
-                      {session.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {session.preview || "No messages yet"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-[var(--muted-soft)] flex-shrink-0">
-                    <ResourceIndicator
-                      count={session.messageCount > 0 ? session.messageCount : 0}
-                      isExpanded={isExpanded}
-                      onClick={() => toggleSessionExpansion(session.id)}
-                    />
-                    <span>{session.messageCount} messages</span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="size-3.5" />
-                      {formatRelativeTime(session.updatedAt)}
-                    </span>
-                    <ChevronDown
-                      className={`size-4 transition-transform duration-200 ${
-                        isExpanded ? "rotate-180" : ""
-                      }`}
-                    />
-                  </div>
-                </ListItem>
-
-                {/* Expanded Resource Panel */}
-                {isExpanded && (
-                  <div className="px-6 pb-4 border-t border-border/50">
-                    <ResourcePanel
-                      sessionId={session.id}
-                      projectId={projectId}
-                    />
-                  </div>
-                )}
+          {filteredSessions.map((session) => (
+            <ListItem
+              key={session.id}
+              href={`/app/projects/${projectId}/chat/${session.id}`}
+              className="gap-4 px-6 py-5"
+            >
+              <div className="size-10 rounded-xl bg-background flex items-center justify-center flex-shrink-0">
+                <MessageSquare className="size-5 text-[var(--muted-soft)]" />
               </div>
-            );
-          })}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-semibold text-[var(--ink)]">
+                  {session.name}
+                </h3>
+                <p className="text-sm text-muted-foreground truncate">
+                  {session.preview || "No messages yet"}
+                </p>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-[var(--muted-soft)] flex-shrink-0">
+                <span>{session.messageCount} messages</span>
+                <span className="flex items-center gap-1">
+                  <Clock className="size-3.5" />
+                  {formatRelativeTime(session.updatedAt)}
+                </span>
+              </div>
+            </ListItem>
+          ))}
         </ListContainer>
       )}
     </div>
