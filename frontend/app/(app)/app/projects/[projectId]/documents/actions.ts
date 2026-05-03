@@ -121,6 +121,21 @@ export async function getDocument(id: string): Promise<Document | null> {
   }
 }
 
+export async function getDocumentDownloadUrl(
+  id: string
+): Promise<{ downloadUrl: string; mimeType: string; name: string }> {
+  try {
+    return await fetchWithAuth<{ downloadUrl: string; mimeType: string; name: string }>(
+      `/documents/${id}/download-url`
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to get document download URL";
+    console.error("[getDocumentDownloadUrl] Failed:", message, "| ID:", id);
+    throw new Error(message);
+  }
+}
+
 export async function createSignedUrl(
   data: GenerateUploadUrlData
 ): Promise<GenerateUploadUrlResponse> {
