@@ -3,6 +3,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { ConfigService } from '@nestjs/config';
 import { RabbitMQService } from '../../rabbitmq/rabbitmq.service';
 import { DocumentCreatedEvent } from '../events/document-created.event';
+import { DocumentEmbeddedEvent } from '../events/document-embedded.event';
 
 @Injectable()
 export class DocumentEventsListener {
@@ -58,6 +59,40 @@ export class DocumentEventsListener {
         },
       );
       // Event is lost - acceptable for v1
+    }
+  }
+
+  @OnEvent('document.embedded')
+  async handleDocumentEmbedded(event: DocumentEmbeddedEvent) {
+    this.logger.debug(
+      `Processing document.embedded event: documentId=${event.documentId}`,
+    );
+
+    try {
+      await this.rabbitmqService.publish(
+        'document.embedded',
+        {
+          documentId: event.documentId,
+          projectId: event.projectId,
+          ownerId: event.ownerId,
+          filename: event.filename,
+          mimeType: event.mimeType,
+          timestamp: event.timestamp,
+        },
+        {
+          messageId: event.documentId,
+        },
+      );
+
+      this.logger.log(
+        `Published document.embedded event to RabbitMQ`,
+        { documentId: event.documentId },
+      );
+    } catch (error) {
+      this.logger.error(
+        'Failed to publish document.embedded event',
+        { documentId: event.documentId, error: error.message },
+      );
     }
   }
 }

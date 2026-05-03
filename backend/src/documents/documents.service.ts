@@ -10,6 +10,7 @@ import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { GenerateUploadUrlDto } from './dto/generate-upload-url.dto';
 import { DocumentCreatedEvent } from './events/document-created.event';
+import { DocumentEmbeddedEvent } from './events/document-embedded.event';
 import { WebSocketPublisher } from '../websocket/websocket-publisher.service';
 import { WSMessage, DocumentStatusPayload } from '../websocket/types';
 import { randomUUID } from 'crypto';
@@ -144,6 +145,20 @@ export class DocumentsService {
         updatedDocument.owner.toString(),
         id,
         updateDocumentDto.status as DocumentStatusPayload['status'],
+      );
+    }
+
+    // Emit event when document is fully embedded
+    if (updateDocumentDto.status === 'embedded' && updatedDocument) {
+      this.eventEmitter.emit(
+        'document.embedded',
+        new DocumentEmbeddedEvent(
+          updatedDocument._id.toString(),
+          updatedDocument.projectId.toString(),
+          updatedDocument.owner.toString(),
+          updatedDocument.name,
+          updatedDocument.mimeType,
+        ),
       );
     }
 
