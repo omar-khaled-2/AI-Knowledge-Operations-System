@@ -1,4 +1,4 @@
-export type WSEventType = 'document.status' | 'chat.message' | 'message.created'
+export type WSEventType = 'document.status' | 'chat.message' | 'message.created' | 'insight.generated'
 
 export interface WSMessage<T extends WSEventType = WSEventType, P = unknown> {
   event: T
@@ -38,7 +38,19 @@ export interface MessageCreatedPayload {
 
 export type DocumentStatusMessage = WSMessage<'document.status', DocumentStatusPayload>
 export type ChatMessageEvent = WSMessage<'chat.message', ChatMessagePayload>
+export interface InsightGeneratedPayload {
+  projectId: string
+  sourceDocumentId: string
+  newInsightsCount: number
+  preview: Array<{
+    type: string
+    title: string
+    confidence: number
+  }>
+}
+
 export type MessageCreatedEvent = WSMessage<'message.created', MessageCreatedPayload>
+export type InsightGeneratedEvent = WSMessage<'insight.generated', InsightGeneratedPayload>
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 

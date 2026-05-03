@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
+import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import {
   Lightbulb,
   X,
@@ -10,16 +10,19 @@ import {
   TrendingUp,
   Link2,
   AlertTriangle,
-} from "lucide-react"
-import { useParams } from "next/navigation"
-import { cn } from "@/lib/utils"
-import {
-  getProjectById,
-  getInsightsByProjectId,
-  formatRelativeTime,
-} from "@/lib/mock-data"
-import { Breadcrumbs } from "@/components/app/breadcrumbs"
-import { PageHeader } from "@/components/page-header"
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { useParams } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Insight, formatRelativeTime } from "@/lib/mock-data";
+import { Breadcrumbs } from "@/components/app/breadcrumbs";
+import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getInsights, dismissInsight } from "./actions";
+import { useWebSocket } from "@/providers/websocket-provider";
+import type { InsightGeneratedPayload } from "@/types/websocket";
 
 const typeConfig: Record<
   string,
@@ -45,18 +48,20 @@ const typeConfig: Record<
     label: "Anomaly",
     color: "#e8b94a",
   },
-}
+};
 
 function InsightCard({
   insight,
+  onDismiss,
 }: {
-  insight: ReturnType<typeof getInsightsByProjectId>[0]
+  insight: Insight;
+  onDismiss: (id: string) => void;
 }) {
   const config = typeConfig[insight.type] || {
     icon: <Lightbulb className="size-4" />,
     label: insight.type,
     color: "#6a6a6a",
-  }
+  };
 
   return (
     <div className="bg-[var(--surface-card)] rounded-2xl p-5 space-y-4">
@@ -109,39 +114,81 @@ function InsightCard({
           <button className="px-3 py-1.5 text-sm text-[var(--ink)] bg-background border border-[var(--hairline)] rounded-lg hover:bg-[var(--surface-strong)] transition-colors">
             View Details
           </button>
-          <button className="p-1.5 text-[var(--muted-soft)] hover:text-red-500 transition-colors"
+          <button 
+            className="p-1.5 text-[var(--muted-soft)] hover:text-red-500 transition-colors"
             aria-label="Dismiss insight"
+            onClick={() => onDismiss(insight.id)}
           >
             <X className="size-4" />
           </button>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default function InsightsPage() {
-  const params = useParams()
-  const projectId = params.projectId as string
-  const project = getProjectById(projectId)
-  const [activeFilter, setActiveFilter] = useState<string>("all")
+  const params = useParams();
+  const projectId = params.projectId as string;
+  const [insights, setInsights] = useState<Insight[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string>("all");
+  const { lastMessage } = useWebSocket();
 
-  if (!project) {
-    return (
-      <div className="p-4 lg:p-8">
-        <h1 className="text-2xl font-semibold text-[var(--ink)]">Project not found</h1>
-        <Link href="/app" className="text-muted-foreground hover:text-[var(--ink)]">
-          ← Back to dashboard
-        </Link>
-      </div>
-    )
-  }
+  const fetchInsights = useCallback(
+    async (filter?: string) => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await getInsights(projectId, {
+          type: filter && filter !== "all" ? filter : undefined,
+          page: 1,
+          limit: 100,
+        });
+        setInsights(response.data);
+        setTotalCount(response.total);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to load insights";
+        setError(message);
+        console.error("Failed to fetch insights:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [projectId]
+  );
 
-  const insights = getInsightsByProjectId(project.id)
-  const filteredInsights =
-    activeFilter === "all"
-      ? insights
-      : insights.filter((i) => i.type === activeFilter)
+  useEffect(() => {
+    fetchInsights(activeFilter);
+  }, [fetchInsights, activeFilter]);
+
+  // Listen for WebSocket insight.generated events
+  useEffect(() => {
+    if (!lastMessage || lastMessage.event !== "insight.generated") {
+      return;
+    }
+
+    const payload = lastMessage.payload as InsightGeneratedPayload;
+    if (payload.projectId !== projectId) return;
+
+    // Refetch insights when new ones are generated
+    fetchInsights(activeFilter);
+  }, [lastMessage, projectId, activeFilter, fetchInsights]);
+
+  const handleDismiss = async (id: string) => {
+    try {
+      await dismissInsight(id);
+      setInsights((prev) => prev.filter((i) => i.id !== id));
+      setTotalCount((prev) => prev - 1);
+    } catch (err) {
+      console.error("Failed to dismiss insight:", err);
+    }
+  };
+
+  const filteredInsights = insights;
 
   const filters = [
     { value: "all", label: "All" },
@@ -149,13 +196,43 @@ export default function InsightsPage() {
     { value: "trend", label: "Trends" },
     { value: "connection", label: "Connections" },
     { value: "anomaly", label: "Anomalies" },
-  ]
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="p-4 lg:p-8 space-y-6">
+        <PageHeader title="Insights">
+          <Breadcrumbs projectId={projectId} section="insights" />
+        </PageHeader>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-48" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 lg:p-8 space-y-6">
+        <PageHeader title="Insights">
+          <Breadcrumbs projectId={projectId} section="insights" />
+        </PageHeader>
+        <div className="flex flex-col items-center gap-4 py-12">
+          <AlertCircle className="size-12 text-destructive" />
+          <p className="text-muted-foreground">{error}</p>
+          <Button onClick={() => fetchInsights(activeFilter)}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 lg:p-8 space-y-6">
       {/* Header */}
       <PageHeader title="Insights">
-        <Breadcrumbs projectId={project.id} section="insights" />
+        <Breadcrumbs projectId={projectId} section="insights" />
       </PageHeader>
 
       {/* Filter Tabs */}
@@ -176,12 +253,18 @@ export default function InsightsPage() {
         ))}
       </div>
 
+      {/* Stats */}
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <span>{totalCount} insights</span>
+      </div>
+
       {/* Insights Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredInsights.map((insight) => (
           <InsightCard
             key={insight.id}
             insight={insight}
+            onDismiss={handleDismiss}
           />
         ))}
       </div>
@@ -190,8 +273,11 @@ export default function InsightsPage() {
         <div className="text-center py-12">
           <Lightbulb className="size-12 text-[var(--hairline)] mx-auto mb-4" />
           <p className="text-muted-foreground">No insights found for this filter</p>
+          <p className="text-sm text-muted-foreground/70 mt-2">
+            Upload documents to generate AI-powered insights
+          </p>
         </div>
       )}
     </div>
-  )
+  );
 }
