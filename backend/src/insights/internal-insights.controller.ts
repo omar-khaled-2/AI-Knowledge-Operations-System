@@ -1,8 +1,9 @@
-import { Controller, Post, Body, Logger } from '@nestjs/common';
+import { Controller, Post, Body, Logger, UsePipes, ValidationPipe } from '@nestjs/common';
 import { InsightsService } from './insights.service';
 import { CreateInsightsBatchDto } from './dto/create-insights-batch.dto';
 
 @Controller('internal/insights')
+@UsePipes(new ValidationPipe())
 export class InternalInsightsController {
   private readonly logger = new Logger(InternalInsightsController.name);
 
