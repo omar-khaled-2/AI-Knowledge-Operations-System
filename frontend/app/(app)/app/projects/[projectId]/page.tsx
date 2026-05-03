@@ -261,7 +261,7 @@ export default async function ProjectHomePage({
                       {Math.round(insight.confidence * 100)}% confidence
                     </span>
                     <span className="text-xs text-[var(--muted-soft)]">
-                      {formatRelativeTime(insight.timestamp)}
+                      {formatRelativeTime(insight.createdAt)}
                     </span>
                   </div>
                 </CardContent>

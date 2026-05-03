@@ -64,7 +64,7 @@ export interface Insight {
   description: string;
   confidence: number;
   relatedDocuments: string[];
-  timestamp: string;
+  createdAt: string;
 }
 
 export interface ActivityItem {
@@ -429,7 +429,7 @@ export const mockInsights: Insight[] = [
     description: "The partnership agreement draft has been sitting for 5 days without review. Legal team needs to approve section 4.2 by end of week.",
     confidence: 0.92,
     relatedDocuments: ["doc-1", "doc-3"],
-    timestamp: "2024-01-15T10:00:00Z",
+    createdAt: "2024-01-15T10:00:00Z",
   },
   {
     id: "ins-2",
@@ -439,7 +439,7 @@ export const mockInsights: Insight[] = [
     description: "Over the past 30 days, references to mobile-first strategy have increased 340% across planning documents.",
     confidence: 0.87,
     relatedDocuments: ["doc-1", "doc-3"],
-    timestamp: "2024-01-14T16:00:00Z",
+    createdAt: "2024-01-14T16:00:00Z",
   },
   {
     id: "ins-3",
@@ -449,7 +449,7 @@ export const mockInsights: Insight[] = [
     description: "The technical depth described in the 'Tech-Savvy Tom' persona aligns closely with content in Engineering Knowledge base.",
     confidence: 0.78,
     relatedDocuments: ["doc-4", "doc-5"],
-    timestamp: "2024-01-14T12:00:00Z",
+    createdAt: "2024-01-14T12:00:00Z",
   },
   {
     id: "ins-4",
@@ -459,7 +459,7 @@ export const mockInsights: Insight[] = [
     description: "The weekly pulse survey typically gets 80% response rate but only received 48% this week. Consider investigating team morale.",
     confidence: 0.95,
     relatedDocuments: ["doc-5"],
-    timestamp: "2024-01-13T09:00:00Z",
+    createdAt: "2024-01-13T09:00:00Z",
   },
   {
     id: "ins-5",
@@ -469,7 +469,7 @@ export const mockInsights: Insight[] = [
     description: "The authentication documentation is outdated and doesn't reflect the new OAuth 2.0 implementation deployed last week.",
     confidence: 0.89,
     relatedDocuments: ["doc-7"],
-    timestamp: "2024-01-15T08:00:00Z",
+    createdAt: "2024-01-15T08:00:00Z",
   },
   {
     id: "ins-6",
@@ -479,7 +479,7 @@ export const mockInsights: Insight[] = [
     description: "Code-to-documentation ratio has improved from 1:0.3 to 1:0.7 over the past quarter.",
     confidence: 0.84,
     relatedDocuments: ["doc-7", "doc-8"],
-    timestamp: "2024-01-14T14:00:00Z",
+    createdAt: "2024-01-14T14:00:00Z",
   },
 ];
 
