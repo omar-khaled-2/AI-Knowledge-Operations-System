@@ -31,27 +31,50 @@ class QdrantSearchClient:
 
     def search(
         self,
-        vector: List[float],
+        dense_vector: List[float],
+        sparse_vector: Any,
         limit: int = 10,
         offset: int = 0,
         filter_obj: Optional[Any] = None,
         score_threshold: Optional[float] = None,
     ) -> List[Dict[str, Any]]:
-        """Search for similar vectors in Qdrant.
-
+        """Search for similar vectors using hybrid dense + sparse.
+        
         Args:
-            vector: Query embedding vector.
+            dense_vector: Dense query embedding.
+            sparse_vector: Sparse query vector (SparseVector dataclass).
             limit: Maximum number of results.
             offset: Pagination offset.
             filter_obj: Qdrant Filter object.
             score_threshold: Minimum similarity score.
-
+            
         Returns:
             List of search results with id, score, and payload.
         """
+        from qdrant_client import models
+        
+        # Convert sparse vector to Qdrant format
+        sparse_query = models.SparseVector(
+            indices=sparse_vector.indices.tolist(),
+            values=sparse_vector.values.tolist(),
+        )
+        
+        # Execute hybrid search with prefetch + fusion
         response = self.client.query_points(
             collection_name=self.collection_name,
-            query=vector,
+            prefetch=[
+                models.Prefetch(
+                    query=dense_vector,
+                    using="dense",
+                    limit=limit * 2,
+                ),
+                models.Prefetch(
+                    query=sparse_query,
+                    using="sparse",
+                    limit=limit * 2,
+                ),
+            ],
+            query=models.FusionQuery(fusion=models.Fusion.RRF),
             limit=limit,
             offset=offset,
             query_filter=filter_obj,
@@ -59,7 +82,7 @@ class QdrantSearchClient:
         )
 
         logger.info(
-            "Qdrant search completed",
+            "Qdrant hybrid search completed",
             collection=self.collection_name,
             limit=limit,
             results_count=len(response.points),
