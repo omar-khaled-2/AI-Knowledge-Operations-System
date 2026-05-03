@@ -38,6 +38,10 @@ build:
       context: ../services/chat-service
       docker:
         dockerfile: Dockerfile
+    - image: insight-service
+      context: ../services/insight-service
+      docker:
+        dockerfile: Dockerfile
   tagPolicy:
     gitCommit: {}
   local:
@@ -137,6 +141,15 @@ deploy:
           - values.yaml
         setValues:
           image.repository: chat-service
+          image.tag: latest
+      - name: insight-service
+        chartPath: helm/insight-service
+        namespace: default
+        createNamespace: true
+        valuesFiles:
+          - values.yaml
+        setValues:
+          image.repository: insight-service
           image.tag: latest
       - name: grafana
         chartPath: helm/grafana
