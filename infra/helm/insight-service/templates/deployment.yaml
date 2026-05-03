@@ -24,10 +24,20 @@ spec:
               protocol: TCP
           env:
             - name: RABBITMQ_URL
-              value: "amqp://user:pass@rabbitmq:5672"
+              value: "amqp://{{ .Values.rabbitmq.host }}:{{ .Values.rabbitmq.port }}"
+            - name: RABBITMQ_EXCHANGE
+              value: {{ .Values.rabbitmq.exchange | quote }}
+            - name: RABBITMQ_QUEUE
+              value: {{ .Values.rabbitmq.queue | quote }}
+            - name: RABBITMQ_ROUTING_KEY
+              value: {{ .Values.rabbitmq.routingKey | quote }}
             - name: QDRANT_URL
-              value: "http://qdrant:6333"
+              value: "http://{{ .Values.qdrant.host }}:{{ .Values.qdrant.port }}"
+            - name: QDRANT_COLLECTION
+              value: {{ .Values.qdrant.collection | quote }}
             - name: BACKEND_URL
-              value: "http://backend-backend:80"
+              value: {{ .Values.backend.url | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.config.logLevel | quote }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

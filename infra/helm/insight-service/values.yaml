@@ -10,6 +10,24 @@ service:
   port: 80
   targetPort: 3000
 
+rabbitmq:
+  host: "rabbitmq"
+  port: 5672
+  exchange: "documents"
+  queue: "insight-jobs"
+  routingKey: "document.embedded"
+
+qdrant:
+  host: "qdrant"
+  port: 6333
+  collection: "documents"
+
+backend:
+  url: "http://backend-backend:80"
+
+config:
+  logLevel: "info"
+
 resources:
   limits:
     cpu: 500m

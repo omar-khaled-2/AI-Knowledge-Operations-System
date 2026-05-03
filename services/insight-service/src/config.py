@@ -9,7 +9,7 @@ class Config:
     """Service configuration loaded from environment variables."""
 
     # RabbitMQ
-    rabbitmq_url: str = os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672")
+    rabbitmq_url: str = os.getenv("RABBITMQ_URL", "amqp://localhost:5672")
     rabbitmq_exchange: str = os.getenv("RABBITMQ_EXCHANGE", "documents")
     rabbitmq_queue: str = os.getenv("RABBITMQ_QUEUE", "insight-jobs")
     rabbitmq_routing_key: str = os.getenv("RABBITMQ_ROUTING_KEY", "document.embedded")
