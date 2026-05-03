@@ -36,14 +36,13 @@ export class Insight {
   })
   status: string;
 
-  @Prop()
-  createdAt: Date;
-
-  @Prop()
-  updatedAt: Date;
 }
 
 export const InsightSchema = SchemaFactory.createForClass(Insight);
+
+InsightSchema.virtual('id').get(function() {
+  return this._id.toString();
+});
 
 InsightSchema.index({ projectId: 1, status: 1 });
 InsightSchema.index({ sourceDocumentId: 1 });
