@@ -20,6 +20,9 @@ class Config:
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     embedding_model: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 
+    # Sparse embedding
+    sparse_embedding_model: str = os.getenv("SPARSE_EMBEDDING_MODEL", "Qdrant/bm25")
+
     # Service
     port: int = int(os.getenv("PORT", "3000"))
     request_timeout: int = int(os.getenv("REQUEST_TIMEOUT", "30"))

@@ -128,7 +128,7 @@ class SearchService:
 
     @property
     def sparse_model(self) -> SparseEmbeddingModel:
-        """Lazy initialization of sparse embedding model."""
+        """Lazy initialization of sparse model."""
         if self._sparse_model is None:
             self._sparse_model = SparseEmbeddingModel(
                 model_name=getattr(self.config, 'sparse_embedding_model', 'Qdrant/bm25')

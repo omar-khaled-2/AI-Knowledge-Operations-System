@@ -7,3 +7,4 @@ python-dotenv==1.0.0
 structlog==24.1.0
 redis==5.0.1
 requests==2.31.0
+fastembed==0.3.6

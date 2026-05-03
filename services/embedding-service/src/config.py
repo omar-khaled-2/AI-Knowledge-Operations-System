@@ -26,6 +26,9 @@ class Config:
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     embedding_model: str = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
 
+    # Sparse embedding model
+    sparse_embedding_model: str = os.getenv("SPARSE_EMBEDDING_MODEL", "Qdrant/bm25")
+
     # Redis for chunk tracking
     redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379")
 

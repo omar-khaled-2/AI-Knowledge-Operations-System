@@ -39,7 +39,7 @@ class QdrantSearchClient:
         score_threshold: Optional[float] = None,
     ) -> List[Dict[str, Any]]:
         """Search for similar vectors using hybrid dense + sparse.
-
+        
         Args:
             dense_vector: Dense query embedding.
             sparse_vector: Sparse query vector (SparseVector dataclass).
@@ -47,18 +47,18 @@ class QdrantSearchClient:
             offset: Pagination offset.
             filter_obj: Qdrant Filter object.
             score_threshold: Minimum similarity score.
-
+            
         Returns:
             List of search results with id, score, and payload.
         """
         from qdrant_client import models
-
+        
         # Convert sparse vector to Qdrant format
         sparse_query = models.SparseVector(
             indices=sparse_vector.indices.tolist(),
             values=sparse_vector.values.tolist(),
         )
-
+        
         # Execute hybrid search with prefetch + fusion
         response = self.client.query_points(
             collection_name=self.collection_name,
