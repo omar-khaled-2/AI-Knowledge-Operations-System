@@ -32,3 +32,19 @@ def test_sparse_model_empty_text():
     
     assert len(result.indices) == 0
     assert len(result.values) == 0
+
+
+def test_sparse_model_whitespace_text():
+    """Whitespace-only text should return empty sparse vector."""
+    model = SparseEmbeddingModel()
+    result = model.embed("   ")
+    
+    assert len(result.indices) == 0
+    assert len(result.values) == 0
+
+
+def test_sparse_model_none_text():
+    """None input should raise ValueError."""
+    model = SparseEmbeddingModel()
+    with pytest.raises(ValueError, match="cannot be None"):
+        model.embed(None)

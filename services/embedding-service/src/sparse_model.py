@@ -1,7 +1,6 @@
 """Sparse vector generation using fastembed BM25."""
 
 from dataclasses import dataclass
-from typing import List
 
 import numpy as np
 from fastembed.sparse import SparseTextEmbedding
@@ -19,7 +18,10 @@ class SparseEmbeddingModel:
     """Generates BM25 sparse vectors for text."""
     
     def __init__(self, model_name: str = "Qdrant/bm25"):
-        self.model = SparseTextEmbedding(model_name)
+        try:
+            self.model = SparseTextEmbedding(model_name)
+        except Exception as e:
+            raise ValueError(f"Failed to initialize sparse embedding model '{model_name}': {e}")
     
     def embed(self, text: str) -> SparseVector:
         """Generate sparse vector for text.
@@ -29,11 +31,22 @@ class SparseEmbeddingModel:
             
         Returns:
             SparseVector with indices and values.
+            
+        Raises:
+            ValueError: If text is None.
+            RuntimeError: If embedding generation fails.
         """
-        if not text or not text.strip():
+        if text is None:
+            raise ValueError("Input text cannot be None")
+        
+        if not text.strip():
             return SparseVector(indices=np.array([], dtype=np.int32), values=np.array([], dtype=np.float32))
         
-        embeddings = list(self.model.embed(text))
+        try:
+            embeddings = list(self.model.embed(text))
+        except Exception as e:
+            raise RuntimeError(f"Failed to generate sparse embedding: {e}")
+        
         if not embeddings:
             return SparseVector(indices=np.array([], dtype=np.int32), values=np.array([], dtype=np.float32))
         
