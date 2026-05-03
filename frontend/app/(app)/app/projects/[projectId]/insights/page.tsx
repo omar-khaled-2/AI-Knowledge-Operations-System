@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import {
   Lightbulb,
   X,
@@ -10,7 +9,6 @@ import {
   TrendingUp,
   Link2,
   AlertTriangle,
-  Loader2,
   AlertCircle,
 } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -153,7 +151,6 @@ export default function InsightsPage() {
         const message =
           err instanceof Error ? err.message : "Failed to load insights";
         setError(message);
-        console.error("Failed to fetch insights:", err);
       } finally {
         setIsLoading(false);
       }
@@ -184,7 +181,7 @@ export default function InsightsPage() {
       setInsights((prev) => prev.filter((i) => i.id !== id));
       setTotalCount((prev) => prev - 1);
     } catch (err) {
-      console.error("Failed to dismiss insight:", err);
+      // Dismiss failed, keep the insight visible
     }
   };
 
