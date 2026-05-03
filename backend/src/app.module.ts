@@ -13,6 +13,7 @@ import { SessionsModule } from "./sessions/sessions.module";
 import { WebSocketModule } from "./websocket/websocket.module";
 import { ChatModule } from "./chat/chat.module";
 import { MessagesModule } from "./messages/messages.module";
+import { InsightsModule } from "./insights/insights.module";
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { MessagesModule } from "./messages/messages.module";
     WebSocketModule,
     MessagesModule,
     ChatModule,
+    InsightsModule,
   ],
   controllers: [AppController],
 })
