@@ -498,7 +498,7 @@ QDRANT_COLLECTION=documents
 
 # OpenAI
 OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4-turbo-preview
+OPENAI_MODEL=gpt-4o-mini  # Lightweight, cost-effective for insight generation
 
 # Backend
 BACKEND_URL=http://backend-backend:80
