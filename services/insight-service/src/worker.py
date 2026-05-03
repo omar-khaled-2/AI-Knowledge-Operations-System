@@ -83,21 +83,11 @@ class InsightWorker:
             chunks = self.qdrant.get_document_chunks(document_id)
             document_text = "\n".join(chunks)
 
-            # Step 2: Search similar documents (use first chunk as query)
-            similar_docs = []
-            if chunks:
-                similar_docs = self.qdrant.search_similar_documents(
-                    project_id=project_id,
-                    exclude_document_id=document_id,
-                    query_vector=[0.0] * 384,  # Placeholder - in production, embed first chunk
-                )
+            # Step 2: Generate insights via LLM (document only for MVP)
+            # TODO: Add cross-document similarity search once embedding service is available
+            insights = self.llm.generate_insights(document_text, "")
 
-            similar_text = "\n".join([d.get("text", "") for d in similar_docs[:3]])
-
-            # Step 3: Generate insights via LLM
-            insights = self.llm.generate_insights(document_text, similar_text)
-
-            # Step 4: Save to backend
+            # Step 3: Save to backend
             if insights:
                 self.backend.save_insights(project_id, document_id, insights)
                 logger.info(
