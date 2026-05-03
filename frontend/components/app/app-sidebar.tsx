@@ -175,7 +175,7 @@ export function AppSidebar({ isOpen, onClose, onToggle }: AppSidebarProps) {
           </div>
           {!isCollapsed && (
             <span className="font-semibold text-[#0a0a0a] text-sm truncate">
-              Knowledge Ops
+              Lalo
             </span>
           )}
         </div>
