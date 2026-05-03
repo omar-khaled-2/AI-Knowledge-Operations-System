@@ -1,31 +1,33 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "insight-service.fullname" . }}
+  name: insight-service
   labels:
-    app: insight-service
+    app.kubernetes.io/name: insight-service
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: insight-service
+      app.kubernetes.io/name: insight-service
   template:
     metadata:
       labels:
-        app: insight-service
+        app.kubernetes.io/name: insight-service
     spec:
       containers:
-      - name: insight-service
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        ports:
-        - containerPort: 3000
-        env:
-        - name: RABBITMQ_URL
-          value: "amqp://user:pass@rabbitmq:5672"
-        - name: QDRANT_URL
-          value: "http://qdrant:6333"
-        - name: BACKEND_URL
-          value: "http://backend-backend:80"
-        resources:
-          {{- toYaml .Values.resources | nindent 10 }}
+        - name: insight-service
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: RABBITMQ_URL
+              value: "amqp://user:pass@rabbitmq:5672"
+            - name: QDRANT_URL
+              value: "http://qdrant:6333"
+            - name: BACKEND_URL
+              value: "http://backend-backend:80"
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
