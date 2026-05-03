@@ -23,13 +23,11 @@ interface UploadButtonProps {
 
 const ALLOWED_TYPES = [
   "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "text/plain",
   "text/markdown",
 ];
 
-const ALLOWED_EXTENSIONS = ".pdf,.doc,.docx,.txt,.md";
+const ALLOWED_EXTENSIONS = ".pdf,.txt,.md";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
@@ -69,7 +67,7 @@ export function UploadButton({ projectId, onDocumentCreated }: UploadButtonProps
     // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
       toast.error(
-        "Invalid file type. Please upload a PDF, DOC, DOCX, TXT, or MD file."
+        "Invalid file type. Please upload a PDF, TXT, or MD file."
       );
       return;
     }
@@ -199,7 +197,7 @@ export function UploadButton({ projectId, onDocumentCreated }: UploadButtonProps
                 {isUploading ? "Uploading..." : "Click or drag and drop"}
               </span>
               <span className="text-xs text-muted-foreground">
-                PDF, DOC, DOCX, TXT, MD — max 50MB
+                PDF, TXT, MD — max 50MB
               </span>
             </div>
           </button>
