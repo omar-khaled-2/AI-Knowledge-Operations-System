@@ -60,7 +60,6 @@ Generate insights for this new document.
                 ],
                 response_format={"type": "json_object"},
                 temperature=0.3,
-                max_tokens=2000,
             )
 
             content = response.choices[0].message.content

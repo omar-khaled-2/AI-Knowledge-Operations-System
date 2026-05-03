@@ -9,6 +9,7 @@ import structlog
 from src.config import Config
 from src.services.llm_client import LLMClient
 from src.services.qdrant_client import QdrantInsightClient
+from src.services.retrieval_client import RetrievalClient
 from src.services.backend_client import BackendClient
 
 logger = structlog.get_logger()
@@ -28,6 +29,7 @@ class InsightWorker:
         self.status = status
         self.llm = LLMClient(config)
         self.qdrant = QdrantInsightClient(config.qdrant_url, config.qdrant_collection)
+        self.retrieval = RetrievalClient(config.retrieval_service_url)
         self.backend = BackendClient(config.backend_url)
         self.connection = None
         self.channel = None
@@ -83,11 +85,29 @@ class InsightWorker:
             chunks = self.qdrant.get_document_chunks(document_id)
             document_text = "\n".join(chunks)
 
-            # Step 2: Generate insights via LLM (document only for MVP)
-            # TODO: Add cross-document similarity search once embedding service is available
-            insights = self.llm.generate_insights(document_text, "")
+            # Step 2: Find similar documents in the same project
+            try:
+                similar_docs = self.retrieval.find_similar_documents(
+                    project_id=project_id,
+                    exclude_document_id=document_id,
+                    query_text=document_text,
+                    limit=5,
+                )
+                similar_docs_text = "\n\n".join(
+                    f"Document {doc['document_id']}:\n{doc['content']}"
+                    for doc in similar_docs
+                )
+            except Exception:
+                logger.warning(
+                    "Retrieval service unavailable, generating insights from document only",
+                    document_id=document_id,
+                )
+                similar_docs_text = ""
 
-            # Step 3: Save to backend
+            # Step 3: Generate insights via LLM with cross-document context
+            insights = self.llm.generate_insights(document_text, similar_docs_text)
+
+            # Step 4: Save to backend
             if insights:
                 self.backend.save_insights(project_id, document_id, insights)
                 logger.info(
