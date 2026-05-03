@@ -8,9 +8,15 @@ logger = structlog.get_logger()
 class BackendClient:
     """Client for posting insights to backend internal API."""
 
-    def __init__(self, base_url: str):
+    def __init__(self, base_url: str, config: Config | None = None):
         self.base_url = base_url
-        self.client = httpx.Client(base_url=base_url, timeout=30.0)
+        self.config = config or Config.from_env()
+
+        headers = {}
+        if self.config.backend_internal_api_key:
+            headers["X-Internal-API-Key"] = self.config.backend_internal_api_key
+
+        self.client = httpx.Client(base_url=base_url, timeout=30.0, headers=headers)
         logger.info("Backend client initialized", base_url=base_url)
 
     def save_insights(

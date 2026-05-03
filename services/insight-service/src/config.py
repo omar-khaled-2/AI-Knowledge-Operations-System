@@ -24,6 +24,7 @@ class Config:
 
     # Backend
     backend_url: str = os.getenv("BACKEND_URL", "http://localhost:3001")
+    backend_internal_api_key: str = os.getenv("BACKEND_INTERNAL_API_KEY", "")
 
     # Service
     log_level: str = os.getenv("LOG_LEVEL", "info").upper()
