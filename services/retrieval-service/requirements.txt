@@ -6,3 +6,4 @@ python-dotenv==1.0.0
 structlog==24.1.0
 pydantic==2.5.0
 pytest-asyncio>=0.21.0
+fastembed==0.3.6
