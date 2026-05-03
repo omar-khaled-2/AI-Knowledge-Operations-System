@@ -124,9 +124,16 @@ class SearchService:
             url=config.qdrant_url,
             collection_name=config.qdrant_collection,
         )
-        self.sparse_model = sparse_model or SparseEmbeddingModel(
-            model_name=getattr(config, 'sparse_embedding_model', 'Qdrant/bm25')
-        )
+        self._sparse_model = sparse_model
+
+    @property
+    def sparse_model(self) -> SparseEmbeddingModel:
+        """Lazy initialization of sparse model."""
+        if self._sparse_model is None:
+            self._sparse_model = SparseEmbeddingModel(
+                model_name=getattr(self.config, 'sparse_embedding_model', 'Qdrant/bm25')
+            )
+        return self._sparse_model
 
     async def search(self, request: SearchRequest) -> SearchResponse:
         """Execute hybrid semantic search.
