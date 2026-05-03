@@ -25,6 +25,9 @@ qdrant:
 backend:
   url: "http://backend-backend:80"
 
+retrieval:
+  url: "http://retrieval-service:80"
+
 config:
   logLevel: "info"
 

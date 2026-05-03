@@ -37,7 +37,16 @@ spec:
               value: {{ .Values.qdrant.collection | quote }}
             - name: BACKEND_URL
               value: {{ .Values.backend.url | quote }}
+            - name: RETRIEVAL_SERVICE_URL
+              value: {{ .Values.retrieval.url | quote }}
             - name: LOG_LEVEL
               value: {{ .Values.config.logLevel | quote }}
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: llm-secrets
+                  key: OPENAI_API_KEY
+            - name: OPENAI_MODEL
+              value: "gpt-5.4-nano"
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

@@ -202,3 +202,7 @@ portForward:
     resourceName: websocket-gateway-websocket-gateway
     port: 80
     localPort: 3002
+  - resourceType: service
+    resourceName: retrieval-service
+    port: 80
+    localPort: 3003
