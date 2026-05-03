@@ -15,7 +15,17 @@ import {
   Bot,
   Loader2,
   AlertCircle,
+  ExternalLink,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { type Session } from "@/lib/mock-data";
 import { useWebSocket } from "@/providers/websocket-provider";
@@ -58,7 +68,13 @@ function formatRelativeTime(dateString: string): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function ChatMessageComponent({ message }: { message: Message }) {
+function ChatMessageComponent({
+  message,
+  onSourceClick,
+}: {
+  message: Message;
+  onSourceClick?: (source: Source) => void;
+}) {
   const isUser = message.role === "user";
 
   return (
@@ -113,6 +129,7 @@ function ChatMessageComponent({ message }: { message: Message }) {
             {message.sources.map((source) => (
               <button
                 key={source.id}
+                onClick={() => onSourceClick?.(source)}
                 className="flex items-center gap-2 text-xs text-[#6a6a6a] hover:text-[#0a0a0a] transition-colors bg-[#fffaf0] border border-[#e5e5e5] rounded-lg px-3 py-2 w-full text-left"
               >
                 <BookOpen className="h-3.5 w-3.5 flex-shrink-0" />
@@ -140,6 +157,63 @@ interface ChatClientProps {
   initialMessages: Message[];
 }
 
+function SourceDialog({
+  source,
+  projectId,
+  isOpen,
+  onClose,
+}: {
+  source: Source | null;
+  projectId: string;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  if (!source) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-muted-foreground" />
+            {source.documentName}
+            {source.pageNumber && (
+              <span className="text-sm font-normal text-muted-foreground">
+                · Page {source.pageNumber}
+              </span>
+            )}
+          </DialogTitle>
+          <DialogDescription>Referenced source snippet</DialogDescription>
+        </DialogHeader>
+        
+        <div className="mt-4 p-4 bg-muted/50 rounded-lg border">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              p: ({ children }) => <p className="m-0 leading-relaxed text-sm">{children}</p>,
+            }}
+          >
+            {source.snippet}
+          </ReactMarkdown>
+        </div>
+
+        <DialogFooter className="mt-4">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+          <Link
+            href={`/app/projects/${projectId}/documents/${source.id}`}
+            className="inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+          >
+            <ExternalLink className="h-4 w-4" />
+            View More
+          </Link>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function ChatClient({
   project,
   session,
@@ -151,6 +225,8 @@ export function ChatClient({
   const [chatMessages, setChatMessages] = useState<Message[]>(initialMessages);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [selectedSource, setSelectedSource] = useState<Source | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { lastMessage } = useWebSocket();
@@ -354,7 +430,14 @@ export function ChatClient({
             </div>
           ) : (
             chatMessages.map((message) => (
-              <ChatMessageComponent key={message.id} message={message} />
+              <ChatMessageComponent
+                key={message.id}
+                message={message}
+                onSourceClick={(source) => {
+                  setSelectedSource(source);
+                  setIsDialogOpen(true);
+                }}
+              />
             ))
           )}
           {isLoading && (
@@ -417,6 +500,16 @@ export function ChatClient({
           </p>
         </div>
       </div>
+
+      <SourceDialog
+        source={selectedSource}
+        projectId={project.id}
+        isOpen={isDialogOpen}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setSelectedSource(null);
+        }}
+      />
     </div>
   );
 }
